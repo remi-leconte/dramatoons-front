@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import api from '../services/api'
 
 const webtoons = ref([])
 const loading = ref(false)
@@ -11,10 +12,11 @@ const fetchWebtoons = async () => {
 
   loading.value = true
   try {
-    const response = await fetch(`http://dramatoons.api.local:8081${nextPageUrl.value}`, {
+    const response = await api.get(nextPageUrl.value, {
       headers: { 'Accept': 'application/ld+json' }
     })
-    const data = await response.json()
+
+    const data = response.data
 
     const newItems = data.member || data['hydra:member'] || []
     webtoons.value = [...webtoons.value, ...newItems] // ... permet de prendre chaque élément du tableau individuellement

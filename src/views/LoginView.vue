@@ -49,46 +49,55 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth' // Ton store Pinia
+import axios from 'axios' // Axios pour l'appel HTTP
 
 const router = useRouter()
+const authStore = useAuthStore() // Activation de ton store Pinia
+
 const loading = ref(false)
+const errorMessage = ref('')
 
 const form = ref({
   identifier: '',
   password: ''
 })
 
-const errorMessage = ref('')
-
 const handleLogin = async () => {
   loading.value = true
   errorMessage.value = ''
   
   try {
-    const response = await fetch('http://dramatoons.api.local:8081/api/login_check', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: form.value.identifier, // Symfony attend souvent "username" par défaut
-        password: form.value.password
-      })
+    // Appel API avec Axios
+    const response = await axios.post('http://dramatoons.api.local:8081/api/login', {
+      email: form.value.identifier,
+      password: form.value.password
     })
 
-    if (!response.ok) {
-      // Si Symfony renvoie un code 401 (Unauthorized)
-      if (response.status === 401) {
-        throw new Error("Identifiants incorrects. Veuillez réessayer.")
-      } else {
-        throw new Error("Une erreur serveur est survenue.")
-      }
-    }
+    // Récupération du token (Axios met la réponse directement dans .data)
+    const token = response.data.token
 
-    const data = await response.json()
-    // Ici on stockera le token JWT...
+    // Stockage du token dans Pinia
+    authStore.setToken(token)
+
+    // Redirection vers l'accueil
     router.push('/')
     
   } catch (error) {
-    errorMessage.value = error.message
+    // Gestion des erreurs avec Axios
+    if (error.response) {
+      if (error.response.status === 401) {
+        errorMessage.value = "Identifiants incorrects. Veuillez réessayer."
+      } else {
+        errorMessage.value = "Une erreur serveur est survenue."
+      }
+    } else if (error.request) {
+      // La requête a été envoyée mais pas de réponse (ex: serveur éteint)
+      errorMessage.value = "Impossible de joindre le serveur."
+    } else {
+      // Erreur de configuration de la requête
+      errorMessage.value = error.message
+    }
   } finally {
     loading.value = false
   }

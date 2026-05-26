@@ -1,11 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { useAuthStore } from './stores/auth'
+import { useRouter } from 'vue-router'
 
-const isLoggedIn = ref(false)
+const authStore = useAuthStore()
+const router = useRouter()
 
-const logout = () => {
-  isLoggedIn.value = false
-  // Ici, il faudra aussi supprimer le token du localStorage
+const handleLogout = () => {
+  authStore.logout() 
+  router.push('/')
 }
 </script>
 
@@ -16,15 +18,15 @@ const logout = () => {
       
       <div class="nav-actions">
         <!-- Connecté -->
-        <template v-if="isLoggedIn">
-          <router-link to="/profile" class="btn-secondary" @click="goToProfile">Mon Profil</router-link>
-          <button class="btn-primary" @click="logout">Déconnexion</button>
+        <template v-if="authStore.isAuthenticated">
+          <router-link to="/profile" class="btn-secondary">Mon Profil</router-link>
+          <button class="btn-primary" @click="handleLogout">Déconnexion</button>
         </template>
 
         <!-- Non connecté -->
         <template v-else>
-          <router-link to="/register" class="btn-secondary" @click="goToRegister">Créer un compte</router-link>
-          <router-link to="/login" class="btn-primary" @click="goToLogin">Connexion</router-link>
+          <router-link to="/register" class="btn-secondary">Créer un compte</router-link>
+          <router-link to="/login" class="btn-primary">Connexion</router-link>
         </template>
       </div>
     </header>
