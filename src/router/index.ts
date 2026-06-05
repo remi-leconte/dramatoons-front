@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import VerifyView from '../views/VerifyView.vue'
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 
 const router = createRouter({
@@ -29,10 +30,20 @@ const router = createRouter({
       component: () => import('../views/ProfileView.vue'),
     },
     {
+      path: '/verify',
+      name: 'verify',
+      component: () => import('../views/VerifyView.vue'),
+    },
+    {
       path: '/forgot-password',
       name: 'forgot-password',
       component: () => import('../views/ForgotPasswordView.vue'),
     },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('../views/ResetPasswordView.vue'),
+    }
   ],
 })
 

@@ -2,20 +2,23 @@
   <div class="auth-container">
     <div class="auth-card">
       <h2>Connexion</h2>
-      
-      <!-- Message d'erreur -->
+
+      <div v-if="infoMessage" class="alert-success">
+        {{ infoMessage }}
+      </div>
+
       <div v-if="errorMessage" class="error-alert">
         {{ errorMessage }}
       </div>
       
       <form @submit.prevent="handleLogin">
         <div class="input-group">
-          <label for="identifier">Email ou Nom d'utilisateur</label>
+          <label for="identifier">Nom d'utilisateur</label>
           <input 
             id="identifier"
             v-model="form.identifier" 
             type="text" 
-            placeholder="Ex: fan@mail.com ou Hero99" 
+            placeholder="login" 
             required
           >
         </div>
@@ -47,21 +50,39 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth' // Ton store Pinia
+import { ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth' // Store Pinia
 import axios from 'axios' // Axios pour l'appel HTTP
 
 const router = useRouter()
+const route = useRoute() // Activation de l'accès aux paramètres de l'URL
 const authStore = useAuthStore() // Activation de ton store Pinia
 
 const loading = ref(false)
 const errorMessage = ref('')
+const infoMessage = ref('')
 
 const form = ref({
   identifier: '',
   password: ''
 })
+
+watch(
+  () => route?.query?.status,
+  (newStatus) => {
+    if (newStatus === 'registered') {
+      infoMessage.value = "Votre compte a bien été créé ! Un e-mail de vérification vous a été envoyé. Vous pouvez vous connecter."
+    } else if (newStatus === 'verified') {
+      infoMessage.value = "Votre adresse e-mail a été validée avec succès ! Vous pouvez maintenant vous connecter."
+    } else if (newStatus === 'modifiedLogin') {
+      infoMessage.value = "Votre nom d'utilisateur a changé. Veuillez vous reconnecter."
+    } else if (newStatus === 'resetPassword') {
+      infoMessage.value = "Votre mot de passe a été modifié avec succès."
+    }
+  },
+  { immediate: true }
+)
 
 const handleLogin = async () => {
   loading.value = true
@@ -69,16 +90,16 @@ const handleLogin = async () => {
   
   try {
     // Appel API avec Axios
-    const response = await axios.post('http://dramatoons.api.local:8081/api/login', {
-      email: form.value.identifier,
+    const response = await axios.post('http://dramatoons.api.local:8081/login', {
+      login: form.value.identifier,
       password: form.value.password
     })
 
     // Récupération du token (Axios met la réponse directement dans .data)
-    const token = response.data.token
+    const { token, refresh_token, user } = response.data
 
     // Stockage du token dans Pinia
-    authStore.setToken(token)
+    authStore.setUserSession(token, refresh_token, user.id, user.login, user.roles)
 
     // Redirection vers l'accueil
     router.push('/')
@@ -173,5 +194,16 @@ const handleLogin = async () => {
 
 .auth-footer a:hover {
   color: #e50914;
+}
+
+.alert-success {
+  background-color: rgba(76, 209, 55, 0.1);
+  border: 1px solid #4cd137;
+  color: #4cd137;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  text-align: left;
 }
 </style>

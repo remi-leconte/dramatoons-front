@@ -3,6 +3,10 @@
     <div class="auth-card">
       <h2>Réinitialiser le mot de passe</h2>
       
+      <div v-if="errorMessage" class="error-alert">
+        {{ errorMessage }}
+      </div>
+      
       <form v-if="!isSent" @submit.prevent="handleResetRequest">
         <p class="auth-description">
           Entrez votre adresse email. Nous vous enverrons un lien pour créer un nouveau mot de passe.
@@ -14,6 +18,7 @@
             type="email" 
             placeholder="votre@email.com" 
             required
+            :disabled="loading"
           >
         </div>
         
@@ -22,14 +27,13 @@
         </button>
       </form>
 
-      <!-- Message de succès -->
       <div v-else class="success-message">
         <div class="success-icon">✓</div>
         <p>Si cet email existe dans notre base, un message vient d'être envoyé.</p>
         <router-link to="/login" class="btn-secondary full-width">Retour à la connexion</router-link>
       </div>
 
-      <div class="auth-footer">
+      <div class="auth-footer" v-if="!isSent">
         <router-link to="/login">Retour à la connexion</router-link>
       </div>
     </div>
@@ -38,24 +42,36 @@
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios' // 💡 Importation d'Axios pour l'appel d'API
 
 const email = ref('')
 const loading = ref(false)
 const isSent = ref(false)
+const errorMessage = ref('')
+
+// Configuration des en-têtes API Platform
+const headers = {
+  'Accept': 'application/ld+json',
+  'Content-Type': 'application/json'
+}
 
 const handleResetRequest = async () => {
   loading.value = true
+  errorMessage.value = ''
   
   try {
-    // Ici, tu feras l'appel à ton API Symfony
-    // await fetch('http://dramatoons.api.local:8081/api/forgot-password', { ... })
-    
-    // Simulation d'une attente réseau
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // 💡 Appel à ton WS API Platform fraîchement créé
+    await axios.post('http://dramatoons.api.local:8081/users/forgot-password', {
+      email: email.value
+    }, { headers })
     
     isSent.value = true
   } catch (error) {
-    console.error("Erreur :", error)
+    if (error.response) {
+      errorMessage.value = error.response.data['hydra:description'] || "Une erreur est survenue lors de la demande."
+    } else {
+      errorMessage.value = "Impossible de joindre le serveur."
+    }
   } finally {
     loading.value = false
   }
@@ -84,5 +100,16 @@ const handleResetRequest = async () => {
 .success-message p {
   margin-bottom: 25px;
   color: #ddd;
+}
+
+.error-alert {
+  background-color: rgba(229, 9, 20, 0.1);
+  border: 1px solid #e50914;
+  color: #e50914;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  text-align: left;
 }
 </style>

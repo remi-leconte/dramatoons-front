@@ -1,15 +1,24 @@
 <template>
   <div class="auth-container">
-    <div class="auth-card profile-page">
+    <div class="auth-card profile-card">
       <h2>Mon Profil</h2>
+
+      <div v-if="infoMessage" class="alert-success">
+        {{ infoMessage }}
+      </div>
+
+      <div v-if="errorMessage" class="error-alert">
+        {{ errorMessage }}
+      </div>
       
       <form @submit.prevent="handleUpdateProfile">
         <div class="input-group">
           <label for="username">Nom d'utilisateur</label>
           <input 
             id="username"
-            v-model="user.username" 
+            v-model="form.username" 
             type="text" 
+            required
           >
         </div>
 
@@ -17,9 +26,27 @@
           <label for="email">Adresse Email</label>
           <input 
             id="email"
-            v-model="user.email" 
+            v-model="form.email" 
             type="email" 
+            required
           >
+          
+          <div class="email-status">
+            <span v-if="form.verified" class="badge verified">
+              ✓ Email vérifié
+            </span>
+            <div v-else class="unverified-container">
+              <span class="badge unverified">⚠ Email non vérifié</span>
+              <button 
+                type="button" 
+                class="btn-link" 
+                :disabled="sendingVerification"
+                @click="handleResendVerification"
+              >
+                {{ sendingVerification ? 'Envoi...' : "Renvoyer le lien de validation" }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <hr class="divider">
@@ -28,85 +55,164 @@
           <label for="newPassword">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
           <input 
             id="newPassword"
-            v-model="user.newPassword" 
+            v-model="form.newPassword" 
             type="password" 
-            placeholder="••••••••"
+            placeholder="••••••••" 
           >
         </div>
 
-        <div class="button-group">
-          <button type="submit" class="btn-primary" :disabled="loading">
-            {{ loading ? 'Enregistrement...' : 'Enregistrer les modifications' }}
-          </button>
-        </div>
+        <button type="submit" class="btn-primary full-width" :disabled="loading">
+          {{ loading ? 'Enregistrement en cours...' : 'Enregistrer les modifications' }}
+        </button>
       </form>
-
-      <div v-if="message" :class="['status-message', messageType]">
-        {{ message }}
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import api from '../services/api'
 
+const authStore = useAuthStore()
+
+const router = useRouter()
 const loading = ref(false)
-const message = ref('')
-const messageType = ref('')
+const sendingVerification = ref(false)
+const errorMessage = ref('')
+const infoMessage = ref('')
 
-// On simule les données récupérées depuis ton API Symfony
-const user = ref({
-  username: 'DramatoonFan',
-  email: 'fan@example.com',
+const form = ref({
+  id: null,
+  username: '',
+  email: '',
+  verified: false,
   newPassword: ''
 })
 
+const getHeaders = (isPatch = false) => {
+  return {
+    'Accept': 'application/ld+json',
+    'Content-Type': isPatch ? 'application/merge-patch+json' : 'application/json',
+    'Authorization': `Bearer ${authStore.token}`
+  }
+}
+
+onMounted(async () => {
+  try {
+    const response = await api.get(`http://dramatoons.api.local:8081/users/${authStore.userId}`, {
+      headers: getHeaders()
+    })
+
+    const data = response.data
+    form.value.id = data.id
+    form.value.username = data.login
+    form.value.email = data.email
+    form.value.verified = data.verified
+  } catch (error) {
+    if (error.response) {
+      errorMessage.value = "Impossible de charger les informations de votre profil."
+    } else {
+      errorMessage.value = "Erreur de connexion avec le serveur."
+    }
+  }
+})
+
+// Mise à jour du profil (PATCH)
 const handleUpdateProfile = async () => {
   loading.value = true
-  message.value = ''
+  errorMessage.value = ''
+  infoMessage.value = ''
   
   try {
-    // Appel API simulé (PATCH ou PUT vers /api/users/{id})
-    await new Promise(resolve => setTimeout(resolve, 1200))
+    const payload = {
+      login: form.value.username,
+      email: form.value.email
+    }
+
+    if (form.value.newPassword) {
+      payload.password = form.value.newPassword
+    }
+
+    const loginChanged = authStore.login !== form.value.username
+
+    const response = await api.patch(`http://dramatoons.api.local:8081/users/${form.value.id}`, payload, {
+      headers: getHeaders(true)
+    })
     
-    message.value = "Profil mis à jour avec succès !"
-    messageType.value = "success"
-    user.value.newPassword = "" // On vide le champ password après succès
+    const updatedUser = response.data
+    form.value.verified = updatedUser.verified
+    form.value.username = updatedUser.login
+    form.value.email = updatedUser.email
+
+    if (loginChanged) {
+      authStore.logout()
+      router.push({ path: '/login', query: { status: 'modifiedLogin' } })
+    } else {
+      infoMessage.value = "Profil mis à jour avec succès !"
+      form.value.newPassword = "" 
+    }
+
   } catch (error) {
-    message.value = "Une erreur est survenue lors de la mise à jour."
-    messageType.value = "error"
+    if (error.response) {
+      errorMessage.value = error.response.data['hydra:description'] || "Une erreur est survenue lors de la mise à jour."
+    } else {
+      console.log(error)
+      errorMessage.value = "Impossible de joindre le serveur."
+    }
   } finally {
     loading.value = false
+  }
+}
+
+// Demande de renvoi de l'e-mail de validation
+const handleResendVerification = async () => {
+  sendingVerification.value = true
+  errorMessage.value = ''
+  infoMessage.value = ''
+
+  try {
+    await api.post('http://dramatoons.api.local:8081/users/resend-verification', {
+      email: form.value.email
+    }, {
+      headers: getHeaders()
+    })
+
+    infoMessage.value = "Un nouveau lien de validation a été envoyé sur votre adresse email."
+  } catch (error) {
+    if (error.response) {
+      errorMessage.value = "Impossible d'envoyer le lien de validation pour le moment."
+    } else {
+      errorMessage.value = "Erreur réseau avec le serveur."
+    }
+  } finally {
+    sendingVerification.value = false
   }
 }
 </script>
 
 <style scoped>
-.profile-page {
-  max-width: 500px;
-}
-
-.divider {
-  border: 0;
-  border-top: 1px solid #333;
-  margin: 2rem 0;
+.profile-card h2 {
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
 }
 
 .input-group {
   margin-bottom: 1.5rem;
+  text-align: left;
 }
 
 .input-group label {
-  display: block;
   font-size: 0.8rem;
-  color: #888;
+  color: #aaa;
+  display: block;
   margin-bottom: 8px;
 }
 
 .input-group input {
   width: 100%;
-  padding: 12px;
+  padding: 12px 15px;
   background: #2a2a2a;
   border: 1px solid #444;
   border-radius: 4px;
@@ -119,32 +225,90 @@ const handleUpdateProfile = async () => {
   border-color: #e50914;
 }
 
-.button-group {
-  margin-top: 2rem;
+.divider {
+  border: 0;
+  border-top: 1px solid #333;
+  margin: 2rem 0;
 }
 
-.status-message {
-  margin-top: 1.5rem;
-  padding: 10px;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-.status-message.success {
-  background: rgba(46, 204, 113, 0.2);
-  color: #2ecc71;
-  border: 1px solid #2ecc71;
-}
-
-.status-message.error {
-  background: rgba(231, 76, 60, 0.2);
-  color: #e74c3c;
-  border: 1px solid #e74c3c;
-}
-
-.btn-primary {
+.full-width {
   width: 100%;
-  padding: 14px;
+  margin-top: 1rem;
+  padding: 12px;
+}
+
+.alert-success {
+  background-color: rgba(76, 209, 55, 0.1);
+  border: 1px solid #4cd137;
+  color: #4cd137;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.email-status {
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.badge.verified {
+  background: rgba(76, 209, 55, 0.1);
+  color: #4cd137;
+  border: 1px solid rgba(76, 209, 55, 0.3);
+}
+
+.badge.unverified {
+  background: rgba(230, 126, 34, 0.15);
+  color: #e67e22;
+  border: 1px solid rgba(230, 126, 34, 0.3);
+}
+
+.unverified-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #e50914;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.btn-link:hover:not(:disabled) {
+  color: #b80710;
+}
+
+.btn-link:disabled {
+  color: #666;
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+.error-alert {
+  background-color: rgba(229, 9, 20, 0.1);
+  border: 1px solid #e50914;
+  color: #e50914;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  text-align: left;
 }
 </style>
