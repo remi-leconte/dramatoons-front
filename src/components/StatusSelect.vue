@@ -1,52 +1,43 @@
+// ce composant permet de gérer le select custom de l'état du webtoon
+
+<script>
+const STATUS_OPTIONS = new Map([
+  [null, { label: 'Aucun', class: 'status-none' }],
+  ['reading', { label: 'En cours', class: 'status-reading' }],
+  ['pause', { label: 'En pause', class: 'status-paused' }],
+  ['break', { label: 'Pas intéressé', class: 'status-disinterested' }],
+  ['completed', { label: 'Terminé', class: 'status-completed' }]
+])
+</script>
+
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-// 1. On définit les données reçues du parent (le statut actuel)
 const props = defineProps({
-  modelValue: {
+  state: {
     type: String,
     default: null
   }
 })
+const emit = defineEmits(['update:state'])
 
-// 2. On définit l'événement qu'on va renvoyer au parent lors d'un changement
-const emit = defineEmits(['update:modelValue'])
-
-// Gestion de l'ouverture locale du menu (plus besoin d'index, chaque composant gère son propre état !)
 const isOpen = ref(false)
-
-// Options de statuts identiques
-const statusOptions = [
-  { id: null, label: 'Aucun', class: 'status-none' },
-  { id: 'reading', label: 'En cours', class: 'status-reading' },
-  { id: 'pause', label: 'En pause', class: 'status-paused' },
-  { id: 'break', label: 'Pas intéressé', class: 'status-disinterested' },
-  { id: 'completed', label: 'Terminé', class: 'status-completed' }
-]
-
-// Calcule la classe CSS actuelle basée sur la prop reçue
-const currentStatusClass = computed(() => {
-  const option = statusOptions.find(o => o.id === props.modelValue)
-  return option ? option.class : 'status-none'
-})
-
-// Calcule le texte actuel basé sur la prop reçue
-const currentStatusLabel = computed(() => {
-  const option = statusOptions.find(o => o.id === props.modelValue)
-  return option ? option.label : 'Aucun'
-})
-
-// Déclenche le changement et informe le parent via l'emit
-const selectStatus = (statusId) => {
-  emit('update:modelValue', statusId)
-  isOpen.value = false
-}
+const containerRef = ref(null) // Référence pour le click outside
 
 // Ferme le menu si on clique n'importe où ailleurs sur la page
 const closeDropdown = (e) => {
-  if (!e.target.closest('.custom-select-container')) {
+  if (containerRef.value && !containerRef.value.contains(e.target)) {
     isOpen.value = false
   }
+}
+
+// récupération du statut
+const currentStatus = computed(() => STATUS_OPTIONS.get(props.state) || STATUS_OPTIONS.get(null))
+
+// update du statut
+const selectStatus = (statusId) => {
+  emit('update:state', statusId)
+  isOpen.value = false
 }
 
 onMounted(() => window.addEventListener('click', closeDropdown))
@@ -54,34 +45,33 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
 </script>
 
 <template>
-  <div class="custom-select-container">
+  <div class="custom-select-container" ref="containerRef">
     <button 
       type="button"
       @click.stop="isOpen = !isOpen" 
       class="status-btn" 
-      :class="[currentStatusClass, { 'is-active': isOpen }]"
-      :title="`Statut : ${currentStatusLabel}`"
+      :class="[currentStatus.class, { 'is-active': isOpen }]"
+      :title="`Statut : ${currentStatus.label}`"
     >
-      <slot :label="currentStatusLabel">
+      <slot :label="currentStatus.label">
         </slot>
       <span class="arrow"></span>
     </button>
 
     <ul v-if="isOpen" class="status-dropdown">
-      <li 
-        v-for="option in statusOptions" 
-        :key="option.id"
-        @click.stop="selectStatus(option.id)"
-        :class="option.class"
+      <li
+        v-for="([id, data], index) in STATUS_OPTIONS"
+        :key="index"
+        @click.stop="selectStatus(id)"
+        :class="data.class"
       >
-        {{ option.label }}
+        {{ data.label }}
       </li>
     </ul>
   </div>
 </template>
 
 <style scoped>
-/* --- DESIGN DU SÉLECTEUR CUSTOM (Isolé grâce à scoped) --- */
 .custom-select-container { position: relative; width: 100%; height: 100%; }
 
 .status-btn { 
@@ -108,17 +98,16 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
 }
 .status-btn.is-active .arrow { transform: rotate(180deg); }
 
-/* Couleurs */
+.status-btn:hover,
+.status-dropdown li:hover {
+  filter: brightness(0.75);
+}
+
 .status-none { background-color: rgba(85, 85, 85, 0.9); }
 .status-reading { background-color: rgba(33, 150, 243, 0.9); }
 .status-paused { background-color: rgba(255, 152, 0, 0.9); }
 .status-disinterested { background-color: rgba(229, 9, 20, 0.9); }
 .status-completed { background-color: rgba(76, 175, 80, 0.9); }
-
-.status-btn:hover,
-.status-dropdown li:hover {
-  filter: brightness(0.75);
-}
 
 .status-dropdown { 
   position: absolute; 

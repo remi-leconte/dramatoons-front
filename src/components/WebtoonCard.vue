@@ -27,8 +27,8 @@ const authStore = useAuthStore()
       
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
         <StatusSelect 
-          :modelValue="webtoon.userProgress?.state" 
-          @update:modelValue="(newState) => emit('status-change', newState)"
+          :state="webtoon.userProgress?.state"
+          @update:state="(newState) => emit('status-change', newState)"
         />
       </div>
 

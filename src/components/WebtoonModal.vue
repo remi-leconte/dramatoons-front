@@ -110,7 +110,7 @@ const saveModalData = async () => {
             <div class="form-group">
               <label>Statut de lecture :</label>
               <div class="modal-select-wrapper">
-                <StatusSelect v-model="localWebtoon.userProgress.state">
+                <StatusSelect v-model:state="localWebtoon.userProgress.state">
                   <template #default="slotProps">
                     <span class="text-label">{{ slotProps.label }}</span>
                   </template>
