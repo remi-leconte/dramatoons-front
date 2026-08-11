@@ -19,6 +19,7 @@
             v-model="form.username" 
             type="text" 
             required
+            :disabled="loading"
           >
         </div>
 
@@ -29,6 +30,7 @@
             v-model="form.email" 
             type="email" 
             required
+            :disabled="loading"
           >
           
           <div class="email-status">
@@ -58,6 +60,7 @@
             v-model="form.newPassword" 
             type="password" 
             placeholder="••••••••" 
+            :disabled="loading"
           >
         </div>
 
@@ -91,19 +94,9 @@ const form = ref({
   newPassword: ''
 })
 
-const getHeaders = (isPatch = false) => {
-  return {
-    'Accept': 'application/ld+json',
-    'Content-Type': isPatch ? 'application/merge-patch+json' : 'application/json',
-    'Authorization': `Bearer ${authStore.token}`
-  }
-}
-
 onMounted(async () => {
   try {
-    const response = await api.get(`http://dramatoons.api.local:8081/users/${authStore.userId}`, {
-      headers: getHeaders()
-    })
+    const response = await api.get(`/users/${authStore.userId}`)
 
     const data = response.data
     form.value.id = data.id
@@ -112,14 +105,13 @@ onMounted(async () => {
     form.value.verified = data.verified
   } catch (error) {
     if (error.response) {
-      errorMessage.value = "Impossible de charger les informations de votre profil."
+      errorMessage.value = "Une erreur est survenue."
     } else {
-      errorMessage.value = "Erreur de connexion avec le serveur."
+      errorMessage.value = "Impossible de joindre le serveur."
     }
   }
 })
 
-// Mise à jour du profil (PATCH)
 const handleUpdateProfile = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -137,8 +129,8 @@ const handleUpdateProfile = async () => {
 
     const loginChanged = authStore.login !== form.value.username
 
-    const response = await api.patch(`http://dramatoons.api.local:8081/users/${form.value.id}`, payload, {
-      headers: getHeaders(true)
+    const response = await api.patch(`/users/${form.value.id}`, payload, {
+      headers: { 'Content-Type': 'application/merge-patch+json' }
     })
     
     const updatedUser = response.data
@@ -156,9 +148,8 @@ const handleUpdateProfile = async () => {
 
   } catch (error) {
     if (error.response) {
-      errorMessage.value = error.response.data['hydra:description'] || "Une erreur est survenue lors de la mise à jour."
+      errorMessage.value = "Une erreur est survenue."
     } else {
-      console.log(error)
       errorMessage.value = "Impossible de joindre le serveur."
     }
   } finally {
@@ -173,18 +164,16 @@ const handleResendVerification = async () => {
   infoMessage.value = ''
 
   try {
-    await api.post('http://dramatoons.api.local:8081/users/resend-verification', {
+    await api.post('/users/resend-verification', {
       email: form.value.email
-    }, {
-      headers: getHeaders()
     })
 
     infoMessage.value = "Un nouveau lien de validation a été envoyé sur votre adresse email."
   } catch (error) {
     if (error.response) {
-      errorMessage.value = "Impossible d'envoyer le lien de validation pour le moment."
+      errorMessage.value = "Une erreur est survenue."
     } else {
-      errorMessage.value = "Erreur réseau avec le serveur."
+      errorMessage.value = "Impossible de joindre le serveur."
     }
   } finally {
     sendingVerification.value = false

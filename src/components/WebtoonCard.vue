@@ -1,28 +1,34 @@
 <script setup>
 import { useAuthStore } from '../stores/auth'
+import { COVER_BASE_URL } from '../services/api'
 import StatusSelect from './StatusSelect.vue'
 
-// 1. Reçoit les données du webtoon à afficher
 defineProps({
   webtoon: {
     type: Object,
     required: true
   }
 })
-
-// 2. Événement envoyé au parent quand le statut change directement sur la carte
 const emit = defineEmits(['status-change'])
 
 const authStore = useAuthStore()
+
+const getDaysSinceUpdate = (dateString) => {
+  if (!dateString) return null
+  const updatedDate = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now - updatedDate)
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24))
+}
 </script>
 
 <template>
   <article class="webtoon-card">
     <div class="poster-wrapper">
       <img 
-        :src="`http://dramatoons.api.local:8081/upload/cover/${webtoon.image}`" 
+        :src="`${COVER_BASE_URL}${webtoon.image}`" 
         :alt="webtoon.title"
-        @error="(e) => e.target.src = 'http://dramatoons.api.local:8081/upload/cover/defaut.jpg'"
+        @error="(e) => e.target.src = `${COVER_BASE_URL}defaut.jpg`"
       >
       
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
@@ -53,17 +59,20 @@ const authStore = useAuthStore()
         <span v-if="authStore.isAuthenticated && webtoon.userProgress" title="Votre note" class="user-rating">🏷️ {{ webtoon.userProgress.rate || '-' }}</span>
       </div>
 
-      <div v-if="webtoon.type === 'completed'" class="status-inline-badge">
+      <span v-if="getDaysSinceUpdate(webtoon.updated) !== null && getDaysSinceUpdate(webtoon.updated) < 60" class="genre">
+        Dernière modification il y a {{ getDaysSinceUpdate(webtoon.updated) }} jour{{ getDaysSinceUpdate(webtoon.updated) > 1 ? 's' : '' }}
+      </span>
+
+      <div v-if="webtoon.status === 'completed'" class="status-inline-badge">
         <span class="badge-completed">Terminé</span>
       </div>
 
-      <p class="genre">Action, Fantasy</p>
+      <!--<p class="genre">Action, Fantasy</p>-->
     </div>
   </article>
 </template>
 
 <style scoped>
-/* --- DESIGN DE LA CARTE (Isolé grâce à scoped) --- */
 .webtoon-card { transition: transform 0.3s ease; cursor: pointer; }
 .webtoon-card:hover { transform: scale(1.05); }
 

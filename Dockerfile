@@ -1,18 +1,17 @@
-FROM node:lts-alpine
+FROM node:24.18.0-alpine3.24 AS base
 
 WORKDIR /app
 
-# 1. On copie les fichiers de définition des dépendances
+RUN apk add --no-cache git
+
 COPY package*.json ./
 
-# 2. On installe les dépendances définies dans ton projet
-# (C'est cette étape qui te manquait)
+FROM base
+
 RUN npm install
 
-# 3. On copie tout le reste du code source
 COPY . .
 
 EXPOSE 5173
 
-# Vite a besoin du flag --host pour accepter les connexions hors conteneur
 CMD ["npm", "run", "dev"]

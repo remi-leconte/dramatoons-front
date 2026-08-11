@@ -1,5 +1,3 @@
-// ce composant permet de gérer le select custom de l'état du webtoon
-
 <script>
 const STATUS_OPTIONS = new Map([
   [null, { label: 'Aucun', class: 'status-none' }],
@@ -22,7 +20,7 @@ const props = defineProps({
 const emit = defineEmits(['update:state'])
 
 const isOpen = ref(false)
-const containerRef = ref(null) // Référence pour le click outside
+const containerRef = ref(null) // Référence pour le click exterieur
 
 // Ferme le menu si on clique n'importe où ailleurs sur la page
 const closeDropdown = (e) => {
@@ -31,10 +29,7 @@ const closeDropdown = (e) => {
   }
 }
 
-// récupération du statut
 const currentStatus = computed(() => STATUS_OPTIONS.get(props.state) || STATUS_OPTIONS.get(null))
-
-// update du statut
 const selectStatus = (statusId) => {
   emit('update:state', statusId)
   isOpen.value = false

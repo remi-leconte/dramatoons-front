@@ -20,6 +20,7 @@
             type="text" 
             placeholder="login" 
             required
+            :disabled="loading"
           >
         </div>
 
@@ -34,6 +35,7 @@
             type="password" 
             placeholder="••••••••" 
             required
+            :disabled="loading"
           >
         </div>
 
@@ -52,12 +54,12 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/auth' // Store Pinia
-import axios from 'axios' // Axios pour l'appel HTTP
+import { useAuthStore } from '../stores/auth'
+import api from '../services/api'
 
 const router = useRouter()
-const route = useRoute() // Activation de l'accès aux paramètres de l'URL
-const authStore = useAuthStore() // Activation de ton store Pinia
+const route = useRoute()
+const authStore = useAuthStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -89,35 +91,26 @@ const handleLogin = async () => {
   errorMessage.value = ''
   
   try {
-    // Appel API avec Axios
-    const response = await axios.post('http://dramatoons.api.local:8081/login', {
+    const response = await api.post('/login', {
       login: form.value.identifier,
       password: form.value.password
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     })
-
-    // Récupération du token (Axios met la réponse directement dans .data)
     const { token, refresh_token, user } = response.data
 
-    // Stockage du token dans Pinia
-    authStore.setUserSession(token, refresh_token, user.id, user.login, user.roles)
-
-    // Redirection vers l'accueil
+    authStore.setUserSession(token, refresh_token, user)
     router.push('/')
     
   } catch (error) {
-    // Gestion des erreurs avec Axios
     if (error.response) {
       if (error.response.status === 401) {
         errorMessage.value = "Identifiants incorrects. Veuillez réessayer."
       } else {
-        errorMessage.value = "Une erreur serveur est survenue."
+        errorMessage.value = "Une erreur est survenue."
       }
-    } else if (error.request) {
-      // La requête a été envoyée mais pas de réponse (ex: serveur éteint)
-      errorMessage.value = "Impossible de joindre le serveur."
     } else {
-      // Erreur de configuration de la requête
-      errorMessage.value = error.message
+      errorMessage.value = "Impossible de joindre le serveur."
     }
   } finally {
     loading.value = false

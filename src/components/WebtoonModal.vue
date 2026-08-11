@@ -1,36 +1,33 @@
 <script setup>
 import { ref, watch } from 'vue'
+import api, { COVER_BASE_URL } from '../services/api'
 import { useAuthStore } from '../stores/auth'
-import api from '../services/api'
 import StatusSelect from './StatusSelect.vue'
 
-// 1. Reçoit le webtoon cliqué depuis le parent
 const props = defineProps({
   webtoon: {
     type: Object,
     required: true
   }
 })
-
-// 2. Événements renvoyés au parent (fermeture et succès de sauvegarde)
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits(['close', 'saved', 'deleted'])
 
 const authStore = useAuthStore()
-
-// Copie locale et isolée pour le formulaire (évite de modifier la grille en direct)
 const localWebtoon = ref(null)
+const loading = ref(false)
+const errorMessage = ref('')
 
-// À chaque fois que la prop "webtoon" change, on recrée une copie propre
+// watch est utilisé au lieu de computed pour faire une copie éditable (formulaire)
 watch(() => props.webtoon, (newWebtoon) => {
   if (newWebtoon) {
     localWebtoon.value = JSON.parse(JSON.stringify(newWebtoon))
     if (!localWebtoon.value.userProgress) {
       localWebtoon.value.userProgress = { bookmark: null, rate: null, state: null, id: null }
     }
+    errorMessage.value = ''
   }
 }, { immediate: true })
 
-// Vérifie et corrige les saisies numériques (chapitres et note)
 const validateInputs = () => {
   if (!localWebtoon.value?.userProgress) return
 
@@ -46,39 +43,89 @@ const validateInputs = () => {
     if (progress.rate > 10) progress.rate = 10
     if (progress.rate < 0) progress.rate = 0
   }
+
+  if (authStore.isAdmin) {
+    if (localWebtoon.value.chapter !== null && localWebtoon.value.chapter !== '') {
+      if (localWebtoon.value.chapter < 0) localWebtoon.value.chapter = 0
+    }
+  }
 }
 
-// Valide et envoie l'ensemble des données à l'API
 const saveModalData = async () => {
   validateInputs()
+  errorMessage.value = ''
+  loading.value = true
 
   try {
-    const payload = {
+    const userProgressPayload = {
       state: localWebtoon.value.userProgress.state,
       rate: localWebtoon.value.userProgress.rate ? parseFloat(localWebtoon.value.userProgress.rate) : null,
       bookmark: localWebtoon.value.userProgress.bookmark ? parseInt(localWebtoon.value.userProgress.bookmark) : null
     }
 
+    const webtoonDetailsPayload = {
+      title: localWebtoon.value.title,
+      chapter: localWebtoon.value.chapter ? parseInt(localWebtoon.value.chapter) : null,
+      status: localWebtoon.value.status
+    }
+
     if (localWebtoon.value.userProgress.id) {
-      await api.patch(`/webtoon_users/${localWebtoon.value.userProgress.id}`, payload, {
+      await api.patch(`/webtoon_users/${localWebtoon.value.userProgress.id}`, userProgressPayload, {
         headers: { 'Content-Type': 'application/merge-patch+json' }
       })
     } else {
       const response = await api.post('/webtoon_users', {
         webtoon: `/webtoons/${localWebtoon.value.id}`,
-        ...payload
+        ...userProgressPayload
       }, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
       localWebtoon.value.userProgress.id = response.data.id
     }
 
-    // Informe le parent du succès en lui transmettant les données mises à jour
-    emit('saved', localWebtoon.value.userProgress)
+    if (authStore.isAdmin) {
+      const response = await api.patch(`/webtoons/${localWebtoon.value.id}`, webtoonDetailsPayload, {
+        headers: { 'Content-Type': 'application/merge-patch+json' }
+      })
+      localWebtoon.value.updated = response.data.updated
+    }
+
+    emit('saved', localWebtoon.value)
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde des informations :", error)
+    console.error(error)
+    if (error.response) {
+      errorMessage.value = "Une erreur est survenue."
+    } else {
+      errorMessage.value = "Impossible de joindre le serveur."
+    }
+  } finally {
+    loading.value = false
   }
 }
+
+const deleteWebtoon = async () => {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce webtoon ? Cette action est irréversible.')) {
+    return;
+  }
+
+  errorMessage.value = '';
+  loading.value = true;
+
+  try {
+    await api.delete(`/webtoons/${localWebtoon.value.id}`);
+    emit('deleted', localWebtoon.value.id);
+    emit('close');
+  } catch (error) {
+    console.error(error);
+    if (error.response) {
+      errorMessage.value = "Une erreur est survenue."
+    } else {
+      errorMessage.value = "Impossible de joindre le serveur."
+    }
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <template>
@@ -88,16 +135,40 @@ const saveModalData = async () => {
       
       <div v-if="localWebtoon" class="modal-content">
         <div class="modal-left">
-          <img 
-            :src="`http://dramatoons.api.local:8081/upload/cover/${localWebtoon.image}`" 
+          <img
+            :src="`${COVER_BASE_URL}${localWebtoon.image}`"
             :alt="localWebtoon.title"
-            @error="(e) => e.target.src = 'http://dramatoons.api.local:8081/upload/cover/defaut.jpg'"
+            @error="(e) => e.target.src = `${COVER_BASE_URL}defaut.jpg`"
           >
         </div>
 
         <div class="modal-right-info">
-          <h2>{{ localWebtoon.title }}</h2>
-          <p class="modal-genres">Genres : Action, Fantasy</p>
+          <div v-if="errorMessage" class="error-alert">
+            {{ errorMessage }}
+          </div>
+
+          <div v-if="authStore.isAdmin" class="modal-form form-group">
+            <input 
+              id="webtoon-title" 
+              type="text" 
+              v-model="localWebtoon.title"
+              class="input-box"
+            >
+          </div>
+
+          <h2 v-else>{{ localWebtoon.title }}</h2>
+
+          <div v-if="authStore.isAdmin" class="completed-toggle-wrapper">
+            <button 
+              type="button"
+              class="btn-toggle-completed"
+              :class="{ active: localWebtoon.status === 'completed' }"
+              @click="localWebtoon.status = localWebtoon.status === 'completed' ? 'ongoing' : 'completed'"
+            >
+              Terminé
+            </button>
+          </div>
+          <!--<p class="modal-genres">Genres : Action, Fantasy</p>-->
           
           <div class="modal-stats">
             <span>⭐ Note Globale : {{ localWebtoon.averageRating || '-' }}</span>
@@ -120,20 +191,27 @@ const saveModalData = async () => {
 
             <div class="form-group">
               <label>Chapitres lus :</label>
-              <div class="input-inline chapter-input-box">
+              <div class="input-inline input-box input-box-chapter">
                 <input 
                   type="number" 
                   v-model="localWebtoon.userProgress.bookmark" 
                   min="0" 
                   :max="localWebtoon.chapter"
-                  @input="validateInputs"
+                  @blur="validateInputs"
                 >
-                <span>/ {{ localWebtoon.chapter }}</span>
+                <span v-if="authStore.isAdmin">/ <input 
+                  id="webtoon-chapter" 
+                  type="number" 
+                  v-model="localWebtoon.chapter" 
+                  min="0"
+                ></span>
+
+                <span v-else>/ {{ localWebtoon.chapter }}</span>
               </div>
             </div>
 
             <div class="form-group">
-              <label>Ma Note (Perso) :</label>
+              <label>Ma Note :</label>
               <input 
                 type="number" 
                 v-model="localWebtoon.userProgress.rate" 
@@ -141,14 +219,21 @@ const saveModalData = async () => {
                 max="10" 
                 step="0.1" 
                 placeholder="Note" 
-                class="small-number-input"
-                @input="validateInputs"
+                class="small-number-input" 
+                @blur="validateInputs"
               >
             </div>
 
             <div class="modal-actions">
-              <button class="btn-cancel" @click="emit('close')">Annuler</button>
-              <button class="btn-save" @click="saveModalData">Enregistrer</button>
+              <button class="btn-cancel" @click="emit('close')" :disabled="loading">
+                Annuler
+              </button>
+              <button class="btn-save" @click="saveModalData" :disabled="loading">
+                {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+              </button>
+              <button v-if="authStore.isAdmin" class="btn-delete" @click="deleteWebtoon" :disabled="loading">
+                Supprimer
+              </button>
             </div>
           </div>
           <div v-else class="modal-auth-notice">
@@ -161,8 +246,7 @@ const saveModalData = async () => {
 </template>
 
 <style scoped>
-/* --- DESIGN DE LA POPUP MODAL (Isolé grâce à scoped) --- */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 15px; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, -0.15); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 15px; }
 .modal-container { background: #181818; border: 1px solid #282828; border-radius: 8px; width: 100%; max-width: 650px; max-height: 90vh; padding: 25px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); color: #ffffff; overflow-y: auto; }
 .modal-close { position: absolute; top: 5px; right: 12px; background: none; border: none; color: #aaa; font-size: 1.8rem; cursor: pointer; z-index: 10; }
 .modal-content { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; }
@@ -175,9 +259,19 @@ const saveModalData = async () => {
 .modal-separator { border: 0; border-top: 1px solid #282828; margin: 15px 0; }
 
 .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-.form-group label { font-size: 0.85rem; color: #bbb; }
+.form-group label { font-size: 0.85rem; color: #bbb; } 
 
-.modal-form input[type="number"] { border: 1px solid #383838; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; outline: none; }
+.error-alert {
+  background-color: rgba(229, 9, 20, 0.1);
+  border: 1px solid #e50914;
+  color: #e50914;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.modal-form input { border: 1px solid #383838; color: #fff; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; outline: none; }
 .modal-form input:focus { border-color: #e50914; }
 
 .modal-form input[type="number"]::-webkit-outer-spin-button,
@@ -189,16 +283,40 @@ const saveModalData = async () => {
 .modal-select-wrapper :deep(.text-label) { margin-right: 10px; }
 .modal-select-wrapper :deep(.status-dropdown) { width: 100%; left: 0; right: auto; }
 
-.chapter-input-box { width: fit-content; display: flex; align-items: center; background: #252525; border: 1px solid #383838; border-radius: 4px; padding-right: 12px; }
-.chapter-input-box input { width: 35px; border: none !important; background: transparent !important; text-align: left; padding-right: 2px; padding-left: 12px; }
-.chapter-input-box span { font-size: 0.85rem; color: #888; white-space: nowrap; }
+.input-box { display: flex; align-items: center; background: #252525; border: 1px solid #383838; border-radius: 4px; padding-right: 12px; }
+.input-box-chapter { width: fit-content; }
+.input-box input { width: 35px; border: none !important; background: transparent !important; text-align: left; padding-right: 2px; padding-left: 12px; }
+.input-box span { font-size: 0.85rem; color: #888; white-space: nowrap; }
+.input-box:focus-within { border-color: #e50914; }
 
 .small-number-input { background: #252525; width: 27px !important; text-align: left; padding-left: 8px !important; padding-right: 2px !important; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
-.btn-cancel, .btn-save { padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; border: none; font-weight: bold; }
+.btn-cancel, .btn-save, .btn-delete { padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; border: none; font-weight: bold; }
 .btn-cancel { background: #333; color: #fff; }
 .btn-save { background: #e50914; color: #fff; }
+.btn-delete { background: #e50914; color: #fff; margin-left: auto; }
+
+.completed-toggle-wrapper {
+  margin-bottom: 12px;
+}
+
+.btn-toggle-completed {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #333333;
+  color: #aaaaaa;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-toggle-completed.active {
+  background-color: #4CAF50;
+  color: #ffffff;
+}
 
 @media (min-width: 576px) {
   .modal-content { flex-direction: row; align-items: flex-start; gap: 30px; }
