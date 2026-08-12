@@ -2,11 +2,10 @@ services:
   dramatoons_front:
     build:
       context: .
-      dockerfile: Dockerfile
     container_name: dramatoons_front
+    restart: unless-stopped
     volumes:
-      - .:/app
-      - /app/node_modules
+      - dramatoons_front_data:/app
     ports:
       - "5173:5173"
     networks:
@@ -18,3 +17,5 @@ networks:
   api_internal_network:
     external: true
     name: shared_api_network
+volumes:
+  dramatoons_front_data:

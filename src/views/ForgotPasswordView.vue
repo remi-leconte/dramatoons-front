@@ -42,33 +42,30 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios' // 💡 Importation d'Axios pour l'appel d'API
+import api from '../services/api'
 
 const email = ref('')
 const loading = ref(false)
 const isSent = ref(false)
 const errorMessage = ref('')
 
-// Configuration des en-têtes API Platform
-const headers = {
-  'Accept': 'application/ld+json',
-  'Content-Type': 'application/json'
-}
-
 const handleResetRequest = async () => {
   loading.value = true
   errorMessage.value = ''
   
   try {
-    // 💡 Appel à ton WS API Platform fraîchement créé
-    await axios.post('http://dramatoons.api.local:8081/users/forgot-password', {
+    await api.post('/users/forgot-password', {
       email: email.value
-    }, { headers })
+    })
     
     isSent.value = true
   } catch (error) {
     if (error.response) {
-      errorMessage.value = error.response.data['hydra:description'] || "Une erreur est survenue lors de la demande."
+      if (error.response.status === 422) {
+        errorMessage.value = "Email incorrects. Veuillez réessayer."
+      } else {
+        errorMessage.value = "Une erreur est survenue."
+      }
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
     }

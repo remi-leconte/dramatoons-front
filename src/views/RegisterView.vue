@@ -20,6 +20,7 @@
             type="text" 
             placeholder="Votre pseudo" 
             required
+            :disabled="loading"
           >
         </div>
 
@@ -31,6 +32,7 @@
             type="email" 
             placeholder="votre@email.com" 
             required
+            :disabled="loading"
           >
         </div>
 
@@ -42,6 +44,7 @@
             type="password" 
             placeholder="••••••••" 
             required
+            :disabled="loading"
           >
         </div>
 
@@ -83,18 +86,15 @@ const handleRegister = async () => {
       email: form.value.email,
       password: form.value.password,
       login: form.value.username
-    }, {
-      headers: { 'Content-Type': 'application/ld+json' }
     })
     
-    // Redirection
     router.push({ path: '/login', query: { status: 'registered' } })
 
   } catch (error) {
-    if (error.response && (error.response.data['description'] ||error.response.data['hydra:description'])) {
-      errorMessage.value = error.response.data['description'] || error.response.data['hydra:description']
+    if (error.response) {
+      errorMessage.value = "Une erreur est survenue."
     } else {
-      errorMessage.value = "Une erreur est survenue lors de l'inscription."
+      errorMessage.value = "Impossible de joindre le serveur."
     }
   } finally {
     loading.value = false

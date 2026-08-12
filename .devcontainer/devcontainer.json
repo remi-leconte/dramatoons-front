@@ -1,0 +1,10 @@
+{
+  "name": "Dramatoons Front DevContainer",
+  "dockerComposeFile": [
+    "../compose.yml",
+    "../compose.override.yml",
+    "compose.yml"
+  ],
+  "service": "front",
+  "workspaceFolder": "/app"
+}

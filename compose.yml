@@ -1,0 +1,12 @@
+services:
+  front:
+    build:
+      context: .
+    restart: unless-stopped
+    networks:
+      - api_internal_network
+
+networks:
+  api_internal_network:
+    external: true
+    name: shared_api_network

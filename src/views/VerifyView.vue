@@ -49,17 +49,15 @@ onMounted(async () => {
   try {
     await api.post('/users/verify', {
       token: token
-    }, {
-      headers: { 'Content-Type': 'application/ld+json' }
     })
     
     router.push({ path: '/login', query: { status: 'verified' } })
 
   } catch (error) {
-    if (error.response && error.response.data['hydra:description']) {
-      errorMessage.value = error.response.data['hydra:description']
+    if (error.response) {
+      errorMessage.value = "Une erreur est survenue."
     } else {
-      errorMessage.value = "Impossible de valider votre compte. Le lien est peut-être expiré."
+      errorMessage.value = "Impossible de joindre le serveur."
     }
   } finally {
     loading.value = false

@@ -51,23 +51,19 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios' // 💡 Axios standard utilisé (l'utilisateur n'est pas authentifié)
+import api from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
 
 const token = route.query.token
+
 const newPassword = ref('')
 const confirmPassword = ref('')
+
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
-
-// Configuration des headers alignée sur ton modèle API Platform
-const headers = {
-  'Accept': 'application/ld+json',
-  'Content-Type': 'application/json'
-}
 
 const handleResetPassword = async () => {
   errorMessage.value = ''
@@ -86,16 +82,15 @@ const handleResetPassword = async () => {
   loading.value = true
 
   try {
-    await axios.post('http://dramatoons.api.local:8081/users/reset-password', {
+    await api.post('/users/reset-password', {
       token: token,
       password: newPassword.value
-    }, { headers })
+    })
 
     router.push({ path: '/login', query: { status: 'resetPassword' } })
   } catch (error) {
     if (error.response) {
-      // Gestion de l'erreur hydra si disponible, sinon fallback sur le message classique
-      errorMessage.value = error.response.data['hydra:description'] || error.response.data.message || "Le lien de réinitialisation est invalide ou a expiré."
+      errorMessage.value = "Une erreur est survenue."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
     }

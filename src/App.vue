@@ -1,3 +1,28 @@
+<template>
+  <div class="app-container">
+    <header class="navbar">
+      <router-link to="/" class="logo">
+        <span class="logo-text">DRAMA<span class="highlight">TOONS</span></span>
+        <span class="logo-badge">.OVH</span>
+      </router-link>
+      
+      <div class="nav-actions">
+        <template v-if="authStore.isAuthenticated">
+          <router-link to="/profile" class="btn-secondary">Mon Profil</router-link>
+          <button class="btn-primary" @click="handleLogout">Déconnexion</button>
+        </template>
+
+        <template v-else>
+          <router-link to="/register" class="btn-secondary">Créer un compte</router-link>
+          <router-link to="/login" class="btn-primary">Connexion</router-link>
+        </template>
+      </div>
+    </header>
+
+    <router-view />
+  </div>
+</template>
+
 <script setup>
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
@@ -11,30 +36,6 @@ const handleLogout = () => {
 }
 </script>
 
-<template>
-  <div class="app-container">
-    <header class="navbar">
-      <router-link to="/" class="logo">DRAMATOONS<span>.OVH</span></router-link>
-      
-      <div class="nav-actions">
-        <!-- Connecté -->
-        <template v-if="authStore.isAuthenticated">
-          <router-link to="/profile" class="btn-secondary">Mon Profil</router-link>
-          <button class="btn-primary" @click="handleLogout">Déconnexion</button>
-        </template>
-
-        <!-- Non connecté -->
-        <template v-else>
-          <router-link to="/register" class="btn-secondary">Créer un compte</router-link>
-          <router-link to="/login" class="btn-primary">Connexion</router-link>
-        </template>
-      </div>
-    </header>
-
-    <router-view />
-  </div>
-</template>
-
 <style>
 body {
   margin: 0;
@@ -47,7 +48,7 @@ body {
   min-height: 100vh;
 }
 
-/* header */
+/* Header */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -60,17 +61,45 @@ body {
 .nav-actions {
   display: flex;
   gap: 15px;
+  align-items: center;
 }
 
+/* Logo */
 .logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 0.2s ease;
 }
 
-.logo span { color: #e50914; }
+.logo:hover {
+  transform: translateY(-1px);
+}
 
-/* boutons */
+.logo-text {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.logo-text .highlight {
+  color: #e50914;
+}
+
+.logo-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #252525;
+  color: #aaa;
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid #383838;
+  letter-spacing: 0.5px;
+}
+
+/* Boutons */
 .btn-primary, .btn-secondary {
   padding: 8px 18px;
   border-radius: 4px;
@@ -78,6 +107,11 @@ body {
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -100,6 +134,31 @@ body {
   border-color: #e50914;
   color: #e50914;
 }
+
+/* Responsive Mobile */
+@media (max-width: 600px) {
+  .navbar {
+    padding: 0.8rem 3%;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+  }
+
+  .logo-badge {
+    display: none;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
+
 .auth-container {
   display: flex;
   justify-content: center;
@@ -117,7 +176,7 @@ body {
   box-shadow: 0 15px 35px rgba(0,0,0,0.5);
 }
 
-/* form auth */
+/* Form Auth */
 .auth-card h2 { margin-bottom: 25px; font-size: 1.8rem; }
 
 .input-group { margin-bottom: 15px; }
@@ -150,5 +209,4 @@ body {
 .forgot-link:hover, .auth-footer a:hover { color: #e50914; }
 
 .auth-footer { margin-top: 20px; text-align: center; color: #666; }
-
 </style>

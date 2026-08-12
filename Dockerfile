@@ -1,18 +1,38 @@
-FROM node:lts-alpine
+FROM node:24.18.0-alpine3.24 AS base
 
 WORKDIR /app
 
-# 1. On copie les fichiers de définition des dépendances
-COPY package*.json ./
+FROM base AS dev
 
-# 2. On installe les dépendances définies dans ton projet
-# (C'est cette étape qui te manquait)
+RUN apk add --no-cache git openssh-client
+
+COPY package*.json ./
 RUN npm install
 
-# 3. On copie tout le reste du code source
 COPY . .
 
 EXPOSE 5173
 
-# Vite a besoin du flag --host pour accepter les connexions hors conteneur
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--", "--host"]
+
+FROM base AS builder
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+RUN npm run build
+
+FROM nginx:1.31.3-alpine3.24 AS prod
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+COPY ./docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

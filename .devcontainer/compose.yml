@@ -1,0 +1,5 @@
+services:
+  front:
+    volumes:
+      - ..:/app:cached
+    command: sleep infinity
