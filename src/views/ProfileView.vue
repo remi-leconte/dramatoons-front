@@ -19,7 +19,7 @@
             v-model="form.username" 
             type="text" 
             required
-            :disabled="loading"
+            :disabled="loading || deleting"
           >
         </div>
 
@@ -30,7 +30,7 @@
             v-model="form.email" 
             type="email" 
             required
-            :disabled="loading"
+            :disabled="loading || deleting"
           >
           
           <div class="email-status">
@@ -42,7 +42,7 @@
               <button 
                 type="button" 
                 class="btn-link" 
-                :disabled="sendingVerification"
+                :disabled="sendingVerification || loading || deleting"
                 @click="handleResendVerification"
               >
                 {{ sendingVerification ? 'Envoi...' : "Renvoyer le lien de validation" }}
@@ -60,14 +60,53 @@
             v-model="form.newPassword" 
             type="password" 
             placeholder="••••••••" 
-            :disabled="loading"
+            :disabled="loading || deleting"
           >
         </div>
 
-        <button type="submit" class="btn-primary full-width" :disabled="loading">
+        <button type="submit" class="btn-primary full-width" :disabled="loading || deleting">
           {{ loading ? 'Enregistrement en cours...' : 'Enregistrer les modifications' }}
         </button>
       </form>
+
+      <hr class="divider">
+
+      <div class="danger-zone">
+        <button 
+          type="button" 
+          class="btn-danger full-width" 
+          :disabled="loading || deleting"
+          @click="showDeleteModal = true"
+        >
+          Supprimer mon compte
+        </button>
+      </div>
+    </div>
+
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
+      <div class="modal-content">
+        <h3>Confirmation de suppression</h3>
+        <p>Êtes-vous sûr de vouloir supprimer votre compte et toute votre progression de lecture ? Cette action est irréversible.</p>
+        
+        <div class="modal-actions">
+          <button 
+            type="button" 
+            class="btn-secondary" 
+            :disabled="deleting"
+            @click="showDeleteModal = false"
+          >
+            Non, annuler
+          </button>
+          <button 
+            type="button" 
+            class="btn-danger" 
+            :disabled="deleting"
+            @click="handleDeleteAccount"
+          >
+            {{ deleting ? 'Suppression...' : 'Oui, supprimer' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -82,6 +121,8 @@ const authStore = useAuthStore()
 
 const router = useRouter()
 const loading = ref(false)
+const deleting = ref(false)
+const showDeleteModal = ref(false)
 const sendingVerification = ref(false)
 const errorMessage = ref('')
 const infoMessage = ref('')
@@ -179,6 +220,27 @@ const handleResendVerification = async () => {
     sendingVerification.value = false
   }
 }
+
+const handleDeleteAccount = async () => {
+  deleting.value = true
+  errorMessage.value = ''
+  
+  try {
+    await api.delete(`/users/${form.value.id}`)
+    showDeleteModal.value = false
+    authStore.logout()
+    router.push('/')
+  } catch (error) {
+    showDeleteModal.value = false
+    if (error.response) {
+      errorMessage.value = "Erreur lors de la suppression du compte."
+    } else {
+      errorMessage.value = "Impossible de joindre le serveur."
+    }
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -222,7 +284,6 @@ const handleResendVerification = async () => {
 
 .full-width {
   width: 100%;
-  margin-top: 1rem;
   padding: 12px;
 }
 
@@ -299,5 +360,84 @@ const handleResendVerification = async () => {
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
   text-align: left;
+}
+
+.danger-zone {
+  margin-top: 1rem;
+}
+
+.btn-danger {
+  background-color: #e50914;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 16px;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #b80710;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #555;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1f1f1f;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 450px;
+  width: 90%;
+  color: white;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-align: left;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #e50914;
+  font-size: 1.4rem;
+}
+
+.modal-content p {
+  margin: 1.5rem 0;
+  color: #ccc;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>
