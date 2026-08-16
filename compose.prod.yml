@@ -3,6 +3,6 @@ services:
     build:
       target: prod
       args:
-        - VITE_API_URL=https://dramatoons.ovh # Injecté PENDANT le build
+        - VITE_API_URL=https://api.dramatoons.ovh
     ports:
       - "127.0.0.1:8080:80"
