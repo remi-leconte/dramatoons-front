@@ -15,6 +15,28 @@ const observerTarget = ref(null) // Référence l'élément HTML invisible en ba
 const selectedWebtoon = ref(null)
 const isCreateModalOpen = ref(false)
 
+const showScrollTop = ref(false)
+let lastScrollY = 0
+
+const handleScroll = () => {
+  const currentScrollY = window.scrollY
+  
+  if (currentScrollY < lastScrollY && currentScrollY > 300) {
+    showScrollTop.value = true
+  } else {
+    showScrollTop.value = false
+  }
+  
+  lastScrollY = currentScrollY
+}
+
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
+
 // Filtres de recherche
 const status = ref([])
 const sortBy = ref('added')
@@ -117,7 +139,6 @@ const resetAndFetchWebtoons = async () => {
 
 // Détection de tout changement dans le formulaire de recherche
 watch([status, sortBy, sortOrder, itemsPerPage], async ([newStatus, newSortBy, newSortOrder, newItemsPerPage]) => {
-
   if (isInitializing.value) return
 
   await authStore.savePreferences({
@@ -134,6 +155,8 @@ watch([status, sortBy, sortOrder, itemsPerPage], async ([newStatus, newSortBy, n
 let observer = null
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll)
+
   isInitializing.value = true
   await authStore.fetchUserProfile()
   await initPreferences()
@@ -151,6 +174,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
   if (observer) observer.disconnect()
 })
 </script>
@@ -220,6 +244,17 @@ onUnmounted(() => {
       </p>
     </div>
   </main>
+
+  <Transition name="fade">
+    <button 
+      v-if="showScrollTop" 
+      class="scroll-top-btn" 
+      @click="scrollToTop"
+      aria-label="Retourner en haut"
+    >
+      ▲
+    </button>
+  </Transition>
 
   <WebtoonModal 
     v-if="selectedWebtoon" 
@@ -305,12 +340,47 @@ onUnmounted(() => {
 #filter-status {
   height: 35px;
   padding: 1px 12px;
-
 }
 
 @media (max-width: 600px) {
   .filter-group {
     flex: 1 1 100%;
   }
+}
+
+.scroll-top-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #e50914;
+  color: #ffffff;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.scroll-top-btn:hover {
+  background-color: #b80710;
+  transform: scale(1.1);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 </style>
