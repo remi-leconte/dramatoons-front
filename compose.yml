@@ -3,10 +3,9 @@ services:
     build:
       context: .
     restart: unless-stopped
-    ports:
-      - "5173:5173"
     networks:
       - api_internal_network
+      - global_proxy_network
     environment:
       - VITE_API_URL=http://localhost:8081
 
@@ -14,6 +13,8 @@ networks:
   api_internal_network:
     external: true
     name: shared_api_network
+  global_proxy_network:
+    external: true
 
 volumes:
   dramatoons_front_data:
