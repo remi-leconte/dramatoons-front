@@ -28,7 +28,10 @@ const getDaysSinceUpdate = (dateString) => {
       <img 
         :src="`${COVER_BASE_URL}${webtoon.image}`" 
         :alt="webtoon.title"
-        @error="(e) => e.target.src = `${COVER_BASE_URL}defaut.jpg`"
+        @error="(e) => { 
+          e.target.onerror = null; 
+          e.target.src = `${COVER_BASE_URL}defaut.jpg`; 
+        }"
       >
       
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
