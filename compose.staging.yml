@@ -1,0 +1,11 @@
+name: dramatoons_front_staging
+
+services:
+  front:
+    build:
+      context: .
+      target: prod
+      args:
+        - VITE_API_URL=https://api-staging.dramatoons.ovh
+    ports:
+      - "127.0.0.1:8083:80"

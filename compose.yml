@@ -2,7 +2,6 @@ services:
   front:
     build:
       context: .
-    container_name: dramatoons_front
     restart: unless-stopped
     ports:
       - "5173:5173"

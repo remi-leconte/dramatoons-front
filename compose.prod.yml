@@ -1,3 +1,5 @@
+name: dramatoons_front_prod
+
 services:
   front:
     build:
