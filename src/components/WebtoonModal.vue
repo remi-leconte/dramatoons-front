@@ -179,7 +179,6 @@ const deleteWebtoon = async () => {
             <img
               :src="previewImage || `${COVER_BASE_URL}${localWebtoon.image}`"
               :alt="localWebtoon.title"
-              @error="(e) => e.target.src = `${COVER_BASE_URL}defaut.jpg`"
             >
             <div v-if="authStore.isAdmin" class="image-overlay">
               <span>Changer l'image</span>
