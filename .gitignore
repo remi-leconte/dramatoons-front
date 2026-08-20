@@ -1,6 +1,6 @@
 .vscode
 .env
-.devcontainer/
+.devcontainer/*
 
 # Logs
 logs
