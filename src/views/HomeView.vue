@@ -38,14 +38,14 @@ const scrollToTop = () => {
 }
 
 // Filtres de recherche
-const status = ref([])
+const status = ref('')
 const sortBy = ref('added')
 const sortOrder = ref('desc')
 const itemsPerPage = ref(20)
 const isInitializing = ref(true)
 
 const initPreferences = async () => {
-  status.value = authStore.preferences.status || []
+  status.value = authStore.preferences.status || ''
   sortBy.value = authStore.preferences.sortBy || 'added'
   sortOrder.value = authStore.preferences.sortOrder || 'desc'
   itemsPerPage.value = authStore.preferences.itemsPerPage || 20
@@ -188,13 +188,13 @@ onUnmounted(() => {
 
     <form v-if="authStore.isAuthenticated" class="filter-bar" @submit.prevent>
       <div class="filter-group">
-        <label for="filter-status">État :</label>
-        <select id="filter-status" v-model="status" class="filter-select" multiple>
-          <option value="">Tous les états</option>
+        <label for="filter-status">Filtrer par état :</label>
+        <select id="filter-status" v-model="status" class="filter-select">
+          <option value="">Tous</option>
           <option value="reading">En cours de lecture</option>
-          <option value="pause">En pause</option>
+          <option value="pause">Lecture en pause</option>
           <option value="break">Pas interessé</option>
-          <option value="completed">Terminé</option>
+          <option value="completed">Lecture Terminée</option>
         </select>
       </div>
 
@@ -217,7 +217,7 @@ onUnmounted(() => {
       </div>
 
       <div class="filter-group">
-        <label for="filter-limit">Par page :</label>
+        <label for="filter-limit">Résultat par page :</label>
         <select id="filter-limit" v-model="itemsPerPage" class="filter-select select-small">
           <option :value="10">10</option>
           <option :value="20">20</option>
