@@ -38,14 +38,14 @@ const scrollToTop = () => {
 }
 
 // Filtres de recherche
-const status = ref(null)
+const status = ref('')
 const sortBy = ref('added')
 const sortOrder = ref('desc')
 const itemsPerPage = ref(20)
 const isInitializing = ref(true)
 
 const initPreferences = async () => {
-  status.value = authStore.preferences.status ?? ''
+  status.value = authStore.preferences.status || ''
   sortBy.value = authStore.preferences.sortBy || 'added'
   sortOrder.value = authStore.preferences.sortOrder || 'desc'
   itemsPerPage.value = authStore.preferences.itemsPerPage || 20
