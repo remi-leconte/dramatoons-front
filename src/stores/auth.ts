@@ -7,7 +7,7 @@ export interface User {
   login: string
   roles: string[]
   searchParameters: {
-    status: string[] | []
+    status: string | null
     sortBy: string | null
     sortOrder: string | null
     itemsPerPage: number | null
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
   const roles = ref<string[]>(localStorage.getItem('roles') ? JSON.parse(localStorage.getItem('roles')!) : [])
 
   const preferences = ref({
-      status: [] as string[],
+      status: '',
       sortBy: 'added',
       sortOrder: 'desc',
       itemsPerPage: 20
@@ -39,7 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
     roles.value = user.roles,
     
     preferences.value = {
-      status: user.searchParameters.status || [],
+      status: user.searchParameters.status || '',
       sortBy: user.searchParameters. sortBy || 'added',
       sortOrder: user.searchParameters.sortOrder || 'desc',
       itemsPerPage: user.searchParameters.itemsPerPage || 20
@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.get(`/users/${userId.value}`)
       const user = response.data
       preferences.value = {
-        status: user.searchStatus || [],
+        status: user.searchStatus || '',
         sortBy: user.searchSortBy || 'added',
         sortOrder: user.searchSortOrder || 'desc',
         itemsPerPage: user.searchItemsPerPage || 20
