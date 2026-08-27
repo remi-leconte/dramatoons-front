@@ -138,7 +138,6 @@ const checkAndLoadMore = () => {
     const rect = observerTarget.value.getBoundingClientRect()
     // Si le haut de l'élément cible est au-dessus du bas de la fenêtre
     if (rect.top <= window.innerHeight) {
-      console.log('ici')
       fetchWebtoons()
     }
   })
