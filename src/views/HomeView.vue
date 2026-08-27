@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import api from '../services/api'
 import { useAuthStore } from '../stores/auth'
 
@@ -123,12 +123,25 @@ const fetchWebtoons = async () => {
 
     const view = data['hydra:view'] || data.view
     nextPageUrl.value = view?.['hydra:next'] || view?.next || null
-    //nextPageUrl.value = data.view?.next || data['hydra:view']?.next || null
   } catch (error) {
     console.error(error)
   } finally {
     loading.value = false
+    checkAndLoadMore()
   }
+}
+
+const checkAndLoadMore = () => {
+  if (!observerTarget.value || !nextPageUrl.value || loading.value) return
+
+  nextTick(() => {
+    const rect = observerTarget.value.getBoundingClientRect()
+    // Si le haut de l'élément cible est au-dessus du bas de la fenêtre
+    if (rect.top <= window.innerHeight) {
+      console.log('ici')
+      fetchWebtoons()
+    }
+  })
 }
 
 const resetAndFetchWebtoons = async () => {
