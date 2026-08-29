@@ -7,3 +7,4 @@ services:
       target: prod
       args:
         - VITE_API_URL=https://api-staging.dramatoons.ovh
+        - VITE_STAGING_AUTH=${VITE_STAGING_AUTH}
