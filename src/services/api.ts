@@ -7,6 +7,10 @@ const api = axios.create({
   headers: {
     'Accept': 'application/ld+json',
     'Content-Type': 'application/ld+json',
+    // Injection de la Basic Auth pour le Staging si la variable existe
+    ...(import.meta.env.VITE_STAGING_AUTH && {
+      'X-Staging-Auth': `Basic ${btoa(import.meta.env.VITE_STAGING_AUTH)}`
+    })
   }
 })
 
