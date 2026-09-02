@@ -12,22 +12,14 @@ defineProps({
 const emit = defineEmits(['status-change'])
 
 const authStore = useAuthStore()
-
-const getDaysSinceUpdate = (dateString) => {
-  if (!dateString) return null
-  const updatedDate = new Date(dateString)
-  const now = new Date()
-  const diffTime = Math.abs(now - updatedDate)
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24))
-}
 </script>
 
 <template>
   <article class="webtoon-card">
     <div class="poster-wrapper">
       <img 
-        :src="`${COVER_BASE_URL}${webtoon.image}`" 
-        :alt="webtoon.title"
+        :src="`${COVER_BASE_URL}${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`" 
+        :alt="webtoon.title || 'Webtoon cover'"
       >
       
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
@@ -38,13 +30,11 @@ const getDaysSinceUpdate = (dateString) => {
       </div>
 
       <div class="overlay">
-        <span class="chapter-badge">
-          <template v-if="authStore.isAuthenticated && webtoon.userProgress && webtoon.userProgress.bookmark">
-            Chap. {{ webtoon.userProgress.bookmark }}/{{ webtoon.chapter }}
-          </template>
-          <template v-else>
-            Chap. {{ webtoon.chapter }}
-          </template>
+        <span 
+          v-if="authStore.isAuthenticated && webtoon.userProgress?.bookmark" 
+          class="chapter-badge"
+        >
+          Chap. {{ webtoon.userProgress.bookmark }}
         </span>
       </div>
     </div>
@@ -57,10 +47,6 @@ const getDaysSinceUpdate = (dateString) => {
         <span title="Nombre de lecteurs">👤 {{ webtoon.readersCount || 0 }}</span>
         <span v-if="authStore.isAuthenticated && webtoon.userProgress" title="Votre note" class="user-rating">🏷️ {{ webtoon.userProgress.rate || '-' }}</span>
       </div>
-
-      <span v-if="getDaysSinceUpdate(webtoon.updated) !== null && getDaysSinceUpdate(webtoon.updated) < 60" class="genre">
-        Dernière modification il y a {{ getDaysSinceUpdate(webtoon.updated) }} jour{{ getDaysSinceUpdate(webtoon.updated) > 1 ? 's' : '' }}
-      </span>
 
       <div v-if="webtoon.status === 'completed'" class="status-inline-badge">
         <span class="badge-completed">Terminé</span>
