@@ -54,8 +54,8 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import api from '../services/api'
+import { useAuthStore } from '../../stores/auth'
+import api from '../../services/api'
 
 const router = useRouter()
 const route = useRoute()
