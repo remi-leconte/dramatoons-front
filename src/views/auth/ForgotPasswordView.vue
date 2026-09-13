@@ -42,7 +42,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import api from '../services/api'
+import api from '../../services/api'
 
 const email = ref('')
 const loading = ref(false)
