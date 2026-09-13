@@ -79,6 +79,7 @@ const saveModalData = async () => {
         bookmark: localWebtoon.value.userProgress.bookmark ? parseInt(localWebtoon.value.userProgress.bookmark) : null
       }
 
+      // webtoon_user
       if (localWebtoon.value.userProgress.id) {
         await api.patch(`/webtoon_users/${localWebtoon.value.userProgress.id}`, userProgressPayload, {
           headers: { 'Content-Type': 'application/merge-patch+json' }
@@ -93,7 +94,8 @@ const saveModalData = async () => {
         localWebtoon.value.userProgress.id = response.data.id
       }
 
-      if (authStore.isAdmin || isCreator.value) {
+      if (isCreator.value) {
+        // cover
         if (selectedFile.value) {
           const formData = new FormData()
           formData.append('file', selectedFile.value)
@@ -102,6 +104,7 @@ const saveModalData = async () => {
           })
         }
 
+        // webtoon
         await api.patch(`/webtoons/${localWebtoon.value.id}`, {
           title: localWebtoon.value.title,
           status: localWebtoon.value.status
@@ -113,6 +116,7 @@ const saveModalData = async () => {
       const refreshedResponse = await api.get(`/webtoons/${localWebtoon.value.id}`)
       emit('saved', { ...refreshedResponse.data, userProgress: localWebtoon.value.userProgress })
     } else {
+      // webtoon
       const response = await api.post('/webtoons', {
         title: localWebtoon.value.title,
         status: localWebtoon.value.status
@@ -122,6 +126,7 @@ const saveModalData = async () => {
 
       const createdWebtoon = response.data
 
+      // cover
       if (selectedFile.value) {
         const formData = new FormData()
         formData.append('file', selectedFile.value)
@@ -131,6 +136,7 @@ const saveModalData = async () => {
         createdWebtoon.image = coverResponse.data.image || createdWebtoon.image
       }
 
+      // webtoon_user
       if (authStore.isAuthenticated && (localWebtoon.value.userProgress.state || localWebtoon.value.userProgress.bookmark || localWebtoon.value.userProgress.rate)) {
         const progressResponse = await api.post('/webtoon_users', {
           webtoon: `/webtoons/${createdWebtoon.id}`,
@@ -182,7 +188,7 @@ const deleteWebtoon = async () => {
         <WebtoonCoverUploader 
           :image-path="localWebtoon.updated ? `${localWebtoon.image}?t=${new Date(localWebtoon.updated).getTime()}`: localWebtoon.image"
           :title="localWebtoon.title"
-          :is-editable="authStore.isAdmin || isCreator"
+          :is-editable="isCreator"
           @file-selected="(file) => selectedFile = file"
         />
 
@@ -190,7 +196,7 @@ const deleteWebtoon = async () => {
           <div v-if="errorMessage" class="error-alert">{{ errorMessage }}</div>
 
             <div class="title-container">
-              <div v-if="(isEditingTitle || !isEditMode) && authStore.isAdmin" class="modal-form form-group">
+              <div v-if="isEditingTitle || !isEditMode" class="modal-form form-group">
                 <input 
                   id="webtoon-title" 
                   type="text" 
@@ -203,7 +209,7 @@ const deleteWebtoon = async () => {
               <div v-else class="title-display">
                 <h2>{{ localWebtoon.title }}</h2>
                 <button 
-                  v-if="authStore.isAdmin" 
+                  v-if="isCreator" 
                   type="button" 
                   class="btn-edit-title" 
                   title="Modifier le titre"
@@ -214,7 +220,7 @@ const deleteWebtoon = async () => {
               </div>
             </div>
 
-          <div v-if="authStore.isAdmin" class="completed-toggle-wrapper">
+          <div v-if="isCreator" class="completed-toggle-wrapper">
             <button 
               type="button"
               class="btn-toggle-completed"
