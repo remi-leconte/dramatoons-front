@@ -43,17 +43,16 @@ const authStore = useAuthStore()
       <h3 class="title" :title="webtoon.title">{{ webtoon.title }}</h3>
 
       <div class="stats-row">
-        <span title="Note moyenne globale">⭐ {{ webtoon.averageRating || '-' }}</span>
-        <span title="Nombre de lecteurs">👤 {{ webtoon.readersCount || 0 }}</span>
         <span v-if="authStore.isAuthenticated && webtoon.userProgress" title="Votre note" class="user-rating">🏷️ {{ webtoon.userProgress.rate || '-' }}</span>
+        <span v-if="webtoon.publish" title="Note moyenne globale">⭐ {{ webtoon.averageRating || '-' }}</span>
+        <span v-if="webtoon.publish" title="Nombre de lecteurs">👤 {{ webtoon.readersCount || 0 }}</span>
       </div>
 
       <div v-if="webtoon.status === 'completed'" class="status-inline-badge">
-        <span class="badge-completed">Terminé</span>
+        <span class="badge-completed"  title="Ce Webtoon est terminé">Terminé</span>
       </div>
-
-      <!--<p class="genre">Action, Fantasy</p>-->
     </div>
+
   </article>
 </template>
 

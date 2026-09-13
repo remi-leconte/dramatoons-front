@@ -35,6 +35,7 @@ watch(() => props.webtoon, (newWebtoon) => {
       id: null,
       title: '',
       status: 'ongoing',
+      publish: false,
       chapter: 0,
       image: '',
       userProgress: { bookmark: null, rate: null, state: null, id: null }
@@ -107,7 +108,8 @@ const saveModalData = async () => {
         // webtoon
         await api.patch(`/webtoons/${localWebtoon.value.id}`, {
           title: localWebtoon.value.title,
-          status: localWebtoon.value.status
+          status: localWebtoon.value.status,
+          publish: localWebtoon.value.publish
         }, {
           headers: { 'Content-Type': 'application/merge-patch+json' }
         })
@@ -119,7 +121,8 @@ const saveModalData = async () => {
       // webtoon
       const response = await api.post('/webtoons', {
         title: localWebtoon.value.title,
-        status: localWebtoon.value.status
+        status: localWebtoon.value.status,
+        publish: localWebtoon.value.publish
       }, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
@@ -195,40 +198,54 @@ const deleteWebtoon = async () => {
         <div class="modal-right-info">
           <div v-if="errorMessage" class="error-alert">{{ errorMessage }}</div>
 
-            <div class="title-container">
-              <div v-if="isEditingTitle || !isEditMode" class="modal-form form-group">
+          <div class="title-container">
+            <div v-if="isEditingTitle || !isEditMode" class="modal-form form-group">
+              <input 
+                id="webtoon-title" 
+                type="text" 
+                v-model="localWebtoon.title"
+                placeholder="Titre du webtoon"
+                class="app-input-field input-title-full"
+                @keyup.enter="isEditingTitle = false"
+              >
+            </div>
+            <div v-else class="title-display">
+              <h2>{{ localWebtoon.title }}</h2>
+              <button 
+                v-if="isCreator" 
+                type="button" 
+                class="btn-edit-title" 
+                title="Modifier le titre"
+                @click="isEditingTitle = true"
+              >
+                ✏️
+              </button>
+            </div>
+          </div>
+
+          <div v-if="isCreator" class="toggles-section">
+            <div class="toggle-row">
+              <span class="toggle-label">Webtoon terminé :</span>
+              <label class="switch">
                 <input 
-                  id="webtoon-title" 
-                  type="text" 
-                  v-model="localWebtoon.title"
-                  placeholder="Titre du webtoon"
-                  class="app-input-field input-title-full"
-                  @keyup.enter="isEditingTitle = false"
+                  type="checkbox" 
+                  :checked="localWebtoon.status === 'completed'"
+                  @change="localWebtoon.status = $event.target.checked ? 'completed' : 'ongoing'"
                 >
-              </div>
-              <div v-else class="title-display">
-                <h2>{{ localWebtoon.title }}</h2>
-                <button 
-                  v-if="isCreator" 
-                  type="button" 
-                  class="btn-edit-title" 
-                  title="Modifier le titre"
-                  @click="isEditingTitle = true"
-                >
-                  ✏️
-                </button>
-              </div>
+                <span class="slider round"></span>
+              </label>
             </div>
 
-          <div v-if="isCreator" class="completed-toggle-wrapper">
-            <button 
-              type="button"
-              class="btn-toggle-completed"
-              :class="{ active: localWebtoon.status === 'completed' }"
-              @click="localWebtoon.status = localWebtoon.status === 'completed' ? 'ongoing' : 'completed'"
-            >
-              Terminé
-            </button>
+            <div v-if="authStore.isAdmin" class="toggle-row">
+              <span class="toggle-label">Webtoon publié :</span>
+              <label class="switch">
+                <input 
+                  type="checkbox" 
+                  v-model="localWebtoon.publish"
+                >
+                <span class="slider round"></span>
+              </label>
+            </div>
           </div>
           
           <div v-if="isEditMode" class="modal-stats">
@@ -272,21 +289,79 @@ const deleteWebtoon = async () => {
 
 .input-title-full { width: 100%; padding: 0 12px; }
 
-.completed-toggle-wrapper { margin-bottom: 12px; }
-.btn-toggle-completed {
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid #444;
-  background-color: #333333;
-  color: #aaaaaa;
-  font-size: 0.8rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* Conteneur des Toggles */
+.toggles-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
 }
-.btn-toggle-completed.active {
-  background-color: #4CAF50;
-  color: var(--text-main);
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  color: #ddd;
+}
+
+/* Interrupteur On/Off (Switch) */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555555; /* Gris par défaut (désactivé) */
+  transition: .3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+}
+
+input:checked + .slider {
+  background-color: #4CAF50; /* Vert quand activé */
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #4CAF50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }
 
 .title-container {
