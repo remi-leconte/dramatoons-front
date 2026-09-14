@@ -7,7 +7,7 @@
       </router-link>
 
       <!-- Formulaire de recherche -->
-      <form class="search-form" @submit.prevent="handleSearch">
+      <form v-if="authStore.isAuthenticated" class="search-form" @submit.prevent="handleSearch">
         <input 
           v-model="searchTitle" 
           type="text" 
