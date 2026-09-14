@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '../services/api'
 import { useAuthStore } from '../stores/auth'
 
 import WebtoonCard from '../components/WebtoonCard.vue'
 import WebtoonModal from '../components/modal/WebtoonModal.vue'
 
+const route = useRoute()
 const authStore = useAuthStore()
 const webtoons = ref([])
 const loading = ref(false)
@@ -37,6 +39,7 @@ const scrollToTop = () => {
 }
 
 // Filtres de recherche
+const title = ref(route.query.title || '')
 const status = ref('')
 const sortBy = ref('added')
 const sortOrder = ref('desc')
@@ -127,6 +130,7 @@ const fetchWebtoons = async () => {
     nextPageUrl.value = view?.['hydra:next'] || view?.next || null
   } catch (error) {
     console.error(error)
+    nextPageUrl.value = null
   } finally {
     loading.value = false
     checkAndLoadMore()
@@ -147,23 +151,39 @@ const checkAndLoadMore = () => {
 
 const resetAndFetchWebtoons = async () => {
   webtoons.value = []
-  nextPageUrl.value = '/webtoons'
+  
+  // On injecte le paramètre de titre dans la première URL
+  const queryParams = new URLSearchParams()
+  if (title.value) {
+    queryParams.append('title', title.value)
+  }
+  
+  const queryString = queryParams.toString()
+  nextPageUrl.value = queryString ? `/webtoons?${queryString}` : '/webtoons'
+  
   await fetchWebtoons()
 }
 
 // Détection de tout changement dans le formulaire de recherche
-watch([status, sortBy, sortOrder, itemsPerPage], async ([newStatus, newSortBy, newSortOrder, newItemsPerPage]) => {
+watch([title, status, sortBy, sortOrder, itemsPerPage], async () => {
   if (isInitializing.value) return
 
   await authStore.savePreferences({
-    searchStatus: newStatus,
-    searchSortBy: newSortBy,
-    searchSortOrder: newSortOrder,
-    searchItemsPerPage: newItemsPerPage
+    searchStatus: status.value,
+    searchSortBy: sortBy.value,
+    searchSortOrder: sortOrder.value,
+    searchItemsPerPage: itemsPerPage.value
   })
 
   await resetAndFetchWebtoons()
 }, { deep: true })
+
+// Mettre à jour le champ lorsque le titre change dans l'URL
+watch(() => route.query.title, (newTitle) => {
+  if (title.value !== (newTitle || '')) {
+    title.value = newTitle || ''
+  }
+})
 
 // Instance de l'IntersectionObserver pour le scroll infini
 let observer = null
@@ -174,6 +194,8 @@ onMounted(async () => {
   isInitializing.value = true
   await authStore.fetchUserProfile()
   await initPreferences()
+  
+  title.value = route.query.title || ''
   isInitializing.value = false
 
   resetAndFetchWebtoons()
