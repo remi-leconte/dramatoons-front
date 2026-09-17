@@ -5,6 +5,36 @@
         <span class="logo-text">DRAMA<span class="highlight">TOONS</span></span>
         <span class="logo-badge">.OVH</span>
       </router-link>
+
+      <!-- Formulaire de recherche -->
+      <form v-if="authStore.isAuthenticated" class="search-form" @submit.prevent="handleSearch">
+        <input 
+          v-model="searchTitle" 
+          type="text" 
+          placeholder="Rechercher un titre..." 
+          class="search-input"
+        />
+
+        <button type="submit" class="search-btn" aria-label="Rechercher">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+
+        <button 
+          v-if="searchTitle" 
+          type="button" 
+          class="clear-btn" 
+          aria-label="Effacer la recherche"
+          @click="clearSearch"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </form>
       
       <div class="nav-actions">
         <template v-if="authStore.isAuthenticated">
@@ -20,15 +50,44 @@
     </header>
 
     <router-view />
+
+    <footer class="app-footer">
+      <div class="footer-content">
+        <span>&copy; {{ new Date().getFullYear() }} Dramatoons.ovh</span>
+        <router-link to="/privacy" class="footer-link">Politique de confidentialité</router-link>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+
+const searchTitle = ref(route.query.title || '')
+
+// Synchronise le champ si la query URL change
+watch(() => route.query.title, (newTitle) => {
+  searchTitle.value = newTitle || ''
+})
+
+const handleSearch = () => {
+  router.push({
+    path: '/',
+    query: { ...route.query, title: searchTitle.value || undefined }
+  })
+}
+
+// Réinitialise le titre et relance la recherche
+const clearSearch = () => {
+  searchTitle.value = ''
+  handleSearch()
+}
 
 const handleLogout = () => {
   authStore.logout() 
@@ -46,6 +105,8 @@ body {
 
 .app-container {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -135,30 +196,6 @@ body {
   color: #e50914;
 }
 
-/* Responsive Mobile */
-@media (max-width: 600px) {
-  .navbar {
-    padding: 0.8rem 3%;
-  }
-
-  .logo-text {
-    font-size: 1.1rem;
-  }
-
-  .logo-badge {
-    display: none;
-  }
-
-  .nav-actions {
-    gap: 8px;
-  }
-
-  .btn-primary, .btn-secondary {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-  }
-}
-
 .auth-container {
   display: flex;
   justify-content: center;
@@ -209,4 +246,117 @@ body {
 .forgot-link:hover, .auth-footer a:hover { color: #e50914; }
 
 .auth-footer { margin-top: 20px; text-align: center; color: #666; }
+
+/* Barre de recherche */
+.search-form {
+  display: flex;
+  align-items: center;
+  background: #252525;
+  border: 1px solid #383838;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 15px;
+  flex: 0 1 300px;
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.search-input:focus {
+  outline: none;
+}
+
+.clear-btn,
+.search-btn {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  padding: 8px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover,
+.search-btn:hover {
+  color: #e50914;
+}
+
+.search-btn {
+  padding-right: 12px;
+}
+
+/* Footer */
+.app-footer {
+  margin-top: auto;
+  background: #1a1a1a;
+  border-top: 1px solid #282828;
+  padding: 1.5rem 5%;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.footer-link {
+  color: #aaa;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: #e50914;
+}
+
+/* Responsive Mobile */
+@media (max-width: 750px) {
+  .navbar {
+    padding: 0.8rem 3%;
+    flex-wrap: wrap;
+    gap: 12px 0;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+  }
+
+  .logo-badge {
+    display: none;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .search-form {
+    order: 3;
+    flex: 1 1 100%;
+    margin: 4px 0 0 0;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+}
 </style>
