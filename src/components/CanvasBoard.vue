@@ -36,7 +36,9 @@
       </div>
 
       <div class="case case-3-perso-1-text">
-        <p>Ensuite, télécharge l'extension <a href="https://addons.mozilla.org/fr/firefox/addon/dramatoons-highlighter/" target="_blank">Dramatoons Highlighter</a> sur ton navigateur.</p>
+
+        <p>Ensuite, télécharge l'extension <router-link to="/install-tutorial">Dramatoons Highlighter</router-link> sur ton navigateur.</p>
+        <!--<a href="https://addons.mozilla.org/fr/firefox/addon/dramatoons-highlighter/" target="_blank">Dramatoons Highlighter</a>-->
       </div>
 
       <!------------------------------Case 4------------------------------------>

@@ -54,9 +54,6 @@ onMounted(() => {
 
     <h3 style="border-bottom: dotted 1px var(--border-color-base,#a2a9b1);margin: 0;">Le Webtoon que je suis en train de lire existe sur le site, mais le titre du site sur lequel je le lis n'est pas le même !</h3>
     <p style="margin-top: 0;">Parfois, un Webtoon a des titres différents ou est tout simplement traduit. Une évolution du site permettra de renseigner des titres secondaires.</p>
-
-    <h3 style="border-bottom: dotted 1px var(--border-color-base,#a2a9b1);margin: 0;">À quand une extension pour Chrome ?</h3>
-    <p style="margin-top: 0;">L'extension pour Chrome reste à développer.</p>
   </section>
 </template>
 
