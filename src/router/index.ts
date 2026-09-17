@@ -10,6 +10,11 @@ const router = createRouter({
       component: () => import('../views/HomeView.vue'),
     },
     {
+      path: '/privacy',
+      name: 'privacy-policy',
+      component: () => import('../views/PrivacyPolicyView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/auth/LoginView.vue'),
