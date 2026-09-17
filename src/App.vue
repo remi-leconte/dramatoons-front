@@ -50,6 +50,13 @@
     </header>
 
     <router-view />
+
+    <footer class="app-footer">
+      <div class="footer-content">
+        <span>&copy; {{ new Date().getFullYear() }} Dramatoons.ovh</span>
+        <router-link to="/privacy" class="footer-link">Politique de confidentialité</router-link>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -98,6 +105,8 @@ body {
 
 .app-container {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -285,6 +294,34 @@ body {
   padding-right: 12px;
 }
 
+/* Footer */
+.app-footer {
+  margin-top: auto;
+  background: #1a1a1a;
+  border-top: 1px solid #282828;
+  padding: 1.5rem 5%;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.footer-link {
+  color: #aaa;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: #e50914;
+}
+
 /* Responsive Mobile */
 @media (max-width: 750px) {
   .navbar {
@@ -314,6 +351,12 @@ body {
     order: 3;
     flex: 1 1 100%;
     margin: 4px 0 0 0;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
 }
 </style>
