@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import('../views/PrivacyPolicyView.vue'),
     },
     {
+      path: '/install-tutorial',
+      name: 'install-tutorial',
+      component: () => import('../views/InstallExtensionTutorialView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/auth/LoginView.vue'),
