@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 const STATUS_OPTIONS = new Map([
   [null, { label: 'Aucun', class: 'status-none' }],
   ['reading', { label: 'En cours', class: 'status-reading' }],
@@ -8,7 +8,7 @@ const STATUS_OPTIONS = new Map([
 ])
 </script>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({

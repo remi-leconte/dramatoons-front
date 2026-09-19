@@ -111,8 +111,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { isAxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import api from '../../services/api'
@@ -145,7 +146,7 @@ onMounted(async () => {
     form.value.email = data.email
     form.value.verified = data.verified
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       errorMessage.value = "Une erreur est survenue."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
@@ -159,7 +160,7 @@ const handleUpdateProfile = async () => {
   infoMessage.value = ''
   
   try {
-    const payload = {
+    const payload: { login: string; email: string; password?: string } = {
       login: form.value.username,
       email: form.value.email
     }
@@ -188,7 +189,7 @@ const handleUpdateProfile = async () => {
     }
 
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       errorMessage.value = "Une erreur est survenue."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
@@ -211,7 +212,7 @@ const handleResendVerification = async () => {
 
     infoMessage.value = "Un nouveau lien de validation a été envoyé sur votre adresse email."
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       errorMessage.value = "Une erreur est survenue."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
@@ -232,7 +233,7 @@ const handleDeleteAccount = async () => {
     router.push('/')
   } catch (error) {
     showDeleteModal.value = false
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       errorMessage.value = "Erreur lors de la suppression du compte."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."

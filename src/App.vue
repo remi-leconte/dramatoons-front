@@ -60,7 +60,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter, useRoute } from 'vue-router'
