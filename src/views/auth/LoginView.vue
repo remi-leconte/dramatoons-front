@@ -51,8 +51,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
+import { isAxiosError } from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import api from '../../services/api'
@@ -103,7 +104,7 @@ const handleLogin = async () => {
     router.push('/')
     
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       if (error.response.status === 401) {
         errorMessage.value = "Identifiants incorrects. Veuillez réessayer."
       } else {

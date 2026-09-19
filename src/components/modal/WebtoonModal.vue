@@ -1,13 +1,19 @@
-<script setup>
-import { ref, computed, watch } from 'vue'
+<script setup lang="ts">
+import { ref, computed, watch, type PropType } from 'vue'
+import { isAxiosError } from 'axios'
 import api from '../../services/api.ts'
 import { useAuthStore } from '../../stores/auth.ts'
 
 import WebtoonCoverUploader from './WebtoonCoverUploader.vue'
 import WebtoonUserProgressForm from './WebtoonUserProgressForm.vue'
 
+import type { Webtoon } from '@/types/webtoon';
+
 const props = defineProps({
-  webtoon: { type: Object, default: null }
+  webtoon: {
+    type: Object as PropType<Webtoon | null>,
+    default: null
+  }
 })
 const emit = defineEmits(['close', 'saved', 'created', 'deleted'])
 const authStore = useAuthStore()
@@ -18,18 +24,19 @@ const isCreator = computed(() => {
   return authStore.userId === props.webtoon?.creator?.id
 })
 
-const localWebtoon = ref(null)
+const localWebtoon = ref<Webtoon | null>(null)
 const loading = ref(false)
 const errorMessage = ref('')
-const selectedFile = ref(null)
+const selectedFile = ref<File | null>(null)
 const isEditingTitle = ref(false)
 
 watch(() => props.webtoon, (newWebtoon) => {
   if (newWebtoon) {
-    localWebtoon.value = JSON.parse(JSON.stringify(newWebtoon))
-    if (!localWebtoon.value.userProgress) {
-      localWebtoon.value.userProgress = { bookmark: null, rate: null, state: null, id: null }
+    const cloned = JSON.parse(JSON.stringify(newWebtoon)) as Webtoon
+    if (!cloned.userProgress) {
+      cloned.userProgress = { bookmark: null, rate: null, state: null, id: null }
     }
+    localWebtoon.value = cloned
   } else {
     localWebtoon.value = {
       id: null,
@@ -38,6 +45,9 @@ watch(() => props.webtoon, (newWebtoon) => {
       publish: false,
       chapter: 0,
       image: '',
+      updated: null,
+      averageRating: null,
+      readersCount: 0,
       userProgress: { bookmark: null, rate: null, state: null, id: null }
     }
   }
@@ -51,17 +61,19 @@ const validateInputs = () => {
   if (!localWebtoon.value?.userProgress) return
   const progress = localWebtoon.value.userProgress
 
-  if (progress.bookmark !== null && progress.bookmark !== '') {
+  if (progress.bookmark !== null && !isNaN(progress.bookmark)) {
     if (progress.bookmark < 0) progress.bookmark = 0
   }
 
-  if (progress.rate !== null && progress.rate !== '') {
+  if (progress.rate !== null && !isNaN(progress.rate)) {
     if (progress.rate > 10) progress.rate = 10
     if (progress.rate < 0) progress.rate = 0
   }
 }
 
 const saveModalData = async () => {
+  if (!localWebtoon.value) return
+
   validateInputs()
   errorMessage.value = ''
 
@@ -73,16 +85,17 @@ const saveModalData = async () => {
   loading.value = true
 
   try {
-    if (isEditMode.value) {
+    if (isEditMode.value && localWebtoon.value) {
+      // webtoon_user
+      const progress = localWebtoon.value.userProgress ||= { id: null, bookmark: null, rate: null, state: null }
       const userProgressPayload = {
-        state: localWebtoon.value.userProgress.state,
-        rate: localWebtoon.value.userProgress.rate ? parseFloat(localWebtoon.value.userProgress.rate) : null,
-        bookmark: localWebtoon.value.userProgress.bookmark ? parseInt(localWebtoon.value.userProgress.bookmark) : null
+        state: progress.state ?? null,
+        rate: progress.rate ?? null,
+        bookmark: progress.bookmark ?? null
       }
 
-      // webtoon_user
-      if (localWebtoon.value.userProgress.id) {
-        await api.patch(`/webtoon_users/${localWebtoon.value.userProgress.id}`, userProgressPayload, {
+      if (progress.id) {
+        await api.patch(`/webtoon_users/${progress.id}`, userProgressPayload, {
           headers: { 'Content-Type': 'application/merge-patch+json' }
         })
       } else {
@@ -92,7 +105,8 @@ const saveModalData = async () => {
         }, {
           headers: { 'Content-Type': 'application/ld+json' }
         })
-        localWebtoon.value.userProgress.id = response.data.id
+        
+        progress.id = response.data.id
       }
 
       if (isCreator.value) {
@@ -140,12 +154,12 @@ const saveModalData = async () => {
       }
 
       // webtoon_user
-      if (authStore.isAuthenticated && (localWebtoon.value.userProgress.state || localWebtoon.value.userProgress.bookmark || localWebtoon.value.userProgress.rate)) {
+      if (authStore.isAuthenticated && (localWebtoon.value.userProgress?.state || localWebtoon.value.userProgress?.bookmark || localWebtoon.value.userProgress?.rate)) {
         const progressResponse = await api.post('/webtoon_users', {
           webtoon: `/webtoons/${createdWebtoon.id}`,
-          state: localWebtoon.value.userProgress.state,
-          rate: localWebtoon.value.userProgress.rate ? parseFloat(localWebtoon.value.userProgress.rate) : null,
-          bookmark: localWebtoon.value.userProgress.bookmark ? parseInt(localWebtoon.value.userProgress.bookmark) : null
+          state: localWebtoon.value.userProgress.state ?? null,
+          rate: localWebtoon.value.userProgress.rate ?? null,
+          bookmark: localWebtoon.value.userProgress.bookmark ?? null
         }, {
           headers: { 'Content-Type': 'application/ld+json' }
         })
@@ -156,8 +170,10 @@ const saveModalData = async () => {
       emit('close')
     }
   } catch (error) {
-    console.error(error)
-    errorMessage.value = error.response ? "Une erreur est survenue." : "Impossible de joindre le serveur."
+    if (isAxiosError(error)) {
+      console.error(error)
+      errorMessage.value = error.response ? "Une erreur est survenue." : "Impossible de joindre le serveur."
+    }
   } finally {
     loading.value = false
   }
@@ -170,12 +186,14 @@ const deleteWebtoon = async () => {
   loading.value = true
 
   try {
-    await api.delete(`/webtoons/${localWebtoon.value.id}`)
-    emit('deleted', localWebtoon.value.id)
+    await api.delete(`/webtoons/${localWebtoon.value?.id}`)
+    emit('deleted', localWebtoon.value?.id)
     emit('close')
   } catch (error) {
-    console.error(error)
-    errorMessage.value = error.response ? "Une erreur est survenue." : "Impossible de joindre le serveur."
+    if (isAxiosError(error)) {
+      console.error(error)
+      errorMessage.value = error.response ? "Une erreur est survenue." : "Impossible de joindre le serveur."
+    }
   } finally {
     loading.value = false
   }
@@ -230,7 +248,7 @@ const deleteWebtoon = async () => {
                 <input 
                   type="checkbox" 
                   :checked="localWebtoon.status === 'completed'"
-                  @change="localWebtoon.status = $event.target.checked ? 'completed' : 'ongoing'"
+                  @change="localWebtoon.status = (($event.target as HTMLInputElement).checked ? 'completed' : 'ongoing')"
                 >
                 <span class="slider round"></span>
               </label>

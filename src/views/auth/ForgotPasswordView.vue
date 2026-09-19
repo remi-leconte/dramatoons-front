@@ -40,8 +40,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import { isAxiosError } from 'axios'
 import api from '../../services/api'
 
 const email = ref('')
@@ -60,7 +61,7 @@ const handleResetRequest = async () => {
     
     isSent.value = true
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       if (error.response.status === 422) {
         errorMessage.value = "Email incorrects. Veuillez réessayer."
       } else {

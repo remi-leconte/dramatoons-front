@@ -25,8 +25,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { isAxiosError } from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../../services/api'
 
@@ -54,7 +55,7 @@ onMounted(async () => {
     router.push({ path: '/login', query: { status: 'verified' } })
 
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       errorMessage.value = "Une erreur est survenue."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
