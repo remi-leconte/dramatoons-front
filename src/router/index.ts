@@ -61,7 +61,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
   if (authStore.isAuthenticated && authStore.roles.length === 0) {
@@ -69,7 +69,7 @@ router.beforeEach(async (to, _from, next) => {
       await authStore.fetchUserProfile()
     } catch {
       authStore.logout()
-      return next({ name: 'login' })
+      return { name: 'login' }
     }
   }
 
@@ -78,22 +78,20 @@ router.beforeEach(async (to, _from, next) => {
   const requiredRoles = to.meta.roles as string[] | undefined
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    return next({ name: 'login' })
+    return { name: 'login' }
   }
 
   if (guestOnly && authStore.isAuthenticated) {
-    return next({ name: 'home' })
+    return { name: 'home' }
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRole = authStore.roles.some(role => requiredRoles.includes(role))
 
     if (!hasRole) {
-      return next({ name: 'home' })
+      return { name: 'home' }
     }
   }
-
-  next()
 })
 
 export default router
