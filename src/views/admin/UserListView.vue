@@ -8,6 +8,18 @@ const loading = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(1)
 
+// Filtres
+const searchFilters = ref({
+  id: '',
+  login: '',
+  email: '',
+  role: ''
+})
+
+// Tri
+const sortKey = ref<'id' | 'login' | 'email' | 'roles' | 'lastLogin'>('id')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 // Modale de confirmation
 const isModalOpen = ref(false)
 const confirmActionType = ref<'reset_password' | 'toggle_status' | null>(null)
@@ -20,10 +32,42 @@ const getDisplayRole = (roles: string[] = []): string => {
   return 'User'
 }
 
+const formatDate = (dateString?: string | null): string => {
+  if (!dateString) return '-'
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(new Date(dateString))
+}
+
 const fetchUsers = async (page = 1) => {
   loading.value = true
   try {
-    const response = await api.get(`/users?page=${page}`)
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+
+    if (searchFilters.value.id) params.append('id', searchFilters.value.id.trim())
+    if (searchFilters.value.login) params.append('login', searchFilters.value.login.trim())
+    if (searchFilters.value.email) params.append('email', searchFilters.value.email.trim())
+    if (searchFilters.value.role) {
+      const roleMap: Record<string, string> = {
+        admin: 'ROLE_ADMIN',
+        modo: 'ROLE_MODO',
+        user: 'ROLE_USER'
+      }
+      const mappedRole = roleMap[searchFilters.value.role]
+      if (mappedRole) {
+        params.append('roles', mappedRole)
+      }
+    }
+
+    params.append(`order[${sortKey.value}]`, sortOrder.value)
+
+    const response = await api.get(`/users?${params.toString()}`)
     const data = response.data
     users.value = data['hydra:member'] || data.member || []
     
@@ -36,6 +80,30 @@ const fetchUsers = async (page = 1) => {
   } finally {
     loading.value = false
   }
+}
+
+const handleSearch = () => {
+  fetchUsers(1)
+}
+
+const resetFilters = () => {
+  searchFilters.value = {
+    id: '',
+    login: '',
+    email: '',
+    role: ''
+  }
+  fetchUsers(1)
+}
+
+const handleSort = (key: 'id' | 'login' | 'email' | 'roles' | 'lastLogin') => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
+  fetchUsers(currentPage.value)
 }
 
 const openConfirmModal = (user: User, action: 'reset_password' | 'toggle_status') => {
@@ -85,15 +153,41 @@ onMounted(() => fetchUsers())
   <div class="admin-page">
     <h1>Utilisateurs</h1>
 
+    <!-- Formulaire de recherche -->
+    <form @submit.prevent="handleSearch" class="search-bar">
+      <input v-model="searchFilters.id" type="text" placeholder="ID..." class="search-input input-id" />
+      <input v-model="searchFilters.login" type="text" placeholder="Login..." class="search-input" />
+      <input v-model="searchFilters.email" type="text" placeholder="Email..." class="search-input" />
+      <select v-model="searchFilters.role" class="search-select">
+        <option value="">Tous les rôles</option>
+        <option value="user">User</option>
+        <option value="modo">Modo</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Rechercher</button>
+      <button type="button" class="btn btn-secondary" @click="resetFilters">Réinitialiser</button>
+    </form>
+
     <div v-if="loading" class="loading">Chargement...</div>
 
     <table v-else class="admin-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Login</th>
-          <th>Email</th>
-          <th>Rôles</th>
+          <th class="sortable" @click="handleSort('id')">
+            ID <span v-if="sortKey === 'id'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th class="sortable" @click="handleSort('login')">
+            Login <span v-if="sortKey === 'login'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th class="sortable" @click="handleSort('email')">
+            Email <span v-if="sortKey === 'email'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th class="sortable" @click="handleSort('roles')">
+            Rôle <span v-if="sortKey === 'roles'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th class="sortable" @click="handleSort('lastLogin')">
+            Dernière connexion <span v-if="sortKey === 'lastLogin'">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
+          </th>
           <th class="action-col">Mot de passe</th>
           <th class="action-col">Statut</th>
           <th class="action-col"></th>
@@ -114,6 +208,7 @@ onMounted(() => fetchUsers())
             </div>
           </td>
           <td>{{ getDisplayRole(user.roles) }}</td>
+          <td>{{ formatDate(user.lastLogin) }}</td>
           <td class="action-col">
             <button class="action-btn" @click="openConfirmModal(user, 'reset_password')">
               Envoyer mail
@@ -132,6 +227,9 @@ onMounted(() => fetchUsers())
           <td class="action-col">
             <router-link :to="`/admin/users/${user.id}`">Détail →</router-link>
           </td>
+        </tr>
+        <tr v-if="users.length === 0">
+          <td colspan="8" class="empty">Aucun utilisateur ne correspond à la recherche.</td>
         </tr>
       </tbody>
     </table>
@@ -171,9 +269,25 @@ onMounted(() => fetchUsers())
 
 <style scoped>
 .admin-page { padding: 2rem 5%; color: #fff; }
+
+.search-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+.search-input, .search-select {
+  background: #252525;
+  border: 1px solid #383838;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.search-input.input-id { width: 80px; }
+.search-input { flex: 1; min-width: 150px; }
+.search-select { min-width: 130px; }
+
 .admin-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
 .admin-table th, .admin-table td { border-bottom: 1px solid #282828; padding: 10px; text-align: left; }
 .admin-table th { color: #888; font-size: 0.85rem; }
+.admin-table th.sortable { cursor: pointer; user-select: none; }
+.admin-table th.sortable:hover { color: #fff; }
 
 .email-cell { display: flex; align-items: center; gap: 8px; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
@@ -187,9 +301,8 @@ onMounted(() => fetchUsers())
 .pagination { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 1.5rem; }
 .pagination button { background: #252525; border: 1px solid #383838; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
 .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
-.loading { margin-top: 1rem; color: #888; }
+.loading, .empty { text-align: center; color: #888; margin-top: 1rem; font-style: italic; }
 
-/* Styles du Modal */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-content { background: #1a1a1a; padding: 1.5rem 2rem; border-radius: 8px; border: 1px solid #333; max-width: 420px; width: 90%; }
 .modal-content h3 { margin-top: 0; color: #fff; }
@@ -200,9 +313,5 @@ onMounted(() => fetchUsers())
 .btn { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
 .btn-primary { background: #e50914; color: #fff; }
 .btn-secondary { background: #333; color: #fff; }
-.toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
+.toggle-btn { display: inline-flex; align-items: center; gap: 8px; }
 </style>
