@@ -9,6 +9,7 @@
       <!-- Formulaire de recherche -->
       <form v-if="authStore.isAuthenticated" class="search-form" @submit.prevent="handleSearch">
         <input 
+          id="searchTitlePrincipal" 
           v-model="searchTitle" 
           type="text" 
           placeholder="Rechercher un titre..." 

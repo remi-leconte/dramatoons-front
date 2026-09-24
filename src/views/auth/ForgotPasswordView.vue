@@ -87,6 +87,9 @@ const handleResetRequest = async () => {
 .success-message {
   text-align: center;
   padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .success-icon {
