@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../../stores/auth.ts'
 import api from '../../services/api'
 
 import type { Progress } from '@/types/progress';
@@ -9,11 +10,37 @@ const route = useRoute()
 const router = useRouter()
 const userId = route.params.id
 
-const user = ref({ login: '', email: '' })
+const user = ref({ 
+  login: '', 
+  email: '', 
+  roles: [] as string[], 
+  lastLogin: null as string | null 
+})
 const initialEmail = ref('')
+const selectedRole = ref<string>('ROLE_USER')
 const userProgressions = ref<Progress[]>([]);
 const loading = ref(true)
 const saving = ref(false)
+
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.isAdmin)
+const formatDate = (dateString?: string | null): string => {
+  if (!dateString) return '-'
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(new Date(dateString))
+}
+
+const getPrimaryRole = (roles: string[] = []): string => {
+  if (roles.includes('ROLE_ADMIN')) return 'ROLE_ADMIN'
+  if (roles.includes('ROLE_MODO')) return 'ROLE_MODO'
+  return 'ROLE_USER'
+}
 
 const fetchData = async () => {
   loading.value = true
@@ -21,6 +48,7 @@ const fetchData = async () => {
     const userRes = await api.get(`/users/${userId}`)
     user.value = userRes.data
     initialEmail.value = userRes.data.email
+    selectedRole.value = getPrimaryRole(userRes.data.roles)
     
     const progressRes = await api.get(`/webtoon_users?reader=${userId}`)
     userProgressions.value = progressRes.data['hydra:member'] || progressRes.data.member || []
@@ -36,10 +64,16 @@ const handleUpdate = async () => {
   try {
     const emailChanged = user.value.email !== initialEmail.value
 
-    await api.patch(`/users/${userId}`, { 
+    const payload: Record<string, string | string[]> = {
       login: user.value.login,
-      email: user.value.email 
-    }, {
+      email: user.value.email
+    }
+
+    if (isAdmin.value) {
+      payload.roles = [selectedRole.value]
+    }
+
+    await api.patch(`/users/${userId}`, payload, {
       headers: { 'Content-Type': 'application/merge-patch+json' }
     })
 
@@ -90,6 +124,21 @@ onMounted(() => fetchData())
           <label>Email :</label>
           <input v-model="user.email" type="email" class="app-input-field" required />
         </div>
+        
+        <!-- Champ affiché uniquement pour les administrateurs -->
+        <div v-if="isAdmin" class="field">
+          <label>Rôle :</label>
+          <select v-model="selectedRole" class="app-input-field">
+            <option value="ROLE_USER">Utilisateur</option>
+            <option value="ROLE_MODO">Modérateur</option>
+            <option value="ROLE_ADMIN">Administrateur</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Dernière connexion :</label>
+          <input :value="formatDate(user.lastLogin)" class="app-input-field" disabled />
+        </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" :disabled="saving">Enregistrer</button>
           <button type="button" class="btn btn-secondary danger" @click="handleDelete">Supprimer</button>
@@ -132,6 +181,15 @@ onMounted(() => fetchData())
 .detail-form { max-width: 400px; margin: 1.5rem 0 2.5rem 0; display: flex; flex-direction: column; gap: 15px; }
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field label { font-size: 0.85rem; color: #888; }
+.field input:disabled { opacity: 0.6; cursor: not-allowed; }
+.app-input-field {
+  background: #252525;
+  border: 1px solid #383838;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
 .form-actions { display: flex; gap: 10px; margin-top: 10px; }
 .action-col { text-align: right; }
 .action-col a { color: #e50914; text-decoration: none; }

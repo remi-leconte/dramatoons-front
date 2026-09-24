@@ -5,4 +5,5 @@ export interface User {
     verified: boolean;
     publish: boolean;
     email: string;
+    lastLogin: string | null;
 }
