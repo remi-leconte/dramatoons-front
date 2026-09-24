@@ -53,20 +53,47 @@ const router = createRouter({
       name: 'reset-password',
       component: () => import('../views/auth/ResetPasswordView.vue'),
       meta: { guestOnly: true }
-    }
+    },
+    { path: '/admin/users', name: 'admin-users', component: () => import('../views/admin/UserListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
+    { path: '/admin/users/:id', name: 'admin-user-detail', component: () => import('../views/admin/UserDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
+    { path: '/admin/webtoons', name: 'admin-webtoons', component: () => import('../views/admin/WebtoonListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
+    { path: '/admin/webtoons/:id', name: 'admin-webtoon-detail', component: () => import('../views/admin/WebtoonDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } }
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return { name: 'login' }
+  if (authStore.isAuthenticated && authStore.roles.length === 0) {
+    try {
+      await authStore.fetchUserProfile()
+    } catch {
+      authStore.logout()
+      return next({ name: 'login' })
+    }
   }
 
-  if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return { name: 'home' }
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const guestOnly = to.matched.some(record => record.meta.guestOnly)
+  const requiredRoles = to.meta.roles as string[] | undefined
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    return next({ name: 'login' })
   }
+
+  if (guestOnly && authStore.isAuthenticated) {
+    return next({ name: 'home' })
+  }
+
+  if (requiredRoles && requiredRoles.length > 0) {
+    const hasRole = authStore.roles.some(role => requiredRoles.includes(role))
+
+    if (!hasRole) {
+      return next({ name: 'home' })
+    }
+  }
+
+  next()
 })
 
 export default router

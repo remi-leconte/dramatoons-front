@@ -223,6 +223,13 @@ onUnmounted(() => {
   <main class="content" :class="{ 'content-dimmed': isModalOpen }">
     <div v-if="authStore.isAuthenticated" class="admin-link-container">
       <button class="admin-link" @click="openModal(null)">Créer un Webtoon</button>
+      
+      <template v-if="authStore.isAdmin">
+        <span class="admin-separator">|</span>
+        <router-link to="/admin/users" class="admin-link">Admin Users</router-link>
+        <span class="admin-separator">|</span>
+        <router-link to="/admin/webtoons" class="admin-link">Admin Webtoons</router-link>
+      </template>
     </div>
     <form v-if="authStore.isAuthenticated" class="filter-bar" @submit.prevent>
       <div class="filter-group">
@@ -310,8 +317,28 @@ onUnmounted(() => {
 .content-dimmed { filter: blur(4px); opacity: 0.3; pointer-events: none; }
 
 /* Admin */
-.admin-link-container { display: flex; margin-bottom: 1rem; }
-.admin-link { background: none; border: none; color: var(--primary-red); font-weight: bold; font-size: 1rem; cursor: pointer; text-decoration: underline; padding: 0; }
+.admin-link-container { 
+  display: flex; 
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem; 
+}
+
+.admin-link { 
+  background: none; 
+  border: none; 
+  color: var(--primary-red); 
+  font-weight: bold; 
+  font-size: 1rem; 
+  cursor: pointer; 
+  text-decoration: underline; 
+  padding: 0; 
+}
+
+.admin-separator {
+  color: var(--border-input);
+  font-weight: normal;
+}
 
 /* Grille */
 .webtoon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 12px; }

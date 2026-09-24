@@ -22,11 +22,11 @@ export const useAuthStore = defineStore('auth', () => {
   const roles = ref<string[]>(localStorage.getItem('roles') ? JSON.parse(localStorage.getItem('roles')!) : [])
 
   const preferences = ref({
-      status: '',
-      sortBy: 'added',
-      sortOrder: 'desc',
-      itemsPerPage: 20
-    })
+    status: '',
+    sortBy: 'added',
+    sortOrder: 'desc',
+    itemsPerPage: 20
+  })
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => roles.value.includes('ROLE_ADMIN'))
@@ -35,15 +35,15 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken
     refreshToken.value = newRefreshToken
     userId.value = user.id,
-    login.value = user.login,
-    roles.value = user.roles,
-    
-    preferences.value = {
-      status: user.searchParameters.status || '',
-      sortBy: user.searchParameters. sortBy || 'added',
-      sortOrder: user.searchParameters.sortOrder || 'desc',
-      itemsPerPage: user.searchParameters.itemsPerPage || 20
-    }
+      login.value = user.login,
+      roles.value = user.roles,
+
+      preferences.value = {
+        status: user.searchParameters.status || '',
+        sortBy: user.searchParameters.sortBy || 'added',
+        sortOrder: user.searchParameters.sortOrder || 'desc',
+        itemsPerPage: user.searchParameters.itemsPerPage || 20
+      }
 
     localStorage.setItem('token', newToken)
     localStorage.setItem('refreshToken', newRefreshToken)
@@ -101,8 +101,18 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('roles')
   }
 
+  const user = computed(() => {
+    if (!userId.value || !login.value) return null
+    return {
+      id: userId.value,
+      login: login.value,
+      roles: roles.value
+    }
+  })
+
   return {
-token,
+    user,
+    token,
     refreshToken,
     userId,
     login,
