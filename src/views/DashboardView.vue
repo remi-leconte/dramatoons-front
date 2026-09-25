@@ -50,10 +50,10 @@ const itemsPerPage = ref(20)
 const isInitializing = ref(true)
 
 const initPreferences = async () => {
-  status.value = authStore.preferences.status || ''
-  sortBy.value = authStore.preferences.sortBy || 'added'
-  sortOrder.value = authStore.preferences.sortOrder || 'desc'
-  itemsPerPage.value = authStore.preferences.itemsPerPage || 20
+  status.value = authStore.preferences.searchStatus || ''
+  sortBy.value = authStore.preferences.searchSortBy || 'added'
+  sortOrder.value = authStore.preferences.searchSortOrder || 'desc'
+  itemsPerPage.value = authStore.preferences.searchItemsPerPage || 20
 }
 
 const openModal = (webtoon: Webtoon | null = null) => {
@@ -172,10 +172,10 @@ watch([title, status, sortBy, sortOrder, itemsPerPage], async () => {
   if (isInitializing.value) return
 
 await authStore.savePreferences({
-    status: status.value,
-    sortBy: sortBy.value,
-    sortOrder: sortOrder.value,
-    itemsPerPage: itemsPerPage.value
+    searchStatus: status.value,
+    searchSortBy: sortBy.value,
+    searchSortOrder: sortOrder.value,
+    searchItemsPerPage: itemsPerPage.value
   })
   await resetAndFetchWebtoons()
 }, { deep: true })

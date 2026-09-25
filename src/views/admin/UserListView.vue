@@ -7,6 +7,7 @@ const users = ref<User[]>([])
 const loading = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(1)
+const itemsPerPage = ref(20)
 
 // Filtres
 const searchFilters = ref({
@@ -49,6 +50,7 @@ const fetchUsers = async (page = 1) => {
   try {
     const params = new URLSearchParams()
     params.append('page', page.toString())
+    params.append('itemsPerPage', itemsPerPage.value.toString())
 
     if (searchFilters.value.id) params.append('id', searchFilters.value.id.trim())
     if (searchFilters.value.login) params.append('login', searchFilters.value.login.trim())
@@ -71,9 +73,9 @@ const fetchUsers = async (page = 1) => {
     const data = response.data
     users.value = data['hydra:member'] || data.member || []
     
-    const view = data['hydra:view'] || {}
-    const lastPageMatch = view['hydra:last']?.match(/page=(\d+)/)
-    totalPages.value = lastPageMatch ? parseInt(lastPageMatch[1], 10) : page
+    const totalItems = data['hydra:totalItems'] || data.totalItems || 0
+    totalPages.value = Math.max(1, Math.ceil(totalItems / itemsPerPage.value))
+    console.log(totalPages.value)
     currentPage.value = page
   } catch (error) {
     console.error('Erreur lors de la récupération des utilisateurs :', error)
@@ -93,6 +95,7 @@ const resetFilters = () => {
     email: '',
     role: ''
   }
+  itemsPerPage.value = 20
   fetchUsers(1)
 }
 
@@ -164,6 +167,14 @@ onMounted(() => fetchUsers())
         <option value="modo">Modo</option>
         <option value="admin">Admin</option>
       </select>
+
+      <select v-model="itemsPerPage" @change="handleSearch" class="search-select">
+        <option :value="10">10 / page</option>
+        <option :value="20">20 / page</option>
+        <option :value="50">50 / page</option>
+        <option :value="100">100 / page</option>
+      </select>
+
       <button type="submit" class="btn btn-primary">Rechercher</button>
       <button type="button" class="btn btn-secondary" @click="resetFilters">Réinitialiser</button>
     </form>
@@ -281,7 +292,7 @@ onMounted(() => fetchUsers())
 }
 .search-input.input-id { width: 80px; }
 .search-input { flex: 1; min-width: 150px; }
-.search-select { min-width: 130px; }
+.search-select { min-width: 110px; }
 
 .admin-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
 .admin-table th, .admin-table td { border-bottom: 1px solid #282828; padding: 10px; text-align: left; }
