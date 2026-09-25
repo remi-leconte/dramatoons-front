@@ -22,10 +22,10 @@ export const useAuthStore = defineStore('auth', () => {
   const roles = ref<string[]>(localStorage.getItem('roles') ? JSON.parse(localStorage.getItem('roles')!) : [])
 
   const preferences = ref({
-    status: '',
-    sortBy: 'added',
-    sortOrder: 'desc',
-    itemsPerPage: 20
+    searchStatus: '',
+    searchSortBy: 'added',
+    searchSortOrder: 'desc',
+    searchItemsPerPage: 20
   })
 
   const isAuthenticated = computed(() => !!token.value)
@@ -39,10 +39,10 @@ export const useAuthStore = defineStore('auth', () => {
       roles.value = user.roles,
 
       preferences.value = {
-        status: user.searchParameters.status || '',
-        sortBy: user.searchParameters.sortBy || 'added',
-        sortOrder: user.searchParameters.sortOrder || 'desc',
-        itemsPerPage: user.searchParameters.itemsPerPage || 20
+        searchStatus: user.searchParameters.status || '',
+        searchSortBy: user.searchParameters.sortBy || 'added',
+        searchSortOrder: user.searchParameters.sortOrder || 'desc',
+        searchItemsPerPage: user.searchParameters.itemsPerPage || 20
       }
 
     localStorage.setItem('token', newToken)
@@ -58,10 +58,10 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.get(`/users/${userId.value}`)
       const user = response.data
       preferences.value = {
-        status: user.searchStatus || '',
-        sortBy: user.searchSortBy || 'added',
-        sortOrder: user.searchSortOrder || 'desc',
-        itemsPerPage: user.searchItemsPerPage || 20
+        searchStatus: user.searchStatus || '',
+        searchSortBy: user.searchSortBy || 'added',
+        searchSortOrder: user.searchSortOrder || 'desc',
+        searchItemsPerPage: user.searchItemsPerPage || 20
       }
     } catch (error) {
       console.error(error)
