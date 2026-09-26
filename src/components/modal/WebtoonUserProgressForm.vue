@@ -7,20 +7,36 @@ const rawProgress = defineModel('progress', {
   default: () => ({ bookmark: null, rate: null, state: null, id: null })
 })
 
-// Securise l'accès aux propriétés si rawProgress vaut null
+// Sécurise l'accès aux propriétés si rawProgress vaut null
 const progress = computed({
   get: () => rawProgress.value || { bookmark: null, rate: null, state: null, id: null },
   set: (val) => { rawProgress.value = val }
 })
 
-defineProps({
+const props = defineProps({
   loading: { type: Boolean, default: false },
   isEditMode: { type: Boolean, default: false },
   isCreator: { type: Boolean, default: false },
-  isAdmin: { type: Boolean, default: false }
+  readersCount: { type: Number, default: 0 },
+  publish: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['save', 'cancel', 'delete', 'validate'])
+
+const creatorHasProgress = computed(() => {
+  const p = progress.value
+  return Boolean(p.id || p.state || p.rate !== null || p.bookmark !== null)
+})
+
+const canDelete = computed(() => {
+  if (props.publish || !props.isCreator || !props.isEditMode) {
+    return false
+  }
+
+  const maxAllowedReaders = creatorHasProgress.value ? 2 : 1
+
+  return props.readersCount < maxAllowedReaders
+})
 </script>
 
 <template>
@@ -71,7 +87,13 @@ const emit = defineEmits(['save', 'cancel', 'delete', 'validate'])
       <button type="button" class="btn btn-primary" @click="emit('save')" :disabled="loading">
         {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
       </button>
-      <button type="button" v-if="(isAdmin || isCreator) && isEditMode" class="btn btn-primary btn-delete" @click="emit('delete')" :disabled="loading">
+      <button 
+        v-if="canDelete" 
+        type="button" 
+        class="btn btn-primary btn-delete" 
+        @click="emit('delete')" 
+        :disabled="loading"
+      >
         Supprimer
       </button>
     </div>
