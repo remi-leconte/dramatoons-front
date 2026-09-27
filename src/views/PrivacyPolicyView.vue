@@ -1,8 +1,8 @@
 <template>
   <div class="privacy-container">
     <div class="privacy-card">
-      <h1>Politique de Confidentialité</h1>
-      <p class="last-updated">Dernière mise à jour : 17 septembre 2026</p>
+      <h1>Politique de confidentialité</h1>
+      <p class="last-updated">Dernière mise à jour : 27 septembre 2026</p>
 
       <p>
         <strong>Dramatoons</strong> (<a href="https://dramatoons.ovh" target="_blank" rel="noopener">https://dramatoons.ovh</a>) est un projet personnel de suivi et de gestion de webtoons.
@@ -29,7 +29,7 @@
 
       <h2>4. Extension Navigateur (Chrome / Edge)</h2>
       <p>
-        L'extension navigateur Dramatoons n'interagit qu'avec l'API officielle de <code>dramatoons.ovh</code> pour lire et mettre à jour votre progression de lecture. Elle ne collecte ni ne transmet aucun historique de navigation ou donnée personnelle issue d'autres sites web.
+        L'extension navigateur Dramatoons n'interagit qu'avec l'API officielle de <code>dramatoons.ovh</code> pour lire votre progression de lecture. Elle ne collecte ni ne transmet aucun historique de navigation ou donnée personnelle issue d'autres sites web.
       </p>
 
       <h2>5. Vos droits et contact</h2>
