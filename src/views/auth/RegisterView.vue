@@ -61,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import type { RegisterPayload, User } from '@/types'
 import { ref } from 'vue'
 import { isAxiosError } from 'axios'
 import { useRouter } from 'vue-router'
@@ -71,7 +72,18 @@ const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-const form = ref({
+interface ApiErrorResponse {
+  'hydra:description'?: string
+  message?: string
+}
+
+interface RegisterForm {
+  username: string
+  email: string
+  password: string
+}
+
+const form = ref<RegisterForm>({
   username: '',
   email: '',
   password: ''
@@ -83,22 +95,23 @@ const handleRegister = async () => {
   successMessage.value = ''
   
   try {
-    await api.post('/users', {
+    const payload: RegisterPayload = {
       email: form.value.email,
       password: form.value.password,
       login: form.value.username
-    })
-    
+    }
+
+    await api.post<User>('/users', payload)
     router.push({ path: '/login', query: { status: 'registered' } })
 
   } catch (error) {
-    if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue."
+    if (isAxiosError<ApiErrorResponse>(error) && error.response) {
+      errorMessage.value = error.response.data['hydra:description'] 
+        || error.response.data.message 
+        || "Une erreur est survenue lors de l'inscription."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
     }
-  } finally {
-    loading.value = false
   }
 }
 </script>

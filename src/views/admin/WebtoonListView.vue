@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '../../services/api'
-import type { Webtoon } from '@/types/webtoon'
+import type { Webtoon, HydraCollection, WebtoonSortKey, SortOrderOption } from '@/types'
 
 const webtoons = ref<Webtoon[]>([])
 const loading = ref(false)
@@ -17,8 +17,8 @@ const searchFilters = ref({
 })
 
 // Tri
-const sortKey = ref<'id' | 'title' | 'status' | 'publish' | 'updated'>('id')
-const sortOrder = ref<'asc' | 'desc'>('asc')
+const sortKey = ref<WebtoonSortKey>('id')
+const sortOrder = ref<SortOrderOption>('asc')
 
 const formatDate = (dateString?: string | Date | null): string => {
   if (!dateString) return '-'
@@ -46,9 +46,8 @@ const fetchWebtoons = async (page = 1) => {
 
     params.append(`order[${sortKey.value}]`, sortOrder.value)
 
-    const response = await api.get(`/webtoons?${params.toString()}`)
-    const data = response.data
-    webtoons.value = data['hydra:member'] || data.member || []
+    const { data } = await api.get<HydraCollection<Webtoon>>(`/webtoons?${params.toString()}`)
+    webtoons.value = data['hydra:member'] ?? data.member ?? []
 
     const totalItems = data['hydra:totalItems'] || data.totalItems || 0
     totalPages.value = Math.max(1, Math.ceil(totalItems / itemsPerPage.value))
@@ -74,7 +73,7 @@ const resetFilters = () => {
   fetchWebtoons(1)
 }
 
-const handleSort = (key: 'id' | 'title' | 'status' | 'publish' | 'updated') => {
+const handleSort = (key: WebtoonSortKey) => {
   if (sortKey.value === key) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -136,7 +135,7 @@ onMounted(() => fetchWebtoons())
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(webtoon, index) in webtoons" :key="webtoon.id ?? index">
+        <tr v-for="(webtoon) in webtoons" :key="webtoon.id">
           <td>{{ webtoon.id }}</td>
           <td>{{ webtoon.title }}</td>
           <td>{{ webtoon.status || '-' }}</td>

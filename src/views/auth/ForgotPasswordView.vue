@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ForgotPasswordPayload } from '@/types'
 import { ref } from 'vue'
 import { isAxiosError } from 'axios'
 import api from '../../services/api'
@@ -55,15 +56,14 @@ const handleResetRequest = async () => {
   errorMessage.value = ''
   
   try {
-    await api.post('/users/forgot-password', {
-      email: email.value
-    })
+    const payload: ForgotPasswordPayload = { email: email.value }
+    await api.post<{ message?: string }>('/users/forgot-password', payload)
     
     isSent.value = true
   } catch (error) {
     if (isAxiosError(error) && error.response) {
       if (error.response.status === 422) {
-        errorMessage.value = "Email incorrects. Veuillez réessayer."
+        errorMessage.value = "Email incorrect. Veuillez réessayer."
       } else {
         errorMessage.value = "Une erreur est survenue."
       }

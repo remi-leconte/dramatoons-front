@@ -1,23 +1,20 @@
 <script setup lang="ts">
+import type { Webtoon, WebtoonPayload, Progress, HydraCollection } from '@/types'
+import { createDefaultWebtoon } from '@/types'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
 import WebtoonCoverUploader from '../../components/modal/WebtoonCoverUploader.vue'
 
-import type { Progress } from '@/types/progress';
-
 const route = useRoute()
 const router = useRouter()
 const webtoonId = route.params.id
 
-const webtoon = ref({ 
-  id: webtoonId,
-  title: '', 
-  status: 'ongoing',
-  publish: false,
-  image: '',
-  updated: null as string | null
+const webtoon = ref<Webtoon>({
+  ...createDefaultWebtoon(),
+  id: Number(webtoonId)
 })
+
 const readerProgressions = ref<Progress[]>([]);
 const loading = ref(true)
 const saving = ref(false)
@@ -38,14 +35,14 @@ const formatDate = (dateString?: string | null): string => {
 const fetchData = async () => {
   loading.value = true
   try {
-    const webtoonRes = await api.get(`/webtoons/${webtoonId}`)
+    const webtoonRes = await api.get<Webtoon>(`/webtoons/${webtoonId}`)
     webtoon.value = {
       ...webtoonRes.data,
       status: webtoonRes.data.status || 'ongoing'
     }
 
-    const progressRes = await api.get(`/webtoon_users?webtoon=${webtoonId}`)
-    readerProgressions.value = progressRes.data['hydra:member'] || progressRes.data.member || []
+    const progressRes = await api.get<HydraCollection<Progress>>(`/webtoon_users?webtoon=/webtoons/${webtoonId}`)
+    readerProgressions.value = progressRes.data['hydra:member'] ?? progressRes.data.member ?? []
   } catch (error) {
     console.error('Erreur lors de la récupération du détail :', error)
   } finally {
@@ -64,11 +61,13 @@ const handleUpdate = async () => {
       })
     }
 
-    await api.patch(`/webtoons/${webtoonId}`, {
+    const payload: WebtoonPayload = {
       title: webtoon.value.title,
-      status: webtoon.value.status || 'ongoing',
+      status: webtoon.value.status,
       publish: webtoon.value.publish
-    }, {
+    }
+
+    await api.patch(`/webtoons/${webtoonId}`, payload, {
       headers: { 'Content-Type': 'application/merge-patch+json' }
     })
 

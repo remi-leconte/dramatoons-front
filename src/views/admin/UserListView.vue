@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '../../services/api'
-import type { User } from '@/types/user'
+import type { User, HydraCollection, UserSortKey, SortOrderOption } from '@/types'
 
 const users = ref<User[]>([])
 const loading = ref(false)
@@ -18,8 +18,8 @@ const searchFilters = ref({
 })
 
 // Tri
-const sortKey = ref<'id' | 'login' | 'email' | 'roles' | 'lastLogin'>('id')
-const sortOrder = ref<'asc' | 'desc'>('asc')
+const sortKey = ref<UserSortKey>('id')
+const sortOrder = ref<SortOrderOption>('asc')
 
 // Modale de confirmation
 const isModalOpen = ref(false)
@@ -69,13 +69,12 @@ const fetchUsers = async (page = 1) => {
 
     params.append(`order[${sortKey.value}]`, sortOrder.value)
 
-    const response = await api.get(`/users?${params.toString()}`)
-    const data = response.data
-    users.value = data['hydra:member'] || data.member || []
+    const { data } = await api.get<HydraCollection<User>>(`/users?${params.toString()}`)
+
+    users.value = data['hydra:member'] ?? data.member ?? []
     
-    const totalItems = data['hydra:totalItems'] || data.totalItems || 0
+    const totalItems = data['hydra:totalItems'] ?? data.totalItems ?? 0
     totalPages.value = Math.max(1, Math.ceil(totalItems / itemsPerPage.value))
-    console.log(totalPages.value)
     currentPage.value = page
   } catch (error) {
     console.error('Erreur lors de la récupération des utilisateurs :', error)
@@ -84,22 +83,15 @@ const fetchUsers = async (page = 1) => {
   }
 }
 
-const handleSearch = () => {
-  fetchUsers(1)
-}
+const handleSearch = () => fetchUsers(1)
 
 const resetFilters = () => {
-  searchFilters.value = {
-    id: '',
-    login: '',
-    email: '',
-    role: ''
-  }
+  searchFilters.value = { id: '', login: '', email: '', role: '' }
   itemsPerPage.value = 20
   fetchUsers(1)
 }
 
-const handleSort = (key: 'id' | 'login' | 'email' | 'roles' | 'lastLogin') => {
+const handleSort = (key: UserSortKey) => {
   if (sortKey.value === key) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -133,9 +125,9 @@ const handleConfirmAction = async () => {
       alert(`Un email de réinitialisation de mot de passe a été envoyé à ${selectedUser.value.login}.`)
     } else if (confirmActionType.value === 'toggle_status') {
       const updatedStatus = !selectedUser.value.publish
-      await api.patch(`/users/${selectedUser.value.id}`, {
-        publish: updatedStatus
-      }, {
+      const userPayload: Pick<User, 'publish'> = { publish: updatedStatus }
+
+      await api.patch(`/users/${selectedUser.value.id}`, userPayload, {
         headers: { 'Content-Type': 'application/merge-patch+json' }
       })
       selectedUser.value.publish = updatedStatus
@@ -156,7 +148,6 @@ onMounted(() => fetchUsers())
   <div class="admin-page">
     <h1>Utilisateurs</h1>
 
-    <!-- Formulaire de recherche -->
     <form @submit.prevent="handleSearch" class="search-bar">
       <input v-model="searchFilters.id" type="text" placeholder="ID..." class="search-input input-id" />
       <input v-model="searchFilters.login" type="text" placeholder="Login..." class="search-input" />

@@ -16,7 +16,7 @@
           <label for="username">Nom d'utilisateur</label>
           <input 
             id="username"
-            v-model="form.username" 
+            v-model="form.login" 
             type="text" 
             required
             :disabled="loading || deleting"
@@ -112,15 +112,24 @@
 </template>
 
 <script setup lang="ts">
+import type { User, UserUpdatePayload } from '@/types'
 import { ref, onMounted } from 'vue'
 import { isAxiosError } from 'axios'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import api from '../../services/api'
 
-const authStore = useAuthStore()
+interface ProfileForm {
+  id?: number
+  login: string
+  email: string
+  verified: boolean
+  newPassword: string
+}
 
+const authStore = useAuthStore()
 const router = useRouter()
+
 const loading = ref(false)
 const deleting = ref(false)
 const showDeleteModal = ref(false)
@@ -128,26 +137,27 @@ const sendingVerification = ref(false)
 const errorMessage = ref('')
 const infoMessage = ref('')
 
-const form = ref({
-  id: null,
-  username: '',
+const form = ref<ProfileForm>({
+  id: undefined,
+  login: '',
   email: '',
   verified: false,
   newPassword: ''
 })
 
 onMounted(async () => {
-  try {
-    const response = await api.get(`/users/${authStore.userId}`)
+  if (!authStore.userId) return
 
-    const data = response.data
+  try {
+    const { data } = await api.get<User>(`/users/${authStore.userId}`)
+
     form.value.id = data.id
-    form.value.username = data.login
+    form.value.login = data.login
     form.value.email = data.email
-    form.value.verified = data.verified
+    form.value.verified = data.verified ?? false
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue."
+      errorMessage.value = "Une erreur est survenue lors de la récupération du profil."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
     }
@@ -155,13 +165,15 @@ onMounted(async () => {
 })
 
 const handleUpdateProfile = async () => {
+  if (!form.value.id) return
+
   loading.value = true
   errorMessage.value = ''
   infoMessage.value = ''
   
   try {
-    const payload: { login: string; email: string; password?: string } = {
-      login: form.value.username,
+    const payload: UserUpdatePayload = {
+      login: form.value.login,
       email: form.value.email
     }
 
@@ -169,16 +181,15 @@ const handleUpdateProfile = async () => {
       payload.password = form.value.newPassword
     }
 
-    const loginChanged = authStore.login !== form.value.username
+    const loginChanged = authStore.login !== form.value.login
 
-    const response = await api.patch(`/users/${form.value.id}`, payload, {
+    const { data } = await api.patch<User>(`/users/${form.value.id}`, payload, {
       headers: { 'Content-Type': 'application/merge-patch+json' }
     })
     
-    const updatedUser = response.data
-    form.value.verified = updatedUser.verified
-    form.value.username = updatedUser.login
-    form.value.email = updatedUser.email
+    form.value.verified = data.verified ?? false
+    form.value.login = data.login
+    form.value.email = data.email
 
     if (loginChanged) {
       authStore.logout()
@@ -190,7 +201,7 @@ const handleUpdateProfile = async () => {
 
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue."
+      errorMessage.value = "Une erreur est survenue lors de la mise à jour."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
     }
@@ -199,21 +210,20 @@ const handleUpdateProfile = async () => {
   }
 }
 
-// Demande de renvoi de l'e-mail de validation
 const handleResendVerification = async () => {
   sendingVerification.value = true
   errorMessage.value = ''
   infoMessage.value = ''
 
   try {
-    await api.post('/users/resend-verification', {
+    await api.post<{ message?: string }>('/users/resend-verification', {
       email: form.value.email
     })
 
     infoMessage.value = "Un nouveau lien de validation a été envoyé sur votre adresse email."
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue."
+      errorMessage.value = "Une erreur est survenue lors de l'envoi."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."
     }
@@ -223,6 +233,8 @@ const handleResendVerification = async () => {
 }
 
 const handleDeleteAccount = async () => {
+  if (!form.value.id) return
+
   deleting.value = true
   errorMessage.value = ''
   
