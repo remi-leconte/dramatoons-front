@@ -3,10 +3,6 @@
     <div class="auth-card profile-card">
       <h2>Réinitialisation du mot de passe</h2>
 
-      <div v-if="successMessage" class="alert-success">
-        {{ successMessage }}
-      </div>
-
       <div v-if="errorMessage" class="error-alert">
         {{ errorMessage }}
       </div>
@@ -49,7 +45,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import type { ResetPasswordPayload } from '@/types'
+import { ref, computed } from 'vue'
 import { isAxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
@@ -57,18 +54,23 @@ import api from '../../services/api'
 const route = useRoute()
 const router = useRouter()
 
-const token = route.query.token
+const loading = ref(false)
+const errorMessage = ref('')
+
+const token = computed<string | null>(() => {
+  const queryToken = route.query.token
+  if (Array.isArray(queryToken)) return queryToken[0] ?? null
+  return queryToken ?? null
+})
 
 const newPassword = ref('')
 const confirmPassword = ref('')
 
-const loading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-
 const handleResetPassword = async () => {
-  errorMessage.value = ''
-  successMessage.value = ''
+  if (!token.value) {
+    errorMessage.value = "Le jeton de réinitialisation est manquant."
+    return
+  }
 
   if (newPassword.value !== confirmPassword.value) {
     errorMessage.value = "Les mots de passe ne correspondent pas."
@@ -81,13 +83,15 @@ const handleResetPassword = async () => {
   }
 
   loading.value = true
+  errorMessage.value = ''
 
   try {
-    await api.post('/users/reset-password', {
-      token: token,
+    const payload: ResetPasswordPayload = {
+      token: token.value,
       password: newPassword.value
-    })
+    }
 
+    await api.post('/users/reset-password', payload)
     router.push({ path: '/login', query: { status: 'resetPassword' } })
   } catch (error) {
     if (isAxiosError(error) && error.response) {

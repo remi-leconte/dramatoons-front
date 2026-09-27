@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import type { Webtoon, WebtoonPayload, Progress, ProgressPayload } from '@/types';
+import api from '../../services/api.ts'
 import { ref, computed, watch, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
-import api from '../../services/api.ts'
 import { useAuthStore } from '../../stores/auth.ts'
-
+import { createDefaultProgress } from '@/types/progress'
+import { createDefaultWebtoon } from '@/types/webtoon'
 import WebtoonCoverUploader from './WebtoonCoverUploader.vue'
 import WebtoonUserProgressForm from './WebtoonUserProgressForm.vue'
 
-import type { Webtoon } from '@/types/webtoon';
 
 const props = defineProps({
   webtoon: {
@@ -32,24 +33,13 @@ const isEditingTitle = ref(false)
 
 watch(() => props.webtoon, (newWebtoon) => {
   if (newWebtoon) {
-    const cloned = JSON.parse(JSON.stringify(newWebtoon)) as Webtoon
+    const cloned: Webtoon = structuredClone(newWebtoon)
     if (!cloned.userProgress) {
-      cloned.userProgress = { bookmark: null, rate: null, state: null, id: null }
+      cloned.userProgress = createDefaultProgress()
     }
     localWebtoon.value = cloned
   } else {
-    localWebtoon.value = {
-      id: null,
-      title: '',
-      status: 'ongoing',
-      publish: false,
-      chapter: 0,
-      image: '',
-      updated: null,
-      averageRating: null,
-      readersCount: 0,
-      userProgress: { bookmark: null, rate: null, state: null, id: null }
-    }
+    localWebtoon.value = createDefaultWebtoon()
   }
 
   errorMessage.value = ''
@@ -61,13 +51,13 @@ const validateInputs = () => {
   if (!localWebtoon.value?.userProgress) return
   const progress = localWebtoon.value.userProgress
 
-  if (progress.bookmark !== null && !isNaN(progress.bookmark)) {
-    if (progress.bookmark < 0) progress.bookmark = 0
+  if (progress.bookmark !== null && progress.bookmark !== undefined) {
+    if (isNaN(progress.bookmark) || progress.bookmark < 0) progress.bookmark = 0
   }
 
-  if (progress.rate !== null && !isNaN(progress.rate)) {
-    if (progress.rate > 10) progress.rate = 10
-    if (progress.rate < 0) progress.rate = 0
+  if (progress.rate !== null && progress.rate !== undefined) {
+    if (isNaN(progress.rate)) progress.rate = null
+    else progress.rate = Math.min(10, Math.max(0, progress.rate))
   }
 }
 
@@ -87,8 +77,8 @@ const saveModalData = async () => {
   try {
     if (isEditMode.value && localWebtoon.value) {
       // webtoon_user
-      const progress = localWebtoon.value.userProgress ||= { id: null, bookmark: null, rate: null, state: null }
-      const userProgressPayload = {
+      const progress = localWebtoon.value.userProgress ||= createDefaultProgress()
+      const userProgressPayload: ProgressPayload = {
         state: progress.state ?? null,
         rate: progress.rate ?? null,
         bookmark: progress.bookmark ?? null
@@ -99,14 +89,13 @@ const saveModalData = async () => {
           headers: { 'Content-Type': 'application/merge-patch+json' }
         })
       } else {
-        const response = await api.post('/webtoon_users', {
+        const payload: ProgressPayload = {
           webtoon: `/webtoons/${localWebtoon.value.id}`,
           ...userProgressPayload
-        }, {
+        }
+        await api.post('/webtoon_users', payload, {
           headers: { 'Content-Type': 'application/ld+json' }
         })
-        
-        progress.id = response.data.id
       }
 
       if (isCreator.value) {
@@ -120,28 +109,30 @@ const saveModalData = async () => {
         }
 
         // webtoon
-        await api.patch(`/webtoons/${localWebtoon.value.id}`, {
+        const webtoonPayload: WebtoonPayload = {
           title: localWebtoon.value.title,
           status: localWebtoon.value.status,
           publish: localWebtoon.value.publish
-        }, {
+        }
+
+        await api.patch(`/webtoons/${localWebtoon.value.id}`, webtoonPayload, {
           headers: { 'Content-Type': 'application/merge-patch+json' }
         })
       }
 
-      const refreshedResponse = await api.get(`/webtoons/${localWebtoon.value.id}`)
+      const refreshedResponse = await api.get<Webtoon>(`/webtoons/${localWebtoon.value.id}`)
       emit('saved', { ...refreshedResponse.data, userProgress: localWebtoon.value.userProgress })
     } else {
       // webtoon
-      const response = await api.post('/webtoons', {
+      const webtoonPayload: WebtoonPayload = {
         title: localWebtoon.value.title,
         status: localWebtoon.value.status,
         publish: localWebtoon.value.publish
-      }, {
+      }
+
+      const { data: createdWebtoon } = await api.post<Webtoon>('/webtoons', webtoonPayload, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
-
-      const createdWebtoon = response.data
 
       // cover
       if (selectedFile.value) {
@@ -155,12 +146,14 @@ const saveModalData = async () => {
 
       // webtoon_user
       if (authStore.isAuthenticated && (localWebtoon.value.userProgress?.state || localWebtoon.value.userProgress?.bookmark || localWebtoon.value.userProgress?.rate)) {
-        const progressResponse = await api.post('/webtoon_users', {
+        const initialProgressPayload: ProgressPayload = {
           webtoon: `/webtoons/${createdWebtoon.id}`,
           state: localWebtoon.value.userProgress.state ?? null,
           rate: localWebtoon.value.userProgress.rate ?? null,
           bookmark: localWebtoon.value.userProgress.bookmark ?? null
-        }, {
+        }
+
+        const progressResponse = await api.post<Progress>('/webtoon_users', initialProgressPayload, {
           headers: { 'Content-Type': 'application/ld+json' }
         })
         createdWebtoon.userProgress = progressResponse.data

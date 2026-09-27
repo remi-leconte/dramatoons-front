@@ -1,21 +1,24 @@
 <script setup lang="ts">
+import type { User, Progress, HydraCollection } from '@/types'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth.ts'
 import api from '../../services/api'
 
-import type { Progress } from '@/types/progress';
-
 const route = useRoute()
 const router = useRouter()
 const userId = route.params.id
 
-const user = ref({ 
-  login: '', 
-  email: '', 
-  roles: [] as string[], 
-  lastLogin: null as string | null 
+const user = ref<User>({
+  id: Number(userId),
+  login: '',
+  email: '',
+  roles: [],
+  verified: false,
+  publish: false,
+  lastLogin: null
 })
+
 const initialEmail = ref('')
 const selectedRole = ref<string>('ROLE_USER')
 const userProgressions = ref<Progress[]>([]);
@@ -45,13 +48,13 @@ const getPrimaryRole = (roles: string[] = []): string => {
 const fetchData = async () => {
   loading.value = true
   try {
-    const userRes = await api.get(`/users/${userId}`)
+    const userRes = await api.get<User>(`/users/${userId}`)
     user.value = userRes.data
     initialEmail.value = userRes.data.email
     selectedRole.value = getPrimaryRole(userRes.data.roles)
     
-    const progressRes = await api.get(`/webtoon_users?reader=${userId}`)
-    userProgressions.value = progressRes.data['hydra:member'] || progressRes.data.member || []
+    const progressRes = await api.get<HydraCollection<Progress>>(`/webtoon_users?reader=/users/${userId}`)
+    userProgressions.value = progressRes.data['hydra:member'] ?? progressRes.data.member ?? []
   } catch (error) {
     console.error('Erreur lors de la récupération du détail :', error)
   } finally {
@@ -64,7 +67,7 @@ const handleUpdate = async () => {
   try {
     const emailChanged = user.value.email !== initialEmail.value
 
-    const payload: Record<string, string | string[]> = {
+    const payload: Partial<User> = {
       login: user.value.login,
       email: user.value.email
     }
@@ -163,7 +166,7 @@ onMounted(() => fetchData())
             <td>{{ prog.rate || '-' }}</td>
             <td>{{ prog.bookmark || '-' }}</td>
             <td class="action-col">
-                <router-link :to="`/admin/webtoons/${prog.webtoon.id}`">{{prog.webtoon.title}} →</router-link>
+                <router-link v-if="prog.webtoon?.id" :to="`/admin/webtoons/${prog.webtoon.id}`">{{prog.webtoon.title}} →</router-link>
             </td>
           </tr>
           <tr v-if="userProgressions.length === 0">

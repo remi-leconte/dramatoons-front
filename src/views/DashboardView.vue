@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import type { Webtoon, ProgressState, ProgressPayload, HydraCollection, SortByOption, SortOrderOption } from '@/types'
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../services/api'
 import { useAuthStore } from '../stores/auth'
+import { createDefaultProgress } from '@/types/progress'
 
 import WebtoonCard from '../components/WebtoonCard.vue'
 import WebtoonModal from '../components/modal/WebtoonModal.vue'
-
-import type { Webtoon } from '@/types/webtoon'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -43,9 +43,9 @@ const scrollToTop = () => {
 // Filtres de recherche
 const rawTitle = Array.isArray(route.query.title) ? route.query.title[0] : route.query.title
 const title = ref<string>(rawTitle || '')
-const status = ref('')
-const sortBy = ref('added')
-const sortOrder = ref('desc')
+const status = ref<ProgressState>('')
+const sortBy = ref<SortByOption>('added')
+const sortOrder = ref<SortOrderOption>('desc')
 const itemsPerPage = ref(20)
 const isInitializing = ref(true)
 
@@ -87,9 +87,9 @@ const handleModalDelete = (deletedId: number) => {
 }
 
 // Changement de statut direct depuis une carte de la grille
-const changeStatus = async (webtoon: Webtoon, newState: string) => {
+const changeStatus = async (webtoon: Webtoon, newState: ProgressState) => {
   if (!webtoon.userProgress) {
-    webtoon.userProgress = { bookmark: null, rate: null, state: null, id: null }
+    webtoon.userProgress = createDefaultProgress()
   }
 
   const previousState = webtoon.userProgress.state
@@ -97,16 +97,18 @@ const changeStatus = async (webtoon: Webtoon, newState: string) => {
 
   try {
     if (webtoon.userProgress.id) {
-      await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, {
-        state: newState
-      }, {
+      const payload: ProgressPayload = { state: newState }
+      
+      await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, payload, {
         headers: { 'Content-Type': 'application/merge-patch+json' }
       })
     } else {
-      const response = await api.post('/webtoon_users', {
+      const payload: ProgressPayload = {
         webtoon: `/webtoons/${webtoon.id}`,
         state: newState
-      }, {
+      }
+      
+      const response = await api.post('/webtoon_users', payload, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
       
@@ -123,14 +125,13 @@ const fetchWebtoons = async () => {
 
   loading.value = true
   try {
-    const response = await api.get(nextPageUrl.value)
+    const { data } = await api.get<HydraCollection<Webtoon>>(nextPageUrl.value)
 
-    const data = response.data
-    const newItems = data.member || data['hydra:member'] || []
+    const newItems = data['hydra:member'] ?? data.member ?? []
     webtoons.value = [...webtoons.value, ...newItems]
 
-    const view = data['hydra:view'] || data.view
-    nextPageUrl.value = view?.['hydra:next'] || view?.next || null
+    const view = data['hydra:view']
+    nextPageUrl.value = view?.['hydra:next'] ?? null
   } catch (error) {
     console.error(error)
     nextPageUrl.value = null
