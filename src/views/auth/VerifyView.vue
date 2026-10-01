@@ -25,8 +25,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { VerifyPayload } from '@/types'
 import { ref, onMounted } from 'vue'
+import { isAxiosError } from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import api from '../../services/api'
 
@@ -38,7 +40,8 @@ const errorMessage = ref('')
 const successMessage = ref('')
 
 onMounted(async () => {
-  const token = route.query.token
+  const queryToken = route.query.token
+  const token = Array.isArray(queryToken) ? queryToken[0] : queryToken
 
   if (!token) {
     errorMessage.value = "Le jeton de vérification est manquant."
@@ -47,14 +50,13 @@ onMounted(async () => {
   }
 
   try {
-    await api.post('/users/verify', {
-      token: token
-    })
+    const payload: VerifyPayload = { token }
+    await api.post<{ message?: string }>('/users/verify', payload)
     
     router.push({ path: '/login', query: { status: 'verified' } })
 
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       errorMessage.value = "Une erreur est survenue."
     } else {
       errorMessage.value = "Impossible de joindre le serveur."

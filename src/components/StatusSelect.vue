@@ -1,5 +1,14 @@
-<script>
-const STATUS_OPTIONS = new Map([
+<script lang="ts">
+import type { ProgressState } from '@/types'
+
+type StatusOptionKey = ProgressState | null
+
+interface StatusOptionValue {
+  label: string
+  class: string
+}
+
+const STATUS_OPTIONS = new Map<StatusOptionKey, StatusOptionValue>([
   [null, { label: 'Aucun', class: 'status-none' }],
   ['reading', { label: 'En cours', class: 'status-reading' }],
   ['pause', { label: 'En pause', class: 'status-paused' }],
@@ -8,29 +17,33 @@ const STATUS_OPTIONS = new Map([
 ])
 </script>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({
-  state: {
-    type: String,
-    default: null
-  }
-})
-const emit = defineEmits(['update:state'])
+const props = defineProps<{
+  state?: ProgressState | null
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:state', value: StatusOptionKey): void
+}>()
 
 const isOpen = ref(false)
-const containerRef = ref(null) // Référence pour le click exterieur
+const containerRef = ref<HTMLElement | null>(null)
 
-// Ferme le menu si on clique n'importe où ailleurs sur la page
-const closeDropdown = (e) => {
-  if (containerRef.value && !containerRef.value.contains(e.target)) {
+const closeDropdown = (e: MouseEvent) => {
+  if (containerRef.value && !containerRef.value.contains(e.target as Node)) {
     isOpen.value = false
   }
 }
 
-const currentStatus = computed(() => STATUS_OPTIONS.get(props.state) || STATUS_OPTIONS.get(null))
-const selectStatus = (statusId) => {
+const defaultStatus: StatusOptionValue = { label: 'Aucun', class: 'status-none' }
+
+const currentStatus = computed<StatusOptionValue>(() => {
+  return STATUS_OPTIONS.get(props.state ?? null) ?? defaultStatus
+})
+
+const selectStatus = (statusId: StatusOptionKey) => {
   emit('update:state', statusId)
   isOpen.value = false
 }
@@ -48,8 +61,7 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
       :class="[currentStatus.class, { 'is-active': isOpen }]"
       :title="`Statut : ${currentStatus.label}`"
     >
-      <slot :label="currentStatus.label">
-        </slot>
+      <slot :label="currentStatus.label"></slot>
       <span class="arrow"></span>
     </button>
 

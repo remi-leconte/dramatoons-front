@@ -1,19 +1,21 @@
-<script setup>
+<script setup lang="ts">
+import type { Webtoon, ProgressState, ProgressPayload, HydraCollection, SortByOption, SortOrderOption } from '@/types'
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../services/api'
 import { useAuthStore } from '../stores/auth'
+import { createDefaultProgress } from '@/types/progress'
 
 import WebtoonCard from '../components/WebtoonCard.vue'
 import WebtoonModal from '../components/modal/WebtoonModal.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
-const webtoons = ref([])
+const webtoons = ref<Webtoon[]>([])
 const loading = ref(false)
-const nextPageUrl = ref('/webtoons')
-const observerTarget = ref(null) // Référence l'élément HTML invisible en bas de page utilisé par l'IntersectionObserver pour déclencher le scroll infini
-const selectedWebtoon = ref(null)
+const nextPageUrl = ref<string | null>('/webtoons')
+const observerTarget = ref<HTMLElement | null>(null) // Référence l'élément HTML invisible en bas de page utilisé par l'IntersectionObserver pour déclencher le scroll infini
+const selectedWebtoon = ref<Webtoon | null>(null)
 const isModalOpen = ref(false)
 
 const showScrollTop = ref(false)
@@ -39,21 +41,22 @@ const scrollToTop = () => {
 }
 
 // Filtres de recherche
-const title = ref(route.query.title || '')
-const status = ref('')
-const sortBy = ref('added')
-const sortOrder = ref('desc')
+const rawTitle = Array.isArray(route.query.title) ? route.query.title[0] : route.query.title
+const title = ref<string>(rawTitle || '')
+const status = ref<ProgressState>('')
+const sortBy = ref<SortByOption>('added')
+const sortOrder = ref<SortOrderOption>('desc')
 const itemsPerPage = ref(20)
 const isInitializing = ref(true)
 
 const initPreferences = async () => {
-  status.value = authStore.preferences.status || ''
-  sortBy.value = authStore.preferences.sortBy || 'added'
-  sortOrder.value = authStore.preferences.sortOrder || 'desc'
-  itemsPerPage.value = authStore.preferences.itemsPerPage || 20
+  status.value = authStore.preferences.searchStatus || ''
+  sortBy.value = authStore.preferences.searchSortBy || 'added'
+  sortOrder.value = authStore.preferences.searchSortOrder || 'desc'
+  itemsPerPage.value = authStore.preferences.searchItemsPerPage || 20
 }
 
-const openModal = (webtoon = null) => {
+const openModal = (webtoon: Webtoon | null = null) => {
   selectedWebtoon.value = webtoon
   isModalOpen.value = true
 }
@@ -64,29 +67,29 @@ const closeModal = () => {
 }
 
 // Met à jour les données de la grille après une sauvegarde réussie dans la popup
-const handleModalSave = (updatedWebtoon) => {
-  const originalWebtoon = webtoons.value.find(w => w.id === updatedWebtoon.id)
-  if (originalWebtoon) {
-    Object.assign(originalWebtoon, updatedWebtoon)
+const handleModalSave = (updatedWebtoon: Webtoon) => {
+  const index = webtoons.value.findIndex(w => w.id === updatedWebtoon.id)
+  if (index !== -1) {
+    webtoons.value[index] = updatedWebtoon
   }
   closeModal()
 }
 
 // Insère le nouveau Webtoon créé au début de la liste
-const handleWebtoonCreated = (newWebtoon) => {
+const handleWebtoonCreated = (newWebtoon: Webtoon) => {
   webtoons.value.unshift(newWebtoon)
   closeModal()
 }
 
 // Supprime le Webtoon de la liste
-const handleModalDelete = (deletedId) => {
+const handleModalDelete = (deletedId: number) => {
   webtoons.value = webtoons.value.filter(item => item.id !== deletedId)
 }
 
 // Changement de statut direct depuis une carte de la grille
-const changeStatus = async (webtoon, newState) => {
+const changeStatus = async (webtoon: Webtoon, newState: ProgressState) => {
   if (!webtoon.userProgress) {
-    webtoon.userProgress = { bookmark: null, rate: null, state: null, id: null }
+    webtoon.userProgress = createDefaultProgress()
   }
 
   const previousState = webtoon.userProgress.state
@@ -94,16 +97,18 @@ const changeStatus = async (webtoon, newState) => {
 
   try {
     if (webtoon.userProgress.id) {
-      await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, {
-        state: newState
-      }, {
+      const payload: ProgressPayload = { state: newState }
+      
+      await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, payload, {
         headers: { 'Content-Type': 'application/merge-patch+json' }
       })
     } else {
-      const response = await api.post('/webtoon_users', {
+      const payload: ProgressPayload = {
         webtoon: `/webtoons/${webtoon.id}`,
         state: newState
-      }, {
+      }
+      
+      const response = await api.post('/webtoon_users', payload, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
       
@@ -120,14 +125,13 @@ const fetchWebtoons = async () => {
 
   loading.value = true
   try {
-    const response = await api.get(nextPageUrl.value)
+    const { data } = await api.get<HydraCollection<Webtoon>>(nextPageUrl.value)
 
-    const data = response.data
-    const newItems = data.member || data['hydra:member'] || []
+    const newItems = data['hydra:member'] ?? data.member ?? []
     webtoons.value = [...webtoons.value, ...newItems]
 
-    const view = data['hydra:view'] || data.view
-    nextPageUrl.value = view?.['hydra:next'] || view?.next || null
+    const view = data['hydra:view']
+    nextPageUrl.value = view?.['hydra:next'] ?? null
   } catch (error) {
     console.error(error)
     nextPageUrl.value = null
@@ -138,10 +142,11 @@ const fetchWebtoons = async () => {
 }
 
 const checkAndLoadMore = () => {
-  if (!observerTarget.value || !nextPageUrl.value || loading.value) return
+  const target = observerTarget.value
+  if (!target || !nextPageUrl.value || loading.value) return
 
   nextTick(() => {
-    const rect = observerTarget.value.getBoundingClientRect()
+    const rect = target.getBoundingClientRect()
     // Si le haut de l'élément cible est au-dessus du bas de la fenêtre
     if (rect.top <= window.innerHeight) {
       fetchWebtoons()
@@ -152,7 +157,6 @@ const checkAndLoadMore = () => {
 const resetAndFetchWebtoons = async () => {
   webtoons.value = []
   
-  // On injecte le paramètre de titre dans la première URL
   const queryParams = new URLSearchParams()
   if (title.value) {
     queryParams.append('title', title.value)
@@ -168,25 +172,26 @@ const resetAndFetchWebtoons = async () => {
 watch([title, status, sortBy, sortOrder, itemsPerPage], async () => {
   if (isInitializing.value) return
 
-  await authStore.savePreferences({
+await authStore.savePreferences({
     searchStatus: status.value,
     searchSortBy: sortBy.value,
     searchSortOrder: sortOrder.value,
     searchItemsPerPage: itemsPerPage.value
   })
-
   await resetAndFetchWebtoons()
 }, { deep: true })
 
 // Mettre à jour le champ lorsque le titre change dans l'URL
 watch(() => route.query.title, (newTitle) => {
-  if (title.value !== (newTitle || '')) {
-    title.value = newTitle || ''
+  const parsedTitle = (Array.isArray(newTitle) ? newTitle[0] : newTitle) || ''
+  
+  if (title.value !== parsedTitle) {
+    title.value = parsedTitle
   }
 })
 
 // Instance de l'IntersectionObserver pour le scroll infini
-let observer = null
+let observer: IntersectionObserver | null = null
 
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
@@ -195,13 +200,13 @@ onMounted(async () => {
   await authStore.fetchUserProfile()
   await initPreferences()
   
-  title.value = route.query.title || ''
+  const queryTitle = route.query.title
+  title.value = (Array.isArray(queryTitle) ? queryTitle[0] : queryTitle) || ''
+  resetAndFetchWebtoons()
   isInitializing.value = false
 
-  resetAndFetchWebtoons()
-
   observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
+    if (entries[0]?.isIntersecting) {
       fetchWebtoons()
     }
   }, { threshold: 0.1 })
@@ -219,6 +224,13 @@ onUnmounted(() => {
   <main class="content" :class="{ 'content-dimmed': isModalOpen }">
     <div v-if="authStore.isAuthenticated" class="admin-link-container">
       <button class="admin-link" @click="openModal(null)">Créer un Webtoon</button>
+      
+      <template v-if="authStore.isAdmin">
+        <span class="admin-separator">|</span>
+        <router-link to="/admin/users" class="admin-link">Admin Users</router-link>
+        <span class="admin-separator">|</span>
+        <router-link to="/admin/webtoons" class="admin-link">Admin Webtoons</router-link>
+      </template>
     </div>
     <form v-if="authStore.isAuthenticated" class="filter-bar" @submit.prevent>
       <div class="filter-group">
@@ -306,8 +318,28 @@ onUnmounted(() => {
 .content-dimmed { filter: blur(4px); opacity: 0.3; pointer-events: none; }
 
 /* Admin */
-.admin-link-container { display: flex; margin-bottom: 1rem; }
-.admin-link { background: none; border: none; color: var(--primary-red); font-weight: bold; font-size: 1rem; cursor: pointer; text-decoration: underline; padding: 0; }
+.admin-link-container { 
+  display: flex; 
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem; 
+}
+
+.admin-link { 
+  background: none; 
+  border: none; 
+  color: var(--primary-red); 
+  font-weight: bold; 
+  font-size: 1rem; 
+  cursor: pointer; 
+  text-decoration: underline; 
+  padding: 0; 
+}
+
+.admin-separator {
+  color: var(--border-input);
+  font-weight: normal;
+}
 
 /* Grille */
 .webtoon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 12px; }

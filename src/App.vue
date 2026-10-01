@@ -9,6 +9,7 @@
       <!-- Formulaire de recherche -->
       <form v-if="authStore.isAuthenticated" class="search-form" @submit.prevent="handleSearch">
         <input 
+          id="searchTitlePrincipal" 
           v-model="searchTitle" 
           type="text" 
           placeholder="Rechercher un titre..." 
@@ -60,7 +61,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useAuthStore } from './stores/auth'
 import { useRouter, useRoute } from 'vue-router'

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useAuthStore } from '../stores/auth'
 import { COVER_BASE_URL } from '../services/api'
 import StatusSelect from './StatusSelect.vue'

@@ -6,8 +6,6 @@ const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}`,
   headers: {
     'Accept': 'application/ld+json',
-    'Content-Type': 'application/ld+json',
-    // Injection de la Basic Auth pour le Staging si la variable existe
     ...(import.meta.env.VITE_STAGING_AUTH && {
       'X-Staging-Auth': `Basic ${btoa(import.meta.env.VITE_STAGING_AUTH)}`
     })
@@ -21,11 +19,15 @@ let isRefreshingFailed = false
 api.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore()
-    
+
     if (authStore.token) {
       config.headers.Authorization = `Bearer ${authStore.token}`
     }
-    
+
+    if (['post', 'put'].includes(config.method?.toLowerCase() ?? '') && !config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/ld+json'
+    }
+
     return config
   },
   (error) => {
@@ -36,15 +38,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-
-    //console.log('--- ERREUR INTERCEPTÉE ---', error.response)
-    
     const authStore = useAuthStore()
     const originalRequest = error.config
-    const isExpiredToken = error.response && 
-                           error.response.status === 401 && 
-                           error.response.data?.message === 'Expired JWT Token'
-                           
+    const isExpiredToken = error.response &&
+      error.response.status === 401 &&
+      error.response.data?.message === 'Expired JWT Token'
+
     if (isExpiredToken && !originalRequest._retry && !isRefreshingFailed) {
       originalRequest._retry = true // Marque la requête pour éviter une boucle infinie
 
@@ -73,7 +72,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       authStore.logout()
     }
-    
+
     return Promise.reject(error)
   }
 )

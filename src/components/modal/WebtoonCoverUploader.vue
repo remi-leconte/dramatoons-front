@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { COVER_BASE_URL } from '../../services/api'
 
@@ -8,10 +8,12 @@ const props = defineProps({
   title: { type: String, default: '' }
 })
 
-const emit = defineEmits(['file-selected'])
+const emit = defineEmits<{
+  (e: 'file-selected', file: File): void
+}>()
 
-const fileInputRef = ref(null)
-const previewImage = ref(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const previewImage = ref<string | null>(null)
 
 const handleClick = () => {
   if (props.isEditable && fileInputRef.value) {
@@ -19,8 +21,9 @@ const handleClick = () => {
   }
 }
 
-const handleFileChange = (event) => {
-  const file = event.target.files[0]
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
   if (file) {
     previewImage.value = URL.createObjectURL(file)
     emit('file-selected', file)

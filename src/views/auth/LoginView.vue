@@ -51,8 +51,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { LoginPayload, LoginResponse } from '@/types'
 import { ref, watch } from 'vue'
+import { isAxiosError } from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import api from '../../services/api'
@@ -65,13 +67,20 @@ const loading = ref(false)
 const errorMessage = ref('')
 const infoMessage = ref('')
 
-const form = ref({
+interface LoginForm {
+  identifier: string;
+  password: string;
+}
+
+const form = ref<LoginForm>({
   identifier: '',
   password: ''
 })
 
+type AuthStatusQuery = 'registered' | 'verified' | 'modifiedLogin' | 'resetPassword'
+
 watch(
-  () => route?.query?.status,
+  () => route?.query?.status as AuthStatusQuery | undefined,
   (newStatus) => {
     if (newStatus === 'registered') {
       infoMessage.value = "Votre compte a bien été créé ! Un e-mail de vérification vous a été envoyé. Vous pouvez vous connecter."
@@ -91,10 +100,10 @@ const handleLogin = async () => {
   errorMessage.value = ''
   
   try {
-    const response = await api.post('/login', {
+    const response = await api.post<LoginResponse>('/login', {
       login: form.value.identifier,
       password: form.value.password
-    }, {
+    } satisfies LoginPayload, {
       headers: { 'Content-Type': 'application/json' }
     })
     const { token, refresh_token, user } = response.data
@@ -103,7 +112,7 @@ const handleLogin = async () => {
     router.push('/')
     
   } catch (error) {
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       if (error.response.status === 401) {
         errorMessage.value = "Identifiants incorrects. Veuillez réessayer."
       } else {
