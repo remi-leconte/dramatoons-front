@@ -9,6 +9,10 @@ export interface HydraView {
     'hydra:last'?: string;
     'hydra:next'?: string;
     'hydra:previous'?: string;
+    'first'?: string;
+    'last'?: string;
+    'next'?: string;
+    'previous'?: string;
 }
 
 export interface HydraCollection<T> {
@@ -18,6 +22,7 @@ export interface HydraCollection<T> {
     'hydra:member'?: T[];
     'hydra:totalItems'?: number;
     'hydra:view'?: HydraView;
+    'view'?: HydraView;
     'hydra:search'?: Record<string, unknown>;
     // Fallbacks
     member?: T[];

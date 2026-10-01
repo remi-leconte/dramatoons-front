@@ -130,8 +130,8 @@ const fetchWebtoons = async () => {
     const newItems = data['hydra:member'] ?? data.member ?? []
     webtoons.value = [...webtoons.value, ...newItems]
 
-    const view = data['hydra:view']
-    nextPageUrl.value = view?.['hydra:next'] ?? null
+    const view = data['hydra:view'] || data.view
+    nextPageUrl.value = view?.['hydra:next'] || view?.next || null
   } catch (error) {
     console.error(error)
     nextPageUrl.value = null
