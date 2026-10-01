@@ -9,7 +9,6 @@ import { createDefaultWebtoon } from '@/types/webtoon'
 import WebtoonCoverUploader from './WebtoonCoverUploader.vue'
 import WebtoonUserProgressForm from './WebtoonUserProgressForm.vue'
 
-
 const props = defineProps({
   webtoon: {
     type: Object as PropType<Webtoon | null>,
@@ -33,7 +32,7 @@ const isEditingTitle = ref(false)
 
 watch(() => props.webtoon, (newWebtoon) => {
   if (newWebtoon) {
-    const cloned: Webtoon = structuredClone(newWebtoon)
+    const cloned: Webtoon = JSON.parse(JSON.stringify(newWebtoon))
     if (!cloned.userProgress) {
       cloned.userProgress = createDefaultProgress()
     }
