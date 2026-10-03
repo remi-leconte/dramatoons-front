@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { COVER_BASE_URL } from '../services/api'
 import StatusSelect from './StatusSelect.vue'
@@ -12,15 +13,21 @@ defineProps({
 const emit = defineEmits(['status-change'])
 
 const authStore = useAuthStore()
+const hasImageError = ref(false)
 </script>
 
 <template>
   <article class="webtoon-card">
     <div class="poster-wrapper">
       <img 
+        v-if="webtoon.image && !hasImageError"
         :src="`${COVER_BASE_URL}${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`" 
         :alt="webtoon.title || 'Webtoon cover'"
+        @error="hasImageError = true"
       >
+      <div v-else class="cover-placeholder">
+        <span class="placeholder-text">{{ webtoon.title || 'Sans titre' }}</span>
+      </div>
       
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
         <StatusSelect 
