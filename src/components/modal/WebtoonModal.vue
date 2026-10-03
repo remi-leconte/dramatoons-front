@@ -294,10 +294,12 @@ const deleteWebtoon = async () => {
               <label class="switch">
                 <input 
                   type="checkbox" 
-                  :checked="localWebtoon.status === 'completed'"
+                  :checked="localWebtoon?.status === 'completed'"
                   @change="() => {
-                    localWebtoon.status = (localWebtoon?.status === 'completed' ? 'ongoing' : 'completed');
-                    onFieldChanged();
+                    if (localWebtoon) {
+                      localWebtoon.status = (localWebtoon.status === 'completed' ? 'ongoing' : 'completed');
+                      onFieldChanged();
+                    }
                   }"
                 >
                 <span class="slider round"></span>
