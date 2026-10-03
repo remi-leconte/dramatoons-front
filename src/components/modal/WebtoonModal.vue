@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Webtoon, WebtoonPayload, Progress, ProgressPayload } from '@/types';
-import api from '../../services/api.ts'
-import { ref, computed, watch, type PropType } from 'vue'
+import api, { COVER_BASE_URL } from '../../services/api.ts'
+import { ref, computed, watch, nextTick, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../../stores/auth.ts'
 import { createDefaultProgress } from '@/types/progress'
@@ -26,9 +26,18 @@ const isCreator = computed(() => {
 
 const localWebtoon = ref<Webtoon | null>(null)
 const loading = ref(false)
+const isSaving = ref(false)
 const errorMessage = ref('')
 const selectedFile = ref<File | null>(null)
 const isEditingTitle = ref(false)
+const titleInputRef = ref<HTMLInputElement | null>(null)
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const bannerUrl = computed(() => {
+  if (!localWebtoon.value?.image) return null
+  return `${COVER_BASE_URL}${localWebtoon.value.image}${localWebtoon.value.updated ? `?t=${new Date(localWebtoon.value.updated).getTime()}` : ''}`
+})
 
 watch(() => props.webtoon, (newWebtoon) => {
   if (newWebtoon) {
@@ -39,12 +48,19 @@ watch(() => props.webtoon, (newWebtoon) => {
     localWebtoon.value = cloned
   } else {
     localWebtoon.value = createDefaultWebtoon()
+    isEditingTitle.value = true
   }
 
   errorMessage.value = ''
   selectedFile.value = null
-  isEditingTitle.value = !newWebtoon
 }, { immediate: true })
+
+const startEditingTitle = () => {
+  isEditingTitle.value = true
+  nextTick(() => {
+    titleInputRef.value?.focus()
+  })
+}
 
 const validateInputs = () => {
   if (!localWebtoon.value?.userProgress) return
@@ -60,7 +76,7 @@ const validateInputs = () => {
   }
 }
 
-const saveModalData = async () => {
+const performAutoSave = async () => {
   if (!localWebtoon.value) return
 
   validateInputs()
@@ -71,11 +87,11 @@ const saveModalData = async () => {
     return
   }
 
-  loading.value = true
+  isSaving.value = true
 
   try {
-    if (isEditMode.value && localWebtoon.value) {
-      // webtoon_user
+    if (isEditMode.value) {
+      // 1. webtoon_user
       const progress = localWebtoon.value.userProgress ||= createDefaultProgress()
       const userProgressPayload: ProgressPayload = {
         state: progress.state ?? null,
@@ -92,22 +108,14 @@ const saveModalData = async () => {
           webtoon: `/webtoons/${localWebtoon.value.id}`,
           ...userProgressPayload
         }
-        await api.post('/webtoon_users', payload, {
+        const response = await api.post('/webtoon_users', payload, {
           headers: { 'Content-Type': 'application/ld+json' }
         })
+        progress.id = response.data.id
       }
 
+      // 2. webtoon
       if (isCreator.value) {
-        // cover
-        if (selectedFile.value) {
-          const formData = new FormData()
-          formData.append('file', selectedFile.value)
-          await api.post(`/webtoons/${localWebtoon.value.id}/cover`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
-        }
-
-        // webtoon
         const webtoonPayload: WebtoonPayload = {
           title: localWebtoon.value.title,
           status: localWebtoon.value.status,
@@ -122,7 +130,6 @@ const saveModalData = async () => {
       const refreshedResponse = await api.get<Webtoon>(`/webtoons/${localWebtoon.value.id}`)
       emit('saved', { ...refreshedResponse.data, userProgress: localWebtoon.value.userProgress })
     } else {
-      // webtoon
       const webtoonPayload: WebtoonPayload = {
         title: localWebtoon.value.title,
         status: localWebtoon.value.status,
@@ -133,7 +140,6 @@ const saveModalData = async () => {
         headers: { 'Content-Type': 'application/ld+json' }
       })
 
-      // cover
       if (selectedFile.value) {
         const formData = new FormData()
         formData.append('file', selectedFile.value)
@@ -143,7 +149,6 @@ const saveModalData = async () => {
         createdWebtoon.image = coverResponse.data.image || createdWebtoon.image
       }
 
-      // webtoon_user
       if (authStore.isAuthenticated && (localWebtoon.value.userProgress?.state || localWebtoon.value.userProgress?.bookmark || localWebtoon.value.userProgress?.rate)) {
         const initialProgressPayload: ProgressPayload = {
           webtoon: `/webtoons/${createdWebtoon.id}`,
@@ -159,15 +164,43 @@ const saveModalData = async () => {
       }
 
       emit('created', createdWebtoon)
-      emit('close')
     }
   } catch (error) {
     if (isAxiosError(error)) {
       console.error(error)
-      errorMessage.value = error.response ? "Une erreur est survenue." : "Impossible de joindre le serveur."
+      errorMessage.value = error.response ? "Une erreur est survenue lors de la sauvegarde." : "Impossible de joindre le serveur."
     }
   } finally {
-    loading.value = false
+    isSaving.value = false
+  }
+}
+
+const onFieldChanged = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    performAutoSave()
+  }, 500)
+}
+
+const handleCoverSelected = async (file: File) => {
+  selectedFile.value = file
+  if (isEditMode.value && localWebtoon.value?.id) {
+    isSaving.value = true
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const coverResponse = await api.post(`/webtoons/${localWebtoon.value.id}/cover`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      localWebtoon.value.image = coverResponse.data.image || localWebtoon.value.image
+      localWebtoon.value.updated = new Date().toISOString()
+      emit('saved', localWebtoon.value)
+    } catch (e) {
+      console.error(e)
+      errorMessage.value = "Erreur lors de l'envoi de l'image."
+    } finally {
+      isSaving.value = false
+    }
   }
 }
 
@@ -194,7 +227,13 @@ const deleteWebtoon = async () => {
 
 <template>
   <div class="modal-overlay" @click="emit('close')">
-    <div class="modal-container" @click.stop>
+    <div class="modal-container modal-has-banner" @click.stop>
+      <div v-if="bannerUrl" class="modal-banner">
+        <img :src="bannerUrl" alt="" />
+        <div class="banner-gradient"></div>
+      </div>
+
+      <span v-if="isSaving" class="saving-indicator">Sauvegarde...</span>
       <button class="modal-close" @click="emit('close')">&times;</button>
       
       <div v-if="localWebtoon" class="modal-content">
@@ -202,7 +241,7 @@ const deleteWebtoon = async () => {
           :image-path="localWebtoon.updated ? `${localWebtoon.image}?t=${new Date(localWebtoon.updated).getTime()}`: localWebtoon.image"
           :title="localWebtoon.title"
           :is-editable="isCreator"
-          @file-selected="(file) => selectedFile = file"
+          @file-selected="handleCoverSelected"
         />
 
         <div class="modal-right-info">
@@ -210,14 +249,27 @@ const deleteWebtoon = async () => {
 
           <div class="title-container">
             <div v-if="isEditingTitle || !isEditMode" class="modal-form form-group">
-              <input 
-                id="webtoon-title" 
-                type="text" 
-                v-model="localWebtoon.title"
-                placeholder="Titre du webtoon"
-                class="app-input-field input-title-full"
-                @keyup.enter="isEditingTitle = false"
-              >
+              <div class="field-with-check">
+                <input 
+                  ref="titleInputRef"
+                  id="webtoon-title" 
+                  type="text" 
+                  v-model="localWebtoon.title"
+                  placeholder="Titre du webtoon"
+                  class="app-input-field input-title-full"
+                  @input="onFieldChanged"
+                  @keyup.enter="isEditingTitle = false"
+                >
+                <button 
+                  v-if="isEditMode"
+                  type="button" 
+                  class="btn-confirm-title" 
+                  title="Valider le titre"
+                  @click="isEditingTitle = false"
+                >
+                  ✓
+                </button>
+              </div>
             </div>
             <div v-else class="title-display">
               <h2>{{ localWebtoon.title }}</h2>
@@ -226,32 +278,41 @@ const deleteWebtoon = async () => {
                 type="button" 
                 class="btn-edit-title" 
                 title="Modifier le titre"
-                @click="isEditingTitle = true"
+                @click="startEditingTitle"
               >
-                ✏️
+                Modifier
               </button>
             </div>
           </div>
 
           <div v-if="isCreator" class="toggles-section">
             <div class="toggle-row">
-              <span class="toggle-label">Webtoon terminé :</span>
+              <span class="toggle-label">
+                <span class="status-indicator" :class="{ 'is-completed': localWebtoon.status === 'completed' }"></span>
+                Série terminée
+              </span>
               <label class="switch">
                 <input 
                   type="checkbox" 
-                  :checked="localWebtoon.status === 'completed'"
-                  @change="localWebtoon.status = (($event.target as HTMLInputElement).checked ? 'completed' : 'ongoing')"
+                  :checked="localWebtoon?.status === 'completed'"
+                  @change="() => {
+                    if (localWebtoon) {
+                      localWebtoon.status = (localWebtoon.status === 'completed' ? 'ongoing' : 'completed');
+                      onFieldChanged();
+                    }
+                  }"
                 >
                 <span class="slider round"></span>
               </label>
             </div>
 
             <div v-if="authStore.isAdmin" class="toggle-row">
-              <span class="toggle-label">Webtoon publié :</span>
+              <span class="toggle-label">Publier au catalogue</span>
               <label class="switch">
                 <input 
                   type="checkbox" 
                   v-model="localWebtoon.publish"
+                  @change="onFieldChanged"
                 >
                 <span class="slider round"></span>
               </label>
@@ -271,10 +332,9 @@ const deleteWebtoon = async () => {
             :loading="loading"
             :is-edit-mode="isEditMode"
             :is-creator="isCreator"
-            :readersCount="localWebtoon.readersCount ?? 0"
+            :readers-count="localWebtoon.readersCount ?? 0"
             :publish="localWebtoon.publish"
-            @save="saveModalData"
-            @cancel="emit('close')"
+            @change="onFieldChanged"
             @delete="deleteWebtoon"
             @validate="validateInputs"
           />
@@ -288,43 +348,146 @@ const deleteWebtoon = async () => {
 </template>
 
 <style scoped>
-.modal-close { position: absolute; top: 5px; right: 12px; background: none; border: none; color: #aaa; font-size: 1.8rem; cursor: pointer; z-index: 10; }
-.modal-content { display: flex; flex-direction: column; gap: 20px; margin-top: 10px; }
+.modal-has-banner {
+  overflow: hidden;
+  padding-top: 0;
+}
+
+.modal-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.modal-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(20px) brightness(0.6);
+  transform: scale(1.2);
+}
+
+.banner-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(24, 24, 24, 0.2) 0%, var(--bg-dark) 100%);
+}
+
+.saving-indicator {
+  position: absolute;
+  top: 12px;
+  left: 15px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.modal-close { 
+  position: absolute; 
+  top: 8px; 
+  right: 12px; 
+  background: rgba(0, 0, 0, 0.4); 
+  border: none; 
+  color: #fff; 
+  font-size: 1.8rem; 
+  cursor: pointer; 
+  z-index: 10; 
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.modal-content { 
+  position: relative; 
+  z-index: 1; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; 
+  margin-top: 50px; 
+}
 
 .modal-right-info { flex: 1; }
-.modal-right-info h2 { margin: 0 0 8px 0; font-size: 1.4rem; }
+.modal-right-info h2 { margin: 0 0 8px 0; font-size: 1.4rem; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
 .modal-stats { display: flex; flex-wrap: wrap; gap: 15px; font-size: 0.85rem; color: #ddd; margin-top: 10px; }
 .modal-separator { border: 0; border-top: 1px solid var(--border-color); margin: 15px 0; }
 
 .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
 
-.input-title-full { width: 100%; padding: 0 12px; }
+.field-with-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.input-title-full { flex: 1; padding: 0 12px; }
+
+.btn-confirm-title {
+  background: transparent;
+  border: none;
+  color: #4CAF50;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 0 6px;
+}
 
 /* Conteneur des Toggles */
 .toggles-section {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 15px;
+  flex-wrap: wrap;
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-input);
   margin-bottom: 15px;
 }
 
 .toggle-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
 .toggle-label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #ddd;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--status-reading);
+  display: inline-block;
+}
+
+.status-indicator.is-completed {
+  background-color: #4CAF50;
 }
 
 /* Interrupteur On/Off (Switch) */
 .switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 38px;
+  height: 20px;
 }
 
 .switch input {
@@ -340,15 +503,15 @@ const deleteWebtoon = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #555555; /* Gris par défaut (désactivé) */
+  background-color: #555555;
   transition: .3s;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 14px;
+  width: 14px;
   left: 3px;
   bottom: 3px;
   background-color: white;
@@ -356,7 +519,7 @@ const deleteWebtoon = async () => {
 }
 
 input:checked + .slider {
-  background-color: #4CAF50; /* Vert quand activé */
+  background-color: #4CAF50;
 }
 
 input:focus + .slider {
@@ -364,11 +527,11 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(18px);
 }
 
 .slider.round {
-  border-radius: 24px;
+  border-radius: 20px;
 }
 
 .slider.round:before {
@@ -391,17 +554,18 @@ input:checked + .slider:before {
 
 .btn-edit-title {
   background: transparent;
-  border: none;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
   cursor: pointer;
-  font-size: 1rem;
-  padding: 2px 4px;
-  opacity: 0.7;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-edit-title:hover {
-  opacity: 1;
-  transform: scale(1.15);
+  color: var(--text-main);
+  background-color: var(--bg-card);
 }
 
 @media (min-width: 576px) {
