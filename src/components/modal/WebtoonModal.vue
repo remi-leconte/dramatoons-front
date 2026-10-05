@@ -46,6 +46,21 @@ const bannerUrl = computed(() => {
   return `${COVER_BASE_URL}${localWebtoon.value.image}${localWebtoon.value.updated ? `?t=${new Date(localWebtoon.value.updated).getTime()}` : ''}`
 })
 
+const creatorHasProgress = computed(() => {
+  if (!localWebtoon.value?.userProgress) return false
+  const p = localWebtoon.value.userProgress
+  return Boolean(p.id || p.state || p.rate !== null || p.bookmark !== null)
+})
+
+const canDelete = computed(() => {
+  if (!localWebtoon.value) return false
+  if (localWebtoon.value.publish || !isCreator.value || !isEditMode.value) {
+    return false
+  }
+  const maxAllowedReaders = creatorHasProgress.value ? 2 : 1
+  return (localWebtoon.value.readersCount ?? 0) < maxAllowedReaders
+})
+
 watch(() => props.webtoon, (newWebtoon) => {
   if (newWebtoon) {
     const cloned: Webtoon = JSON.parse(JSON.stringify(newWebtoon))
@@ -404,10 +419,10 @@ const deleteWebtoon = async () => {
                 </button>
               </div>
             </div>
-            <div v-else class="title-display">
+            <div v-else class="title-display" >
               <h2>{{ localWebtoon.title.title }}</h2>
-              <button 
-                v-if="isCreator" 
+              <button
+                v-if="isCreator && canDelete" 
                 type="button" 
                 class="btn-edit-title" 
                 title="Modifier le titre"
@@ -486,13 +501,13 @@ const deleteWebtoon = async () => {
             </div>
           </div>
 
-          <div v-if="isCreator" class="toggles-section">
+          <div v-if="localWebtoon.status === 'completed' || canDelete" class="toggles-section">
             <div class="toggle-row">
               <span class="toggle-label">
                 <span class="status-indicator" :class="{ 'is-completed': localWebtoon.status === 'completed' }"></span>
                 Série terminée
               </span>
-              <label class="switch">
+              <label v-if="canDelete" class="switch">
                 <input 
                   type="checkbox" 
                   :checked="localWebtoon?.status === 'completed'"
@@ -520,7 +535,7 @@ const deleteWebtoon = async () => {
             </div>
           </div>
           
-          <div v-if="isEditMode" class="modal-stats">
+          <div v-if="isEditMode && localWebtoon.readersCount !== 0 && localWebtoon.readersCount !== 1" class="modal-stats">
             <span>⭐ Note Globale : {{ localWebtoon.averageRating || '-' }}</span>
             <span>👤 Lecteurs : {{ localWebtoon.readersCount || 0 }}</span>
           </div>
@@ -531,10 +546,7 @@ const deleteWebtoon = async () => {
             v-if="authStore.isAuthenticated"
             v-model:progress="localWebtoon.userProgress"
             :loading="loading"
-            :is-edit-mode="isEditMode"
-            :is-creator="isCreator"
-            :readers-count="localWebtoon.readersCount ?? 0"
-            :publish="localWebtoon.publish"
+            :can-delete="canDelete"
             @change="onFieldChanged"
             @delete="deleteWebtoon"
             @validate="validateInputs"

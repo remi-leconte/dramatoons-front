@@ -12,12 +12,9 @@ const progress = computed({
   set: (val) => { rawProgress.value = val }
 })
 
-const props = defineProps({
+defineProps({
   loading: { type: Boolean, default: false },
-  isEditMode: { type: Boolean, default: false },
-  isCreator: { type: Boolean, default: false },
-  readersCount: { type: Number, default: 0 },
-  publish: { type: Boolean, default: false }
+  canDelete: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['delete', 'validate', 'change'])
@@ -51,19 +48,6 @@ const handleBookmarkInput = () => {
   emit('validate')
   emit('change')
 }
-
-const creatorHasProgress = computed(() => {
-  const p = progress.value
-  return Boolean(p.id || p.state || p.rate !== null || p.bookmark !== null)
-})
-
-const canDelete = computed(() => {
-  if (props.publish || !props.isCreator || !props.isEditMode) {
-    return false
-  }
-  const maxAllowedReaders = creatorHasProgress.value ? 2 : 1
-  return props.readersCount < maxAllowedReaders
-})
 
 const currentRate = computed(() => {
   return progress.value.rate !== null && progress.value.rate !== undefined 
