@@ -6,14 +6,14 @@ type StatusOptionKey = ProgressState | null
 interface StatusOptionValue {
   label: string
   class: string
+  colorVar: string
 }
 
-const STATUS_OPTIONS = new Map<StatusOptionKey, StatusOptionValue>([
-  [null, { label: 'Aucun', class: 'status-none' }],
-  ['reading', { label: 'En cours', class: 'status-reading' }],
-  ['pause', { label: 'En pause', class: 'status-paused' }],
-  ['break', { label: 'Pas intéressé', class: 'status-disinterested' }],
-  ['completed', { label: 'Terminé', class: 'status-completed' }]
+const STATUS_OPTIONS = new Map<ProgressState, StatusOptionValue>([
+  ['reading', { label: 'En cours', class: 'status-reading', colorVar: 'var(--status-reading)' }],
+  ['pause', { label: 'En pause', class: 'status-paused', colorVar: 'var(--status-paused)' }],
+  ['break', { label: 'Pas intéressé', class: 'status-disinterested', colorVar: 'var(--status-disinterested)' }],
+  ['completed', { label: 'Terminé', class: 'status-completed', colorVar: 'var(--status-completed)' }]
 ])
 </script>
 
@@ -37,14 +37,19 @@ const closeDropdown = (e: MouseEvent) => {
   }
 }
 
-const defaultStatus: StatusOptionValue = { label: 'Aucun', class: 'status-none' }
+const defaultStatus: StatusOptionValue = { label: 'Aucun', class: 'status-none', colorVar: 'var(--status-none)' }
 
 const currentStatus = computed<StatusOptionValue>(() => {
-  return STATUS_OPTIONS.get(props.state ?? null) ?? defaultStatus
+  if (!props.state) return defaultStatus
+  return STATUS_OPTIONS.get(props.state) ?? defaultStatus
 })
 
-const selectStatus = (statusId: StatusOptionKey) => {
-  emit('update:state', statusId)
+const selectStatus = (statusId: ProgressState) => {
+  if (props.state === statusId) {
+    emit('update:state', null)
+  } else {
+    emit('update:state', statusId)
+  }
   isOpen.value = false
 }
 
@@ -57,79 +62,101 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
     <button 
       type="button"
       @click.stop="isOpen = !isOpen" 
-      class="status-btn" 
-      :class="[currentStatus.class, { 'is-active': isOpen }]"
-      :title="`Statut : ${currentStatus.label}`"
+      class="status-pill-btn" 
+      :class="[currentStatus.class, { 'is-active': isOpen, 'is-empty': !state }]"
+      :title="state ? `Statut : ${currentStatus.label}` : 'Sélectionner un statut'"
     >
-      <slot :label="currentStatus.label"></slot>
-      <span class="arrow"></span>
+      <span v-if="state" class="status-label">{{ currentStatus.label }}</span>
     </button>
 
-    <ul v-if="isOpen" class="status-dropdown">
-      <li
-        v-for="([id, data], index) in STATUS_OPTIONS"
-        :key="index"
+    <div v-if="isOpen" class="status-pills-popover">
+      <button
+        v-for="([id, data]) in STATUS_OPTIONS"
+        :key="id"
+        type="button"
+        class="pill-option"
+        :class="[data.class, { active: state === id }]"
         @click.stop="selectStatus(id)"
-        :class="data.class"
       >
         {{ data.label }}
-      </li>
-    </ul>
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.custom-select-container { position: relative; width: 100%; height: 100%; }
-
-.status-btn { 
-  border: none; 
-  border-radius: 4px; 
-  color: #ffffff; 
-  display: flex; 
-  justify-content: center; 
-  align-items: center; 
-  cursor: pointer; 
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4); 
-  transition: filter 0.2s ease;
-  width: 100%;
-  height: 100%;
+.custom-select-container { 
+  position: relative; 
+  display: inline-block;
 }
 
-.status-btn .arrow { 
-  width: 0; 
-  height: 0; 
-  border-left: 3.5px solid transparent; 
-  border-right: 3.5px solid transparent; 
-  border-top: 4.5px solid #ffffff; 
-  transition: transform 0.2s ease; 
+.status-pill-btn {
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
-.status-btn.is-active .arrow { transform: rotate(180deg); }
 
-.status-btn:hover,
-.status-dropdown li:hover {
-  filter: brightness(0.75);
+.status-pill-btn.is-empty {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
 }
 
-.status-none { background-color: rgba(85, 85, 85, 0.9); }
-.status-reading { background-color: rgba(33, 150, 243, 0.9); }
-.status-paused { background-color: rgba(255, 152, 0, 0.9); }
-.status-disinterested { background-color: rgba(229, 9, 20, 0.9); }
-.status-completed { background-color: rgba(76, 175, 80, 0.9); }
-
-.status-dropdown { 
-  position: absolute; 
-  top: 100%; 
-  right: 0; 
-  width: 110px; 
-  margin: 4px 0 0 0; 
-  padding: 0; 
-  list-style: none; 
-  background-color: #1f1f1f; 
-  border: 1px solid #333333; 
-  border-radius: 4px; 
-  z-index: 100; 
-  box-shadow: 0 5px 15px rgba(0,0,0,0.6); 
-  overflow: hidden; 
+.status-pill-btn:hover {
+  transform: scale(1.05);
 }
-.status-dropdown li { padding: 6px 8px; font-size: 0.75rem; color: #ffffff; cursor: pointer; transition: filter 0.2s ease; }
+
+.status-none { background-color: rgba(85, 85, 85, 0.85); }
+.status-reading { background-color: rgba(33, 150, 243, 0.85); }
+.status-paused { background-color: rgba(255, 152, 0, 0.85); }
+.status-disinterested { background-color: rgba(229, 9, 20, 0.85); }
+.status-completed { background-color: rgba(76, 175, 80, 0.85); }
+
+.status-pills-popover {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+}
+
+.pill-option {
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.pill-option:hover,
+.pill-option.active {
+  opacity: 1;
+  transform: translateX(-2px);
+}
 </style>

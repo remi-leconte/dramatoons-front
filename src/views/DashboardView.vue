@@ -120,6 +120,40 @@ const changeStatus = async (webtoon: Webtoon, newState: ProgressState) => {
   }
 }
 
+// Changement direct du bookmark depuis une carte de la grille
+const changeBookmark = async (webtoon: Webtoon, newBookmark: number) => {
+  if (!webtoon.userProgress) {
+    webtoon.userProgress = createDefaultProgress()
+  }
+
+  const previousBookmark = webtoon.userProgress.bookmark
+  webtoon.userProgress.bookmark = newBookmark
+
+  try {
+    if (webtoon.userProgress.id) {
+      const payload: ProgressPayload = { bookmark: newBookmark }
+      
+      await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, payload, {
+        headers: { 'Content-Type': 'application/merge-patch+json' }
+      })
+    } else {
+      const payload: ProgressPayload = {
+        webtoon: `/webtoons/${webtoon.id}`,
+        bookmark: newBookmark
+      }
+      
+      const response = await api.post('/webtoon_users', payload, {
+        headers: { 'Content-Type': 'application/ld+json' }
+      })
+      
+      webtoon.userProgress.id = response.data.id
+    }
+  } catch (error) {
+    console.error(error)
+    webtoon.userProgress.bookmark = previousBookmark
+  }
+}
+
 const fetchWebtoons = async () => {
   if (loading.value || !nextPageUrl.value) return
 
@@ -280,6 +314,7 @@ onUnmounted(() => {
         :webtoon="webtoon"
         @click="openModal(webtoon)"
         @status-change="(newState) => changeStatus(webtoon, newState)"
+        @bookmark-change="(newBookmark) => changeBookmark(webtoon, newBookmark)"
       />
     </div>
 
