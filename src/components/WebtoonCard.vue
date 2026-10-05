@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { COVER_BASE_URL } from '../services/api'
 import StatusSelect from './StatusSelect.vue'
@@ -10,10 +10,15 @@ const props = defineProps({
     required: true
   }
 })
-const emit = defineEmits(['status-change'])
+const emit = defineEmits(['status-change', 'bookmark-change'])
 
 const authStore = useAuthStore()
 const hasImageError = ref(false)
+const isEditingBookmark = ref(false)
+const bookmarkInput = ref<number | null>(null)
+
+const tempBookmark = ref<number | null>(null)
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const secondaryTitlesArray = computed(() => {
   if (!props.webtoon.secondaryTitles) return []
@@ -27,6 +32,55 @@ const secondaryTitlesText = computed(() => {
   if (secondaryTitlesArray.value.length === 0) return ''
   return secondaryTitlesArray.value.map((t: { title: string }) => t.title).join(', ')
 })
+
+const currentBookmark = computed(() => {
+  if (tempBookmark.value !== null) {
+    return tempBookmark.value
+  }
+  const bm = props.webtoon.userProgress?.bookmark
+  return bm !== null && bm !== undefined && !isNaN(Number(bm)) ? Number(bm) : 0
+})
+
+watch(() => props.webtoon.userProgress?.bookmark, () => {
+  if (debounceTimer === null) {
+    tempBookmark.value = null
+  }
+})
+
+const debouncedEmitBookmark = (value: number) => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+  debounceTimer = setTimeout(() => {
+    emit('bookmark-change', value)
+    debounceTimer = null
+    tempBookmark.value = null
+  }, 500)
+}
+
+const updateBookmark = (delta: number) => {
+  const nextValue = Math.max(0, currentBookmark.value + delta)
+  tempBookmark.value = nextValue
+  debouncedEmitBookmark(nextValue)
+}
+
+const startEditingBookmark = () => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+  bookmarkInput.value = currentBookmark.value
+  isEditingBookmark.value = true
+}
+
+const saveBookmarkInput = () => {
+  isEditingBookmark.value = false
+  if (bookmarkInput.value !== null && !isNaN(bookmarkInput.value)) {
+    const nextValue = Math.max(0, Number(bookmarkInput.value))
+    tempBookmark.value = nextValue
+    debouncedEmitBookmark(nextValue)
+  }
+}
 </script>
 
 <template>
@@ -50,12 +104,50 @@ const secondaryTitlesText = computed(() => {
       </div>
 
       <div class="overlay">
-        <span 
-          v-if="authStore.isAuthenticated && webtoon.userProgress?.bookmark" 
-          class="chapter-badge"
+        <!-- Badge & Contrôles rapides du Bookmark -->
+        <div 
+          v-if="authStore.isAuthenticated" 
+          class="quick-actions-container"
+          @click.stop
         >
-          Chap. {{ webtoon.userProgress.bookmark }}
-        </span>
+          <div v-if="isEditingBookmark" class="bookmark-edit-wrapper">
+            <input 
+              type="number" 
+              v-model.number="bookmarkInput"
+              min="0"
+              class="quick-bookmark-input"
+              @keyup.enter="saveBookmarkInput"
+              @blur="saveBookmarkInput"
+              v-focus
+            >
+          </div>
+          <div v-else class="quick-chapter-controls">
+            <button 
+              type="button" 
+              class="quick-btn" 
+              title="-1 chapitre"
+              :disabled="currentBookmark <= 0"
+              @click.stop="updateBookmark(-1)"
+            >
+              -
+            </button>
+            <span 
+              class="chapter-badge"
+              title="Cliquer pour modifier"
+              @click.stop="startEditingBookmark"
+            >
+              Chap. {{ currentBookmark }}
+            </span>
+            <button 
+              type="button" 
+              class="quick-btn" 
+              title="+1 chapitre"
+              @click.stop="updateBookmark(1)"
+            >
+              +
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -88,13 +180,110 @@ const secondaryTitlesText = computed(() => {
 .webtoon-card { transition: transform 0.3s ease; cursor: pointer; }
 .webtoon-card:hover { transform: scale(1.05); }
 
-.poster-wrapper { position: relative; aspect-ratio: 2 / 3; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-.poster-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.poster-wrapper { position: relative; aspect-ratio: 2 / 3; box-shadow: 0 10px 20px rgba(0,0,0,0.5); overflow: hidden; border-radius: 4px; }
+.poster-wrapper img { width: 100%; height: 100%; object-fit: cover; }
 
-.grid-select-position { position: absolute; top: 8px; right: 8px; width: 16px; height: 16px; z-index: 20; }
+.grid-select-position { position: absolute; top: 8px; right: 8px; z-index: 20; }
 
-.overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 10px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); border-radius: 0 0 4px 4px; }
-.chapter-badge { background: #e50914; font-size: 0.7rem; padding: 2px 6px; border-radius: 2px; font-weight: bold; }
+.overlay { 
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  padding: 8px; 
+  background: linear-gradient(transparent, rgba(0,0,0,0.85)); 
+  border-radius: 0 0 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quick-actions-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.quick-chapter-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chapter-badge { 
+  background: #e50914; 
+  font-size: 0.7rem; 
+  padding: 2px 6px; 
+  border-radius: 2px; 
+  font-weight: bold; 
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.chapter-badge:hover {
+  background: #b80710;
+}
+
+.quick-btn {
+  opacity: 0;
+  visibility: hidden;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--border-input, #383838);
+  color: #ffffff;
+  border-radius: 3px;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease;
+}
+
+.poster-wrapper:hover .quick-btn {
+  opacity: 1;
+  visibility: visible;
+}
+
+.quick-btn:hover:not(:disabled) {
+  background: var(--primary-red, #e50914);
+  border-color: var(--primary-red, #e50914);
+}
+
+.quick-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.bookmark-edit-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.quick-bookmark-input {
+  width: 60px;
+  height: 22px;
+  background: #181818;
+  border: 1px solid var(--primary-red, #e50914);
+  color: #fff;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  padding: 0 4px;
+  text-align: center;
+  outline: none;
+}
+
+.quick-bookmark-input::-webkit-outer-spin-button,
+.quick-bookmark-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.quick-bookmark-input {
+  -moz-appearance: textfield;
+}
 
 .info { margin-top: 10px; }
 
