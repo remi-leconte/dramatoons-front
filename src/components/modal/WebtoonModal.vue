@@ -54,6 +54,8 @@ watch(() => props.webtoon, (newWebtoon) => {
     }
     if (!cloned.secondaryTitles) {
       cloned.secondaryTitles = []
+    } else if (!Array.isArray(cloned.secondaryTitles)) {
+      cloned.secondaryTitles = Object.values(cloned.secondaryTitles)
     }
     localWebtoon.value = cloned
   } else {
@@ -93,6 +95,12 @@ const addSecondaryTitle = async () => {
 
   const titleVal = newSecondaryTitle.value.trim()
 
+  if (!Array.isArray(localWebtoon.value.secondaryTitles)) {
+    localWebtoon.value.secondaryTitles = localWebtoon.value.secondaryTitles 
+      ? Object.values(localWebtoon.value.secondaryTitles) 
+      : []
+  }
+
   if (isEditMode.value && localWebtoon.value.id) {
     isSaving.value = true
     try {
@@ -102,7 +110,7 @@ const addSecondaryTitle = async () => {
       }, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
-      localWebtoon.value.secondaryTitles?.push(response.data)
+      localWebtoon.value.secondaryTitles.push(response.data)
       newSecondaryTitle.value = ''
       isAddingSecondaryTitle.value = false
       emit('saved', localWebtoon.value)
@@ -114,7 +122,7 @@ const addSecondaryTitle = async () => {
     }
   } else {
     // Mode création locale
-    localWebtoon.value.secondaryTitles?.push({ title: titleVal })
+    localWebtoon.value.secondaryTitles.push({ title: titleVal })
     newSecondaryTitle.value = ''
     isAddingSecondaryTitle.value = false
   }
@@ -150,11 +158,19 @@ const saveSecondaryTitle = async (st: WebtoonTitle) => {
 
 // Suppression d'un titre secondaire
 const removeSecondaryTitle = async (index: number, st: WebtoonTitle) => {
+  if (!localWebtoon.value) return
+
+  if (!Array.isArray(localWebtoon.value.secondaryTitles)) {
+    localWebtoon.value.secondaryTitles = localWebtoon.value.secondaryTitles 
+      ? Object.values(localWebtoon.value.secondaryTitles) 
+      : []
+  }
+
   if (isEditMode.value && st.id) {
     isSaving.value = true
     try {
       await api.delete(`/webtoon_titles/${st.id}`, { responseType: 'text' })
-      localWebtoon.value?.secondaryTitles?.splice(index, 1)
+      localWebtoon.value.secondaryTitles.splice(index, 1)
       emit('saved', localWebtoon.value)
     } catch (err) {
       console.error(err)
@@ -163,7 +179,7 @@ const removeSecondaryTitle = async (index: number, st: WebtoonTitle) => {
       isSaving.value = false
     }
   } else {
-    localWebtoon.value?.secondaryTitles?.splice(index, 1)
+    localWebtoon.value.secondaryTitles.splice(index, 1)
   }
 }
 
@@ -247,7 +263,7 @@ const performAutoSave = async () => {
 
       // Création des titres secondaires pré-remplis
       if (localWebtoon.value.secondaryTitles && localWebtoon.value.secondaryTitles.length > 0) {
-        for (const sec of localWebtoon.value.secondaryTitles) {
+        for (const sec of localWebtoon.value.secondaryTitles as WebtoonTitle[]) {
           await api.post('/webtoon_titles', {
             title: sec.title,
             webtoon: `/webtoons/${createdWebtoon.id}`
