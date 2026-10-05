@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Webtoon, WebtoonPayload, Progress, ProgressPayload } from '@/types';
+import type { Webtoon, WebtoonPayload, Progress, ProgressPayload, WebtoonTitle } from '@/types';
 import api, { COVER_BASE_URL } from '../../services/api.ts'
 import { ref, computed, watch, nextTick, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
@@ -32,6 +32,13 @@ const selectedFile = ref<File | null>(null)
 const isEditingTitle = ref(false)
 const titleInputRef = ref<HTMLInputElement | null>(null)
 
+// Gestion des titres secondaires
+const newSecondaryTitle = ref('')
+const editingSecondaryId = ref<number | null>(null)
+const editingSecondaryText = ref('')
+const isAddingSecondaryTitle = ref(false)
+const addSecondaryInputRef = ref<HTMLInputElement | null>(null)
+
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const bannerUrl = computed(() => {
@@ -45,6 +52,9 @@ watch(() => props.webtoon, (newWebtoon) => {
     if (!cloned.userProgress) {
       cloned.userProgress = createDefaultProgress()
     }
+    if (!cloned.secondaryTitles) {
+      cloned.secondaryTitles = []
+    }
     localWebtoon.value = cloned
   } else {
     localWebtoon.value = createDefaultWebtoon()
@@ -53,6 +63,9 @@ watch(() => props.webtoon, (newWebtoon) => {
 
   errorMessage.value = ''
   selectedFile.value = null
+  newSecondaryTitle.value = ''
+  editingSecondaryId.value = null
+  isAddingSecondaryTitle.value = false
 }, { immediate: true })
 
 const startEditingTitle = () => {
@@ -60,6 +73,98 @@ const startEditingTitle = () => {
   nextTick(() => {
     titleInputRef.value?.focus()
   })
+}
+
+const startAddingSecondaryTitle = () => {
+  isAddingSecondaryTitle.value = true
+  nextTick(() => {
+    addSecondaryInputRef.value?.focus()
+  })
+}
+
+const cancelAddingSecondaryTitle = () => {
+  isAddingSecondaryTitle.value = false
+  newSecondaryTitle.value = ''
+}
+
+// Ajouter un titre secondaire
+const addSecondaryTitle = async () => {
+  if (!newSecondaryTitle.value.trim() || !localWebtoon.value) return
+
+  const titleVal = newSecondaryTitle.value.trim()
+
+  if (isEditMode.value && localWebtoon.value.id) {
+    isSaving.value = true
+    try {
+      const response = await api.post<WebtoonTitle>('/webtoon_titles', {
+        title: titleVal,
+        webtoon: `/webtoons/${localWebtoon.value.id}`
+      }, {
+        headers: { 'Content-Type': 'application/ld+json' }
+      })
+      localWebtoon.value.secondaryTitles?.push(response.data)
+      newSecondaryTitle.value = ''
+      isAddingSecondaryTitle.value = false
+      emit('saved', localWebtoon.value)
+    } catch (err) {
+      console.error(err)
+      errorMessage.value = "Erreur lors de l'ajout du titre secondaire."
+    } finally {
+      isSaving.value = false
+    }
+  } else {
+    // Mode création locale
+    localWebtoon.value.secondaryTitles?.push({ title: titleVal })
+    newSecondaryTitle.value = ''
+    isAddingSecondaryTitle.value = false
+  }
+}
+
+// Édition d'un titre secondaire
+const startEditingSecondary = (st: WebtoonTitle) => {
+  if (!st.id) return
+  editingSecondaryId.value = st.id
+  editingSecondaryText.value = st.title
+}
+
+const saveSecondaryTitle = async (st: WebtoonTitle) => {
+  if (!editingSecondaryText.value.trim() || !st.id) return
+
+  isSaving.value = true
+  try {
+    const response = await api.patch<WebtoonTitle>(`/webtoon_titles/${st.id}`, {
+      title: editingSecondaryText.value.trim()
+    }, {
+      headers: { 'Content-Type': 'application/merge-patch+json' }
+    })
+    st.title = response.data.title
+    editingSecondaryId.value = null
+    emit('saved', localWebtoon.value)
+  } catch (err) {
+    console.error(err)
+    errorMessage.value = "Erreur lors de la modification du titre."
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// Suppression d'un titre secondaire
+const removeSecondaryTitle = async (index: number, st: WebtoonTitle) => {
+  if (isEditMode.value && st.id) {
+    isSaving.value = true
+    try {
+      await api.delete(`/webtoon_titles/${st.id}`, { responseType: 'text' })
+      localWebtoon.value?.secondaryTitles?.splice(index, 1)
+      emit('saved', localWebtoon.value)
+    } catch (err) {
+      console.error(err)
+      errorMessage.value = "Erreur lors de la suppression du titre."
+    } finally {
+      isSaving.value = false
+    }
+  } else {
+    localWebtoon.value?.secondaryTitles?.splice(index, 1)
+  }
 }
 
 const validateInputs = () => {
@@ -82,7 +187,7 @@ const performAutoSave = async () => {
   validateInputs()
   errorMessage.value = ''
 
-  if (isCreator.value && !localWebtoon.value.title?.trim()) {
+  if (isCreator.value && !localWebtoon.value.title.title?.trim()) {
     errorMessage.value = "Le titre est obligatoire."
     return
   }
@@ -139,6 +244,18 @@ const performAutoSave = async () => {
       const { data: createdWebtoon } = await api.post<Webtoon>('/webtoons', webtoonPayload, {
         headers: { 'Content-Type': 'application/ld+json' }
       })
+
+      // Création des titres secondaires pré-remplis
+      if (localWebtoon.value.secondaryTitles && localWebtoon.value.secondaryTitles.length > 0) {
+        for (const sec of localWebtoon.value.secondaryTitles) {
+          await api.post('/webtoon_titles', {
+            title: sec.title,
+            webtoon: `/webtoons/${createdWebtoon.id}`
+          }, {
+            headers: { 'Content-Type': 'application/ld+json' }
+          })
+        }
+      }
 
       if (selectedFile.value) {
         const formData = new FormData()
@@ -239,7 +356,7 @@ const deleteWebtoon = async () => {
       <div v-if="localWebtoon" class="modal-content">
         <WebtoonCoverUploader 
           :image-path="localWebtoon.updated ? `${localWebtoon.image}?t=${new Date(localWebtoon.updated).getTime()}`: localWebtoon.image"
-          :title="localWebtoon.title"
+          :title="localWebtoon.title.title"
           :is-editable="isCreator"
           @file-selected="handleCoverSelected"
         />
@@ -254,7 +371,7 @@ const deleteWebtoon = async () => {
                   ref="titleInputRef"
                   id="webtoon-title" 
                   type="text" 
-                  v-model="localWebtoon.title"
+                  v-model="localWebtoon.title.title"
                   placeholder="Titre du webtoon"
                   class="app-input-field input-title-full"
                   @input="onFieldChanged"
@@ -272,7 +389,7 @@ const deleteWebtoon = async () => {
               </div>
             </div>
             <div v-else class="title-display">
-              <h2>{{ localWebtoon.title }}</h2>
+              <h2>{{ localWebtoon.title.title }}</h2>
               <button 
                 v-if="isCreator" 
                 type="button" 
@@ -282,6 +399,74 @@ const deleteWebtoon = async () => {
               >
                 Modifier
               </button>
+            </div>
+          </div>
+
+          <!-- Section Titres Secondaires -->
+          <div v-if="localWebtoon.secondaryTitles?.length !== 0 || isCreator" class="secondary-titles-section">
+            <span v-if="localWebtoon.secondaryTitles?.length !== 0" class="section-subtitle">Titres alternatifs :</span>
+            <div class="titles-list">
+              <div 
+                v-for="(st, idx) in localWebtoon.secondaryTitles" 
+                :key="st.id || idx" 
+                class="secondary-title-chip"
+              >
+                <template v-if="editingSecondaryId === st.id">
+                  <input 
+                    type="text" 
+                    v-model="editingSecondaryText" 
+                    class="app-input-field chip-input"
+                    @keyup.enter="saveSecondaryTitle(st)"
+                  />
+                  <button type="button" class="btn-chip-action" @click="saveSecondaryTitle(st)">✓</button>
+                  <button type="button" class="btn-chip-action" @click="editingSecondaryId = null">✕</button>
+                </template>
+                <template v-else>
+                  <span>{{ st.title }}</span>
+                  <button 
+                    v-if="isCreator && st.id" 
+                    type="button" 
+                    class="btn-chip-action" 
+                    title="Éditer"
+                    @click="startEditingSecondary(st)"
+                  >
+                    ✎
+                  </button>
+                  <button 
+                    v-if="isCreator" 
+                    type="button" 
+                    class="btn-chip-action btn-delete-chip" 
+                    title="Supprimer"
+                    @click="removeSecondaryTitle(idx, st)"
+                  >
+                    ×
+                  </button>
+                </template>
+              </div>
+
+              <!-- Bloc pilule interactif pour ajouter un titre alternatif -->
+              <div 
+                v-if="isCreator" 
+                class="secondary-title-chip"
+              >
+                <template v-if="isAddingSecondaryTitle">
+                  <input 
+                    ref="addSecondaryInputRef"
+                    type="text" 
+                    v-model="newSecondaryTitle" 
+                    placeholder="Ajouter un titre alternatif..."
+                    class="app-input-field chip-input"
+                    @keyup.enter="addSecondaryTitle"
+                  />
+                  <button type="button" class="btn-chip-action" @click="addSecondaryTitle">✓</button>
+                  <button type="button" class="btn-chip-action" @click="cancelAddingSecondaryTitle">✕</button>
+                </template>
+                <template v-else>
+                  <span class="clickable-placeholder" @click="startAddingSecondaryTitle">
+                    Ajouter un titre alternatif...
+                  </span>
+                </template>
+              </div>
             </div>
           </div>
 
@@ -444,6 +629,75 @@ const deleteWebtoon = async () => {
   padding: 0 6px;
 }
 
+/* Titres secondaires */
+.secondary-titles-section {
+  margin-bottom: 15px;
+}
+
+.section-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.titles-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.secondary-title-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.chip-input {
+  padding: 1px 6px;
+  font-size: 0.8rem;
+  height: 24px;
+}
+
+.clickable-placeholder {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.clickable-placeholder:hover {
+  color: var(--text-main);
+}
+
+.btn-chip-action {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0 2px;
+}
+
+.btn-chip-action:hover {
+  color: #fff;
+}
+
+.btn-delete-chip:hover {
+  color: var(--primary-red);
+}
+
+.no-titles {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* Conteneur des Toggles */
 .toggles-section {
   display: flex;
@@ -539,7 +793,7 @@ input:checked + .slider:before {
 }
 
 .title-container {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .title-display {
