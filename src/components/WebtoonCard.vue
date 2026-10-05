@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { COVER_BASE_URL } from '../services/api'
 import StatusSelect from './StatusSelect.vue'
 
-const props = defineProps({
+defineProps({
   webtoon: {
     type: Object,
     required: true
@@ -13,34 +12,15 @@ const props = defineProps({
 const emit = defineEmits(['status-change'])
 
 const authStore = useAuthStore()
-const hasImageError = ref(false)
-
-const secondaryTitlesArray = computed(() => {
-  if (!props.webtoon.secondaryTitles) return []
-  if (Array.isArray(props.webtoon.secondaryTitles)) {
-    return props.webtoon.secondaryTitles
-  }
-  return Object.values(props.webtoon.secondaryTitles)
-})
-
-const secondaryTitlesText = computed(() => {
-  if (secondaryTitlesArray.value.length === 0) return ''
-  return secondaryTitlesArray.value.map((t: { title: string }) => t.title).join(', ')
-})
 </script>
 
 <template>
   <article class="webtoon-card">
     <div class="poster-wrapper">
       <img 
-        v-if="webtoon.image && !hasImageError"
         :src="`${COVER_BASE_URL}${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`" 
-        :alt="webtoon.title.title || 'Webtoon cover'"
-        @error="hasImageError = true"
+        :alt="webtoon.title || 'Webtoon cover'"
       >
-      <div v-else class="cover-placeholder">
-        <span class="placeholder-text">{{ webtoon.title.title || 'Sans titre' }}</span>
-      </div>
       
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
         <StatusSelect 
@@ -60,15 +40,7 @@ const secondaryTitlesText = computed(() => {
     </div>
     
     <div class="info">
-      <div class="title-row">
-        <h3 class="title" :title="webtoon.title.title">
-          {{ webtoon.title.title }}
-        </h3>
-
-        <div v-if="secondaryTitlesText" class="secondary-titles-badge" :title="`Titres alternatifs : ${secondaryTitlesText}`">
-          +{{ secondaryTitlesArray.length }}
-        </div>
-      </div>
+      <h3 class="title" :title="webtoon.title">{{ webtoon.title }}</h3>
 
       <div class="stats-row">
         <span v-if="authStore.isAuthenticated && webtoon.userProgress" title="Votre note" class="user-rating">🏷️ {{ webtoon.userProgress.rate || '-' }}</span>
@@ -77,7 +49,7 @@ const secondaryTitlesText = computed(() => {
       </div>
 
       <div v-if="webtoon.status === 'completed'" class="status-inline-badge">
-        <span class="badge-completed" title="Ce Webtoon est terminé">Terminé</span>
+        <span class="badge-completed"  title="Ce Webtoon est terminé">Terminé</span>
       </div>
     </div>
 
@@ -97,33 +69,7 @@ const secondaryTitlesText = computed(() => {
 .chapter-badge { background: #e50914; font-size: 0.7rem; padding: 2px 6px; border-radius: 2px; font-weight: bold; }
 
 .info { margin-top: 10px; }
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.title {
-  font-size: 0.9rem;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-}
-
-.secondary-titles-badge {
-  font-size: 0.7rem;
-  color: var(--text-muted, #aaaaaa);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1px 5px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
+.title { font-size: 0.9rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .genre { font-size: 0.75rem; color: #aaaaaa; margin-top: 4px; }
 .badge-completed { font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; color: #fff; display: inline-block; background-color: #4CAF50; margin-top: 6px; }
 

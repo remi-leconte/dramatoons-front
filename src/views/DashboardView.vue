@@ -66,19 +66,19 @@ const closeModal = () => {
   isModalOpen.value = false
 }
 
+// Met à jour les données de la grille après une sauvegarde réussie dans la popup
 const handleModalSave = (updatedWebtoon: Webtoon) => {
   const index = webtoons.value.findIndex(w => w.id === updatedWebtoon.id)
   if (index !== -1) {
     webtoons.value[index] = updatedWebtoon
   }
-  
-  selectedWebtoon.value = updatedWebtoon
+  closeModal()
 }
 
-// Insère le nouveau Webtoon créé au début de la liste et le bascule en mode édition sans fermer la modale
+// Insère le nouveau Webtoon créé au début de la liste
 const handleWebtoonCreated = (newWebtoon: Webtoon) => {
   webtoons.value.unshift(newWebtoon)
-  selectedWebtoon.value = newWebtoon
+  closeModal()
 }
 
 // Supprime le Webtoon de la liste
@@ -172,7 +172,7 @@ const resetAndFetchWebtoons = async () => {
 watch([title, status, sortBy, sortOrder, itemsPerPage], async () => {
   if (isInitializing.value) return
 
-  await authStore.savePreferences({
+await authStore.savePreferences({
     searchStatus: status.value,
     searchSortBy: sortBy.value,
     searchSortOrder: sortOrder.value,

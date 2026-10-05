@@ -12,13 +12,6 @@
   --radius-md: 6px;
   --radius-lg: 8px;
   --input-height: 38px;
-
-  /* Statuts */
-  --status-none: rgba(85, 85, 85, 0.9);
-  --status-reading: rgba(33, 150, 243, 0.9);
-  --status-paused: rgba(255, 152, 0, 0.9);
-  --status-disinterested: rgba(229, 9, 20, 0.9);
-  --status-completed: rgba(76, 175, 80, 0.9);
 }
 
 /* --- POPUP MODALE & OVERLAY --- */
@@ -28,8 +21,7 @@
   left: 0;
   width: 100%; 
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.6);
   display: flex; 
   justify-content: center; 
   align-items: center;
@@ -80,11 +72,11 @@
   border-color: var(--primary-red);
 }
 
-.app-input-field[type="number"]::-webkit-outer-spin-button,
+/*.app-input-field[type="number"]::-webkit-outer-spin-button,
 .app-input-field[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
+}*/
 .app-input-field[type="number"] {
   -moz-appearance: textfield;
 }
@@ -92,111 +84,6 @@
 .app-input-field::placeholder {
   color: #888;
 }
-
-/* --- RATING SLIDER & STEPPER --- */
-.rating-control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 320px;
-}
-
-.rating-slider {
-  flex: 1;
-  accent-color: var(--primary-red);
-  cursor: pointer;
-  height: 6px;
-  background: var(--border-input);
-  border-radius: 3px;
-  outline: none;
-}
-
-.stepper-btn {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-input);
-  color: var(--text-main);
-  border-radius: var(--radius-sm);
-  width: var(--input-height);
-  height: var(--input-height);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.1rem;
-  cursor: pointer;
-  user-select: none;
-  box-sizing: border-box;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
-}
-
-.stepper-btn:hover:not(:disabled) {
-  background-color: #333333;
-  border-color: var(--primary-red);
-}
-
-.stepper-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.stepper-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.rating-display {
-  min-width: 45px;
-  height: var(--input-height);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.95rem;
-  color: var(--text-main);
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-input);
-  border-radius: var(--radius-sm);
-  padding: 0 8px;
-  box-sizing: border-box;
-}
-
-/* --- SEGMENTED CONTROL / PILLS --- */
-.status-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
-}
-
-.pill-btn {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-input);
-  color: var(--text-muted);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.pill-btn:hover {
-  border-color: #555;
-  color: var(--text-main);
-}
-
-.pill-btn.active {
-  color: var(--text-main);
-  border-color: transparent;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-.pill-btn.active.pill-none { background-color: var(--status-none); }
-.pill-btn.active.pill-reading { background-color: var(--status-reading); }
-.pill-btn.active.pill-pause { background-color: var(--status-paused); }
-.pill-btn.active.pill-break { background-color: var(--status-disinterested); }
-.pill-btn.active.pill-completed { background-color: var(--status-completed); }
 
 /* --- BOUTONS RÉUTILISABLES --- */
 .btn {
@@ -228,38 +115,4 @@
 .btn:disabled { 
   opacity: 0.6; 
   cursor: not-allowed; 
-}
-
-/* --- COVER PLACEHOLDER --- */
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  box-sizing: border-box;
-  text-align: center;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-input);
-  user-select: none;
-}
-
-.cover-placeholder .placeholder-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
-  opacity: 0.6;
-}
-
-.cover-placeholder .placeholder-text {
-  font-size: 0.75rem;
-  line-height: 1.2;
-  word-break: break-word;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
 }
