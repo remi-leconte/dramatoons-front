@@ -1,8 +1,9 @@
+// Gère la grille de cartes de webtoons avec mise à jour directe du statut et du marque-page
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useAuthStore } from '../stores/auth'
-import { COVER_BASE_URL } from '../services/api'
-import StatusSelect from './StatusSelect.vue'
+import { useAuthStore } from '../../stores/auth.ts'
+import { COVER_BASE_URL } from '../../services/api.ts'
+import StatusSelect from '../card/StatusSelect.vue'
 
 const props = defineProps({
   webtoon: {
@@ -118,7 +119,6 @@ const saveBookmarkInput = () => {
               class="quick-bookmark-input"
               @keyup.enter="saveBookmarkInput"
               @blur="saveBookmarkInput"
-              v-focus
             >
           </div>
           <div v-else class="quick-chapter-controls">

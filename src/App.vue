@@ -1,3 +1,47 @@
+/* Affiche l'entête du site qui comprend :
+- Le logo
+- Le formulaire de recherche par titre
+- Les liens vers "Mon Profil" et "Déconnexion" lorsque l'utilisateur est connecté
+- Les liens vers "Créer un compte" et "Connexion" lorsque l'utilisateur est déconnecté
+Et le footer qui comprend :
+- le copyright
+- Le lien vers "Politique de confidentialité"
+*/
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useAuthStore } from './stores/auth'
+import { useRouter, useRoute } from 'vue-router'
+
+const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
+
+const searchTitle = ref(route.query.title || '')
+
+// Synchronise le champ si la query URL change
+watch(() => route.query.title, (newTitle) => {
+  searchTitle.value = newTitle || ''
+})
+
+const handleSearch = () => {
+  router.push({
+    path: '/',
+    query: { ...route.query, title: searchTitle.value || undefined }
+  })
+}
+
+// Réinitialise le titre et relance la recherche
+const clearSearch = () => {
+  searchTitle.value = ''
+  handleSearch()
+}
+
+const handleLogout = () => {
+  authStore.logout() 
+  router.push('/')
+}
+</script>
+
 <template>
   <div class="app-container">
     <header class="navbar">
@@ -61,41 +105,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useAuthStore } from './stores/auth'
-import { useRouter, useRoute } from 'vue-router'
-
-const authStore = useAuthStore()
-const router = useRouter()
-const route = useRoute()
-
-const searchTitle = ref(route.query.title || '')
-
-// Synchronise le champ si la query URL change
-watch(() => route.query.title, (newTitle) => {
-  searchTitle.value = newTitle || ''
-})
-
-const handleSearch = () => {
-  router.push({
-    path: '/',
-    query: { ...route.query, title: searchTitle.value || undefined }
-  })
-}
-
-// Réinitialise le titre et relance la recherche
-const clearSearch = () => {
-  searchTitle.value = ''
-  handleSearch()
-}
-
-const handleLogout = () => {
-  authStore.logout() 
-  router.push('/')
-}
-</script>
-
 <style>
 body {
   margin: 0;
@@ -108,6 +117,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-bottom: 50px;
 }
 
 /* Header */
@@ -297,12 +307,17 @@ body {
 
 /* Footer */
 .app-footer {
-  margin-top: auto;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 70;
   background: #1a1a1a;
   border-top: 1px solid #282828;
-  padding: 1.5rem 5%;
-  font-size: 0.85rem;
+  padding: 0.8rem 5%;
+  font-size: 0.82rem;
   color: #888;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .footer-content {
@@ -357,7 +372,7 @@ body {
   .footer-content {
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
   }
 }
 </style>

@@ -18,7 +18,6 @@ export interface User {
     searchSortBy?: SortByOption | null;
     searchSortOrder?: SortOrderOption | null;
     searchStatus?: ProgressState | '' | null;
-    searchItemsPerPage?: number | null;
 }
 
 export const createDefaultUser = (): User => ({
@@ -33,8 +32,7 @@ export const createDefaultUser = (): User => ({
     lastLogin: undefined,
     searchSortBy: undefined,
     searchSortOrder: undefined,
-    searchStatus: undefined,
-    searchItemsPerPage: undefined
+    searchStatus: undefined
 })
 
 export interface UserUpdatePayload {

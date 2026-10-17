@@ -108,7 +108,7 @@ onMounted(() => fetchData())
           <div class="cover-container">
             <WebtoonCoverUploader 
               :image-path="webtoon.updated ? `${webtoon.image}?t=${new Date(webtoon.updated).getTime()}` : webtoon.image"
-              :title="webtoon.title"
+              :title="webtoon.title.title"
               :is-editable="true"
               @file-selected="(file: File) => selectedFile = file"
             />
@@ -117,7 +117,7 @@ onMounted(() => fetchData())
 
         <div class="field">
           <label>Titre :</label>
-          <input v-model="webtoon.title" class="app-input-field" required />
+          <input v-model="webtoon.title.title" class="app-input-field" required />
         </div>
 
         <div class="field toggle-row">

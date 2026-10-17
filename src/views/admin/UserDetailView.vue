@@ -166,7 +166,7 @@ onMounted(() => fetchData())
             <td>{{ prog.rate || '-' }}</td>
             <td>{{ prog.bookmark || '-' }}</td>
             <td class="action-col">
-                <router-link v-if="prog.webtoon?.id" :to="`/admin/webtoons/${prog.webtoon.id}`">{{prog.webtoon.title}} →</router-link>
+                <router-link v-if="prog.webtoon?.id" :to="`/admin/webtoons/${prog.webtoon.id}`">{{prog.webtoon.title.title}} →</router-link>
             </td>
           </tr>
           <tr v-if="userProgressions.length === 0">
