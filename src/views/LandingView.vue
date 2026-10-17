@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
-import CanvasBoard from '../components/CanvasBoard.vue'
+import CanvasBoard from '../components/Canvas.vue'
 
 const authStore = useAuthStore()
 const showLegalBanner = ref(true)
@@ -15,19 +15,12 @@ onMounted(() => {
   }
 })
 
-/*const dismissLegalBanner = () => {
-  showLegalBanner.value = false
-  localStorage.setItem('legal_banner_dismissed', 'true')
-}*/
 </script>
 
 <template>
   <div v-if="showLegalBanner" class="legal-banner">
     <p class="legal-banner-text">Ce site n’héberge aucun contenu protégé par le droit d'auteur et ne fournit aucun lien vers des plateformes de diffusion non autorisées.</p>
     <p class="legal-banner-text">This site does not host any copyrighted content, nor does it provide links to unauthorized distribution platforms.</p>
-    <!--<button class="legal-banner-btn" @click="dismissLegalBanner">
-      J'ai compris
-    </button>-->
   </div>
 
   <CanvasBoard />

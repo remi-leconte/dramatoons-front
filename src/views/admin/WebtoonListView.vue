@@ -38,7 +38,7 @@ const fetchWebtoons = async (page = 1) => {
     const params = new URLSearchParams()
     params.append('page', page.toString())
     params.append('itemsPerPage', itemsPerPage.value.toString())
-    params.append('admin', '1')
+    params.append('mode', 'admin')
 
     if (searchFilters.value.id) params.append('id', searchFilters.value.id.trim())
     if (searchFilters.value.title) params.append('title', searchFilters.value.title.trim())
@@ -137,7 +137,7 @@ onMounted(() => fetchWebtoons())
       <tbody>
         <tr v-for="(webtoon) in webtoons" :key="webtoon.id">
           <td>{{ webtoon.id }}</td>
-          <td>{{ webtoon.title }}</td>
+          <td>{{ webtoon.title.title }}</td>
           <td>{{ webtoon.status || '-' }}</td>
           <td>
             <span :class="['publish-dot', webtoon.publish ? 'publish-true' : 'publish-false']"></span>

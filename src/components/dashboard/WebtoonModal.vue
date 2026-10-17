@@ -1,3 +1,4 @@
+// Gère la modale d'édition/création/suppression
 <script setup lang="ts">
 import type { Webtoon, WebtoonPayload, Progress, ProgressPayload, WebtoonTitle } from '@/types';
 import api, { COVER_BASE_URL } from '../../services/api.ts'
@@ -6,8 +7,8 @@ import { isAxiosError } from 'axios'
 import { useAuthStore } from '../../stores/auth.ts'
 import { createDefaultProgress } from '@/types/progress'
 import { createDefaultWebtoon } from '@/types/webtoon'
-import WebtoonCoverUploader from './WebtoonCoverUploader.vue'
-import WebtoonUserProgressForm from './WebtoonUserProgressForm.vue'
+import WebtoonCoverUploader from './../modal/WebtoonCoverUploader.vue'
+import WebtoonUserProgressForm from './../modal/WebtoonUserProgressForm.vue'
 
 const props = defineProps({
   webtoon: {
