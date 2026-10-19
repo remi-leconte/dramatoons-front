@@ -8,32 +8,27 @@ Et le footer qui comprend :
 - Le lien vers "Politique de confidentialité"
 */
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from './stores/auth'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
+import type { Webtoon } from '@/types'
+import HeaderSearch from './components/HeaderSearch.vue'
+import WebtoonModal from './components/dashboard/WebtoonModal.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const route = useRoute()
 
-const searchTitle = ref(route.query.title || '')
+const selectedSearchWebtoon = ref<Webtoon | null>(null)
+const isSearchModalOpen = ref(false)
 
-// Synchronise le champ si la query URL change
-watch(() => route.query.title, (newTitle) => {
-  searchTitle.value = newTitle || ''
-})
-
-const handleSearch = () => {
-  router.push({
-    path: '/',
-    query: { ...route.query, title: searchTitle.value || undefined }
-  })
+const handleSelectWebtoon = (webtoon: Webtoon) => {
+  selectedSearchWebtoon.value = webtoon
+  isSearchModalOpen.value = true
 }
 
-// Réinitialise le titre et relance la recherche
-const clearSearch = () => {
-  searchTitle.value = ''
-  handleSearch()
+const closeSearchModal = () => {
+  selectedSearchWebtoon.value = null
+  isSearchModalOpen.value = false
 }
 
 const handleLogout = () => {
@@ -50,36 +45,10 @@ const handleLogout = () => {
         <span class="logo-badge">.OVH</span>
       </router-link>
 
-      <!-- Formulaire de recherche -->
-      <form v-if="authStore.isAuthenticated" class="search-form" @submit.prevent="handleSearch">
-        <input 
-          id="searchTitlePrincipal" 
-          v-model="searchTitle" 
-          type="text" 
-          placeholder="Rechercher un titre..." 
-          class="search-input"
-        />
-
-        <button type="submit" class="search-btn" aria-label="Rechercher">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </button>
-
-        <button 
-          v-if="searchTitle" 
-          type="button" 
-          class="clear-btn" 
-          aria-label="Effacer la recherche"
-          @click="clearSearch"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </form>
+      <HeaderSearch 
+        v-if="authStore.isAuthenticated" 
+        @select-webtoon="handleSelectWebtoon" 
+      />
       
       <div class="nav-actions">
         <template v-if="authStore.isAuthenticated">
@@ -95,6 +64,13 @@ const handleLogout = () => {
     </header>
 
     <router-view />
+
+    <WebtoonModal 
+      v-if="isSearchModalOpen"
+      :webtoon="selectedSearchWebtoon"
+      @close="closeSearchModal"
+      @deleted="closeSearchModal"
+    />
 
     <footer class="app-footer">
       <div class="footer-content">
@@ -125,6 +101,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   padding: 1rem 5%;
   background: #1a1a1a;
   border-bottom: 2px solid #e50914;
@@ -134,6 +112,7 @@ body {
   display: flex;
   gap: 15px;
   align-items: center;
+  margin-left: auto;
 }
 
 /* Logo */
@@ -258,53 +237,6 @@ body {
 
 .auth-footer { margin-top: 20px; text-align: center; color: #666; }
 
-/* Barre de recherche */
-.search-form {
-  display: flex;
-  align-items: center;
-  background: #252525;
-  border: 1px solid #383838;
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 0 15px;
-  flex: 0 1 300px;
-}
-
-.search-input {
-  background: transparent;
-  border: none;
-  padding: 8px 12px;
-  color: #fff;
-  font-size: 0.9rem;
-  width: 100%;
-}
-
-.search-input:focus {
-  outline: none;
-}
-
-.clear-btn,
-.search-btn {
-  background: transparent;
-  border: none;
-  color: #aaa;
-  padding: 8px 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-
-.clear-btn:hover,
-.search-btn:hover {
-  color: #e50914;
-}
-
-.search-btn {
-  padding-right: 12px;
-}
-
 /* Footer */
 .app-footer {
   position: fixed;
@@ -342,8 +274,6 @@ body {
 @media (max-width: 750px) {
   .navbar {
     padding: 0.8rem 3%;
-    flex-wrap: wrap;
-    gap: 12px 0;
   }
 
   .logo-text {
@@ -361,12 +291,6 @@ body {
   .btn-primary, .btn-secondary {
     padding: 6px 10px;
     font-size: 0.8rem;
-  }
-
-  .search-form {
-    order: 3;
-    flex: 1 1 100%;
-    margin: 4px 0 0 0;
   }
 
   .footer-content {

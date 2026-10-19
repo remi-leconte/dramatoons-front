@@ -128,7 +128,6 @@ onMounted(() => fetchData())
           <input v-model="user.email" type="email" class="app-input-field" required />
         </div>
         
-        <!-- Champ affiché uniquement pour les administrateurs -->
         <div v-if="isAdmin" class="field">
           <label>Rôle :</label>
           <select v-model="selectedRole" class="app-input-field">

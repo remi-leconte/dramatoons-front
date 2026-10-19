@@ -13,7 +13,6 @@ const emit = defineEmits<{
 
 <template>
   <div class="dashboard-header">
-    <!-- Onglets -->
     <div class="tabs-container">
       <button 
         class="tab-button" 
@@ -33,7 +32,6 @@ const emit = defineEmits<{
       </button>
     </div>
 
-    <!-- Actions -->
     <div class="header-actions">
       <button class="btn-create" @click="emit('openCreateModal')">
         <span>+</span> Créer un Webtoon

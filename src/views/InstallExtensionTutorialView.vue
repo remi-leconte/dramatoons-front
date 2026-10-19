@@ -3,7 +3,6 @@
     <div class="tutorial-card">
       <h1>Installer l'extension Dramatoons</h1>
 
-      <!-- Section des stores officiels -->
       <section class="store-section">
         <h2>Stores officiels</h2>
         <p class="section-intro">
@@ -32,7 +31,6 @@
 
       <hr class="divider" />
 
-      <!-- Section installation manuelle (Chromium / Brave / Chrome) -->
       <section class="manual-section">
         <h2>Installation manuelle (Google Chrome / Brave)</h2>
 

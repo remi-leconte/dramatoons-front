@@ -125,6 +125,7 @@ onUnmounted(() => { observer?.disconnect() })
 
     <DashboardFilterBar
       v-if="authStore.isAuthenticated"
+      v-model:title="title"
       :included-statuses="includedStatuses"
       :excluded-statuses="excludedStatuses"
       :sort-by="sortBy"

@@ -434,7 +434,6 @@ const deleteWebtoon = async () => {
             </div>
           </div>
 
-          <!-- Section Titres Secondaires -->
           <div v-if="localWebtoon.secondaryTitles?.length !== 0 || isCreator" class="secondary-titles-section">
             <span v-if="localWebtoon.secondaryTitles?.length !== 0" class="section-subtitle">Titres alternatifs :</span>
             <div class="titles-list">
@@ -476,7 +475,6 @@ const deleteWebtoon = async () => {
                 </template>
               </div>
 
-              <!-- Bloc pilule interactif pour ajouter un titre alternatif -->
               <div 
                 v-if="isCreator" 
                 class="secondary-title-chip"

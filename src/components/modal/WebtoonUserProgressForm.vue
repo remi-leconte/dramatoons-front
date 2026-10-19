@@ -80,7 +80,6 @@ const resetRate = () => {
 
 <template>
   <div class="modal-form">
-    <!-- Statut de lecture -->
     <div class="form-group">
       <div class="status-pills">
         <button
@@ -96,7 +95,6 @@ const resetRate = () => {
       </div>
     </div>
 
-    <!-- Dernier chapitre lu -->
     <div class="form-group bookmark-group">
       <div class="label-row">
         <label for="progress-bookmark" class="field-label">Ma progression</label>
@@ -136,7 +134,6 @@ const resetRate = () => {
       </div>
     </div>
 
-    <!-- Note personnelle -->
     <div class="form-group">
       <div class="label-row">
         <label for="progress-rate" class="field-label">Ma note</label>
@@ -189,7 +186,6 @@ const resetRate = () => {
       </div>
     </div>
 
-    <!-- Supprimer Webtoon (Créateur uniquement) -->
     <div v-if="canDelete" class="modal-actions">
       <button 
         type="button" 

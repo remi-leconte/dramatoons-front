@@ -90,7 +90,6 @@ onMounted(() => fetchWebtoons())
   <div class="admin-page">
     <h1>Webtoons</h1>
 
-    <!-- Formulaire de recherche -->
     <form @submit.prevent="handleSearch" class="search-bar">
       <input v-model="searchFilters.id" type="text" placeholder="ID..." class="search-input input-id" />
       <input v-model="searchFilters.title" type="text" placeholder="Titre..." class="search-input" />

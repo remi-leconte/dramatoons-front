@@ -105,7 +105,6 @@ const saveBookmarkInput = () => {
       </div>
 
       <div class="overlay">
-        <!-- Badge & Contrôles rapides du Bookmark -->
         <div 
           v-if="authStore.isAuthenticated" 
           class="quick-actions-container"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
-import CanvasBoard from '../components/Canvas.vue'
+import CanvasBoard from '../components/CanvasView.vue'
 
 const authStore = useAuthStore()
 const showLegalBanner = ref(true)
