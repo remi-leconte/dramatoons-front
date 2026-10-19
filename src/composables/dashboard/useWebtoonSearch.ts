@@ -16,6 +16,7 @@ export function useWebtoonSearch() {
 
     const sortBy = ref<SortByOption>('added')
     const sortOrder = ref<SortOrderOption>('desc')
+    const isFilterVisible = ref<boolean>(true)
 
     const currentSortOptions = computed(() => {
         const addedLabel = activeTab.value === 'bibliotheque' ? 'Modification' : 'Dernier ajout'
@@ -32,7 +33,8 @@ export function useWebtoonSearch() {
             includedStatuses: includedStatuses.value,
             excludedStatuses: excludedStatuses.value,
             sortBy: sortBy.value,
-            sortOrder: sortOrder.value
+            sortOrder: sortOrder.value,
+            isFilterVisible: isFilterVisible.value
         }
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(prefs))
     }
@@ -46,13 +48,15 @@ export function useWebtoonSearch() {
                 excludedStatuses.value = Array.isArray(prefs.excludedStatuses) ? prefs.excludedStatuses : []
                 sortBy.value = prefs.sortBy || 'added'
                 sortOrder.value = prefs.sortOrder || 'desc'
+                if (typeof prefs.isFilterVisible === 'boolean') {
+                    isFilterVisible.value = prefs.isFilterVisible
+                }
             }
         } catch (e) {
             console.error('Erreur lors de la lecture du cache local', e)
         }
     }
 
-    // Chargement immédiat des préférences au démarrage
     initPreferences()
 
     const cycleStatusFilter = (key: ProgressState) => {
@@ -80,6 +84,11 @@ export function useWebtoonSearch() {
         savePreferences()
     }
 
+    const toggleFilterVisibility = () => {
+        isFilterVisible.value = !isFilterVisible.value
+        savePreferences()
+    }
+
     const buildQueryUrl = (): string => {
         const queryParams = new URLSearchParams()
         queryParams.append('mode', activeTab.value)
@@ -99,9 +108,11 @@ export function useWebtoonSearch() {
         excludedStatuses,
         sortBy,
         sortOrder,
+        isFilterVisible,
         currentSortOptions,
         cycleStatusFilter,
         toggleSort,
+        toggleFilterVisibility,
         buildQueryUrl,
         initPreferences
     }
