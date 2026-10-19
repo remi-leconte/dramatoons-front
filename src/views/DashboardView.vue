@@ -19,8 +19,8 @@ const authStore = useAuthStore()
 
 const {
   activeTab, title, includedStatuses, excludedStatuses,
-  sortBy, sortOrder, currentSortOptions,
-  cycleStatusFilter, toggleSort, buildQueryUrl, initPreferences
+  sortBy, sortOrder, isFilterVisible, currentSortOptions,
+  cycleStatusFilter, toggleSort, toggleFilterVisibility, buildQueryUrl, initPreferences
 } = useWebtoonSearch()
 
 const { changeStatus, changeBookmark } = useWebtoonProgress()
@@ -71,8 +71,18 @@ const selectTab = (tab: 'bibliotheque' | 'catalogue') => {
   resetAndFetchWebtoons()
 }
 
-const openModal = (webtoon: Webtoon | null = null) => { selectedWebtoon.value = webtoon; isModalOpen.value = true }
-const closeModal = () => { selectedWebtoon.value = null; isModalOpen.value = false }
+const openModal = (webtoon: Webtoon | null = null) => { 
+  selectedWebtoon.value = webtoon; 
+  isModalOpen.value = true;
+  document.body.classList.add('modal-open');
+}
+
+const closeModal = () => { 
+  selectedWebtoon.value = null; 
+  isModalOpen.value = false;
+  document.body.classList.remove('modal-open');
+}
+
 const handleModalSave = (updated: Webtoon) => {
   const index = webtoons.value.findIndex(w => w.id === updated.id)
   if (index !== -1) webtoons.value[index] = updated
@@ -110,7 +120,10 @@ onMounted(async () => {
   if (observerTarget.value) observer.observe(observerTarget.value)
 })
 
-onUnmounted(() => { observer?.disconnect() })
+onUnmounted(() => { 
+  observer?.disconnect();
+  document.body.classList.remove('modal-open');
+})
 </script>
 
 <template>
@@ -131,8 +144,10 @@ onUnmounted(() => { observer?.disconnect() })
       :sort-by="sortBy"
       :sort-order="sortOrder"
       :sort-options="currentSortOptions"
+      :is-filter-visible="isFilterVisible"
       @cycle-status="cycleStatusFilter"
       @toggle-sort="toggleSort"
+      @toggle-visibility="toggleFilterVisibility"
     />
     
     <div class="webtoon-grid">

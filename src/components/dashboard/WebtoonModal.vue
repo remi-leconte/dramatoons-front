@@ -228,7 +228,6 @@ const performAutoSave = async () => {
 
   try {
     if (isEditMode.value) {
-      // 1. webtoon_user
       const progress = localWebtoon.value.userProgress ||= createDefaultProgress()
       const userProgressPayload: ProgressPayload = {
         state: progress.state ?? null,
@@ -251,7 +250,6 @@ const performAutoSave = async () => {
         progress.id = response.data.id
       }
 
-      // 2. webtoon
       if (isCreator.value) {
         const webtoonPayload: WebtoonPayload = {
           title: localWebtoon.value.title,

@@ -82,7 +82,6 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-// Raccourci Ctrl+K conservé en tâche de fond
 const handleGlobalKeydown = (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
     e.preventDefault()
