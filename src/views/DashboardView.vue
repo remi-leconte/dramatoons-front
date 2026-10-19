@@ -91,6 +91,13 @@ const handleModalSave = (updated: Webtoon) => {
 const handleWebtoonCreated = (created: Webtoon) => { webtoons.value.unshift(created); selectedWebtoon.value = created }
 const handleModalDelete = (id: number) => { webtoons.value = webtoons.value.filter(item => item.id !== id) }
 
+const focusSearchInput = () => {
+  const inputEl = document.querySelector('.header-search-input') as HTMLInputElement | null
+  if (inputEl) {
+    inputEl.focus()
+  }
+}
+
 watch([title, includedStatuses, excludedStatuses, sortBy, sortOrder], async () => {
   if (isInitializing.value) return
   await resetAndFetchWebtoons()
@@ -150,7 +157,7 @@ onUnmounted(() => {
       @toggle-visibility="toggleFilterVisibility"
     />
     
-    <div class="webtoon-grid">
+    <div v-if="webtoons.length > 0" class="webtoon-grid">
       <WebtoonCard 
         v-for="(webtoon, index) in webtoons" 
         :key="webtoon.id || index"
@@ -161,10 +168,22 @@ onUnmounted(() => {
       />
     </div>
 
+    <div v-else-if="webtoons.length == 0 && !loading" class="empty-library">
+      <p v-if="activeTab == 'bibliotheque'">
+        Votre bibliothèque est vide, vous pouvez suivre des webtoons via la 
+        <a href="#" @click.prevent="focusSearchInput">barre de recherche rapide</a> 
+        ou le 
+        <a href="#" @click.prevent="selectTab('catalogue')">catalogue</a>.
+      </p>
+      <p v-else>
+        Aucun résultat pour votre recherche.
+      </p>
+    </div>
+
     <div ref="observerTarget" class="pagination-trigger">
       <div v-if="loading" class="loader-infinite">Chargement des prochains webtoons...</div>
       <p v-if="!nextPageUrl && webtoons.length > 0" class="end-message">
-        Fin du catalogue.
+        Fin.
       </p>
     </div>
   </main>
@@ -204,6 +223,23 @@ onUnmounted(() => {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 25px 15px;
   }
+}
+
+.empty-library {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted, #bbb);
+  font-size: 1rem;
+}
+
+.empty-library a {
+  color: var(--primary-red, #e50914);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.empty-library a:hover {
+  color: var(--primary-red-hover, #b80710);
 }
 
 .pagination-trigger {
