@@ -122,15 +122,16 @@ const saveBookmarkInput = () => {
           </div>
           <div v-else class="quick-chapter-controls">
             <button 
+              v-if="currentBookmark > 0" 
               type="button" 
               class="quick-btn" 
               title="-1 chapitre"
-              :disabled="currentBookmark <= 0"
               @click.stop="updateBookmark(-1)"
             >
               -
             </button>
-            <span 
+            <span
+              v-if="currentBookmark > 0" 
               class="chapter-badge"
               title="Cliquer pour modifier"
               @click.stop="startEditingBookmark"
