@@ -242,7 +242,6 @@ onMounted(() => fetchUsers())
       <button :disabled="currentPage >= totalPages" @click="fetchUsers(currentPage + 1)">Suivant</button>
     </div>
 
-    <!-- Modale de Confirmation -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <h3>Confirmation</h3>

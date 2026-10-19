@@ -1,5 +1,5 @@
-<!-- Gère la barre de filtres et de tri permettant d'inclure/exclure des statuts et de modifier l'ordre d'affichage -->[cite: 23]
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import type { ProgressState, SortByOption, SortOrderOption } from '@/types'
 
 interface SortOption {
@@ -14,6 +14,7 @@ interface StatusPill {
 }
 
 const props = defineProps<{
+  title: string
   includedStatuses: ProgressState[]
   excludedStatuses: ProgressState[]
   sortBy: SortByOption
@@ -22,6 +23,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  (e: 'update:title', value: string): void
   (e: 'cycleStatus', key: ProgressState): void
   (e: 'toggleSort', key: SortByOption, defaultOrder: SortOrderOption): void
 }>()
@@ -32,6 +34,28 @@ const STATUS_PILLS: StatusPill[] = [
   { key: 'break', label: 'Pas intéressé' },
   { key: 'completed', label: 'Terminé' }
 ]
+
+const searchInput = ref(props.title)
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null
+
+watch(() => props.title, (newVal) => {
+  if (newVal !== searchInput.value) {
+    searchInput.value = newVal
+  }
+})
+
+const handleInput = () => {
+  if (debounceTimeout) clearTimeout(debounceTimeout)
+  debounceTimeout = setTimeout(() => {
+    emit('update:title', searchInput.value)
+  }, 500)
+}
+
+const clearSearch = () => {
+  if (debounceTimeout) clearTimeout(debounceTimeout)
+  searchInput.value = ''
+  emit('update:title', '')
+}
 </script>
 
 <template>
@@ -77,6 +101,27 @@ const STATUS_PILLS: StatusPill[] = [
         </button>
       </div>
     </div>
+
+    <div class="filter-search">
+      <div class="search-input-wrapper">
+        <input
+          v-model="searchInput"
+          type="text"
+          placeholder="Rechercher par titre..."
+          class="search-input"
+          @input="handleInput"
+        />
+        <button
+          v-if="searchInput"
+          type="button"
+          class="clear-search-btn"
+          title="Effacer la recherche"
+          @click="clearSearch"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -105,9 +150,58 @@ const STATUS_PILLS: StatusPill[] = [
   justify-content: flex-start;
 }
 
+.filter-search {
+  flex: 1 1 100%;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  background: #252525;
+  border: 1px solid #383838;
+  color: #fff;
+  padding: 6px 32px 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #e50914;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  transition: color 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  color: #fff;
+}
+
 .filter-right {
   justify-content: flex-end;
-  margin-left: auto;
 }
 
 .filter-label {
@@ -174,13 +268,25 @@ const STATUS_PILLS: StatusPill[] = [
   font-weight: bold;
 }
 
-@media (max-width: 768px) {
-  .filter-group {
-    flex: 1 1 100%;
+@media (max-width: 900px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .filter-right {
+
+  .filter-left {
+    width: 100%;
     justify-content: flex-start;
-    margin-left: 0;
+  }
+
+  .filter-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .filter-search {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 </style>
