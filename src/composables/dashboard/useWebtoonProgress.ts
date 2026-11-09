@@ -1,53 +1,75 @@
 import api from '../../services/api'
-import { createDefaultProgress } from '@/types/progress'
-import type { Webtoon, ProgressState } from '@/types'
+import { useAuthStore } from '../../stores/auth'
+import { createDefaultProgress, isEmptyProgress } from '@/types/progress'
+import type { Webtoon, Progress, ProgressState } from '@/types'
+
+const LEAVE_UNPUBLISHED_MESSAGE = "Ce Webtoon n'est plus disponible, vous n'y aurez plus accès si vous arrêtez de le suivre. Continuer ?"
+
+export function losesAccessWithoutProgress(webtoon: Webtoon): boolean {
+    return !webtoon.publish && webtoon.creator?.id !== useAuthStore().userId
+}
+
+export function confirmLeavingUnpublished(webtoon: Webtoon, progress: Progress): boolean {
+    const leaving = !!progress.id && isEmptyProgress(progress) && losesAccessWithoutProgress(webtoon)
+
+    return !leaving || confirm(LEAVE_UNPUBLISHED_MESSAGE)
+}
+
+// L'API refuse un suivi vide : il est supprimé au lieu d'être enregistré
+export async function saveProgress(webtoonId: number | undefined, progress: Progress): Promise<void> {
+    if (isEmptyProgress(progress)) {
+        if (progress.id) {
+            await api.delete(`/webtoon_users/${progress.id}`, { responseType: 'text' })
+            progress.id = undefined
+        }
+        return
+    }
+
+    // Un champ numérique vidé dans le formulaire vaut '' (v-model.number), que l'API refuse
+    const payload = {
+        state: progress.state || null,
+        rate: typeof progress.rate === 'number' ? progress.rate : null,
+        bookmark: progress.bookmark || null
+    }
+
+    if (progress.id) {
+        await api.patch(`/webtoon_users/${progress.id}`, payload, {
+            headers: { 'Content-Type': 'application/merge-patch+json' }
+        })
+    } else {
+        if (!webtoonId) throw new Error('Webtoon sans id : impossible de créer son suivi.')
+        const response = await api.post<Progress>('/webtoon_users', {
+            webtoon: `/webtoons/${webtoonId}`,
+            ...payload
+        }, { headers: { 'Content-Type': 'application/ld+json' } })
+        progress.id = response.data.id
+    }
+}
 
 export function useWebtoonProgress() {
-    const changeStatus = async (webtoon: Webtoon, newState: ProgressState) => {
-        if (!webtoon.userProgress) webtoon.userProgress = createDefaultProgress()
-        const previousState = webtoon.userProgress.state
-        webtoon.userProgress.state = newState
+    // Renvoie vrai si le webtoon doit disparaître de la bibliothèque (dépublié, plus suivi)
+    const changeProgress = async (webtoon: Webtoon, change: Partial<Progress>): Promise<boolean> => {
+        const progress = webtoon.userProgress ||= createDefaultProgress()
+        const previous = { ...progress }
+        Object.assign(progress, change)
+
+        if (!confirmLeavingUnpublished(webtoon, progress)) {
+            Object.assign(progress, previous)
+            return false
+        }
 
         try {
-            if (webtoon.userProgress.id) {
-                await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, { state: newState }, {
-                    headers: { 'Content-Type': 'application/merge-patch+json' }
-                })
-            } else {
-                const response = await api.post('/webtoon_users', {
-                    webtoon: `/webtoons/${webtoon.id}`,
-                    state: newState
-                }, { headers: { 'Content-Type': 'application/ld+json' } })
-                webtoon.userProgress.id = response.data.id
-            }
+            await saveProgress(webtoon.id, progress)
+            return !progress.id && losesAccessWithoutProgress(webtoon)
         } catch (error) {
             console.error(error)
-            webtoon.userProgress.state = previousState
+            Object.assign(progress, previous)
+            return false
         }
     }
 
-    const changeBookmark = async (webtoon: Webtoon, newBookmark: number) => {
-        if (!webtoon.userProgress) webtoon.userProgress = createDefaultProgress()
-        const previousBookmark = webtoon.userProgress.bookmark
-        webtoon.userProgress.bookmark = newBookmark
-
-        try {
-            if (webtoon.userProgress.id) {
-                await api.patch(`/webtoon_users/${webtoon.userProgress.id}`, { bookmark: newBookmark }, {
-                    headers: { 'Content-Type': 'application/merge-patch+json' }
-                })
-            } else {
-                const response = await api.post('/webtoon_users', {
-                    webtoon: `/webtoons/${webtoon.id}`,
-                    bookmark: newBookmark
-                }, { headers: { 'Content-Type': 'application/ld+json' } })
-                webtoon.userProgress.id = response.data.id
-            }
-        } catch (error) {
-            console.error(error)
-            webtoon.userProgress.bookmark = previousBookmark
-        }
-    }
+    const changeStatus = (webtoon: Webtoon, newState: ProgressState) => changeProgress(webtoon, { state: newState })
+    const changeBookmark = (webtoon: Webtoon, newBookmark: number) => changeProgress(webtoon, { bookmark: newBookmark })
 
     return { changeStatus, changeBookmark }
 }

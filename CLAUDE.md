@@ -23,7 +23,7 @@ docker compose exec front npm run format
 - **`src/types/`** : `Webtoon`, `WebtoonTitle`, `Progress` (= WebtoonUser), `User`, `HydraCollection`.
 - **`src/composables/dashboard/`** :
   - `useWebtoonSearch` : onglet, filtres et tri, mémorisés dans `localStorage` (`dramatoons_search_prefs`) ;
-  - `useWebtoonProgress` : changement de `state` ou de `bookmark`, avec un `POST` si le suivi n'existe pas, sinon un `PATCH`.
+  - `useWebtoonProgress` : changement de `state` ou de `bookmark`, et `saveProgress()` (aussi utilisée par `WebtoonModal`) : `POST` si le suivi n'existe pas, sinon `PATCH`, et `DELETE` s'il devient vide (`isEmptyProgress()` : ni note ni état, chapitre vide ou 0), car l'API refuse un suivi vide.
 - **Composants** :
   - `components/dashboard/` : `DashboardHeader` (menu admin), `DashboardFilterBar`, `WebtoonCard` et `WebtoonModal`, qui crée, édite ou supprime un webtoon, gère titres, couverture et progression ;
   - `components/modal/` : formulaire de progression et upload de couverture ;

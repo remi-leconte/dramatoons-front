@@ -90,6 +90,7 @@ const handleModalSave = (updated: Webtoon) => {
 }
 const handleWebtoonCreated = (created: Webtoon) => { webtoons.value.unshift(created); selectedWebtoon.value = created }
 const handleModalDelete = (id: number) => { webtoons.value = webtoons.value.filter(item => item.id !== id) }
+const removeWebtoon = (webtoon: Webtoon) => { webtoons.value = webtoons.value.filter(item => item !== webtoon) }
 
 const focusSearchInput = () => {
   const inputEl = document.querySelector('.header-search-input') as HTMLInputElement | null
@@ -163,8 +164,8 @@ onUnmounted(() => {
         :key="webtoon.id || index"
         :webtoon="webtoon"
         @click="openModal(webtoon)"
-        @status-change="(newState) => changeStatus(webtoon, newState)"
-        @bookmark-change="(newBookmark) => changeBookmark(webtoon, newBookmark)"
+        @status-change="async (newState) => (await changeStatus(webtoon, newState)) && removeWebtoon(webtoon)"
+        @bookmark-change="async (newBookmark) => (await changeBookmark(webtoon, newBookmark)) && removeWebtoon(webtoon)"
       />
     </div>
 

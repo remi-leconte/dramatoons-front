@@ -22,9 +22,5 @@ export const createDefaultProgress = (): Progress => ({
     webtoon: undefined
 })
 
-export interface ProgressPayload {
-    webtoon?: string;
-    state?: ProgressState | null;
-    rate?: number | null;
-    bookmark?: number | null;
-}
+export const isEmptyProgress = (progress: Progress): boolean =>
+    !progress.state && typeof progress.rate !== 'number' && !progress.bookmark
