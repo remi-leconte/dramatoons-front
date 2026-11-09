@@ -14,7 +14,26 @@ const api = axios.create({
 
 export const COVER_BASE_URL = `${api.defaults.baseURL}/upload/cover/`;
 
-let isRefreshingFailed = false
+let refreshPromise: Promise<string> | null = null
+
+// Le refresh token est à usage unique : les requêtes en 401 simultanées partagent un seul renouvellement
+function refreshAccessToken(): Promise<string> {
+  const authStore = useAuthStore()
+
+  refreshPromise ??= axios
+    .post<{ token: string; refresh_token: string }>(`${api.defaults.baseURL}/token/refresh`, {
+      refresh_token: authStore.refreshToken
+    })
+    .then((response) => {
+      authStore.updateToken(response.data.token, response.data.refresh_token)
+      return response.data.token
+    })
+    .finally(() => {
+      refreshPromise = null
+    })
+
+  return refreshPromise
+}
 
 api.interceptors.request.use(
   (config) => {
@@ -44,28 +63,19 @@ api.interceptors.response.use(
       error.response.status === 401 &&
       error.response.data?.message === 'Expired JWT Token'
 
-    if (isExpiredToken && !originalRequest._retry && !isRefreshingFailed) {
+    if (isExpiredToken && !originalRequest._retry && authStore.refreshToken) {
       originalRequest._retry = true // Marque la requête pour éviter une boucle infinie
 
-      if (authStore.refreshToken) {
-        try {
-          const response = await axios.post(`${api.defaults.baseURL}/token/refresh`, {
-            refresh_token: authStore.refreshToken
-          })
-          const newToken = response.data.token
+      try {
+        const newToken = await refreshAccessToken()
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
 
-          authStore.updateToken(newToken)
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return api(originalRequest)
+      } catch (refreshError) {
+        authStore.logout()
+        router.push('/')
 
-          return api(originalRequest)
-
-        } catch (refreshError) {
-          isRefreshingFailed = true
-          authStore.logout()
-          router.push('/')
-
-          return Promise.reject(refreshError)
-        }
+        return Promise.reject(refreshError)
       }
     }
 
