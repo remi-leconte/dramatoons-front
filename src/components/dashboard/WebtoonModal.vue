@@ -1,11 +1,12 @@
 // Gère la modale d'édition/création/suppression
 <script setup lang="ts">
-import type { Webtoon, WebtoonPayload, Progress, ProgressPayload, WebtoonTitle } from '@/types';
+import type { Webtoon, WebtoonPayload, WebtoonTitle } from '@/types';
 import api, { COVER_BASE_URL } from '../../services/api.ts'
 import { ref, computed, watch, nextTick, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../../stores/auth.ts'
-import { createDefaultProgress } from '@/types/progress'
+import { createDefaultProgress, isEmptyProgress } from '@/types/progress'
+import { saveProgress, confirmLeavingUnpublished } from '@/composables/dashboard/useWebtoonProgress'
 import { createDefaultWebtoon } from '@/types/webtoon'
 import WebtoonCoverUploader from './../modal/WebtoonCoverUploader.vue'
 import WebtoonUserProgressForm from './../modal/WebtoonUserProgressForm.vue'
@@ -229,25 +230,19 @@ const performAutoSave = async () => {
   try {
     if (isEditMode.value) {
       const progress = localWebtoon.value.userProgress ||= createDefaultProgress()
-      const userProgressPayload: ProgressPayload = {
-        state: progress.state ?? null,
-        rate: progress.rate ?? null,
-        bookmark: progress.bookmark ?? null
+
+      if (!confirmLeavingUnpublished(localWebtoon.value, progress)) {
+        localWebtoon.value.userProgress = JSON.parse(JSON.stringify(props.webtoon?.userProgress ?? createDefaultProgress()))
+        return
       }
 
-      if (progress.id) {
-        await api.patch(`/webtoon_users/${progress.id}`, userProgressPayload, {
-          headers: { 'Content-Type': 'application/merge-patch+json' }
-        })
-      } else {
-        const payload: ProgressPayload = {
-          webtoon: `/webtoons/${localWebtoon.value.id}`,
-          ...userProgressPayload
-        }
-        const response = await api.post('/webtoon_users', payload, {
-          headers: { 'Content-Type': 'application/ld+json' }
-        })
-        progress.id = response.data.id
+      await saveProgress(localWebtoon.value.id, progress)
+
+      // Dépublié et plus suivi : l'utilisateur n'a plus accès au webtoon
+      if (!localWebtoon.value.publish && !progress.id && !isCreator.value) {
+        emit('deleted', localWebtoon.value.id)
+        emit('close')
+        return
       }
 
       if (isCreator.value) {
@@ -296,18 +291,10 @@ const performAutoSave = async () => {
         createdWebtoon.image = coverResponse.data.image || createdWebtoon.image
       }
 
-      if (authStore.isAuthenticated && (localWebtoon.value.userProgress?.state || localWebtoon.value.userProgress?.bookmark || localWebtoon.value.userProgress?.rate)) {
-        const initialProgressPayload: ProgressPayload = {
-          webtoon: `/webtoons/${createdWebtoon.id}`,
-          state: localWebtoon.value.userProgress.state ?? null,
-          rate: localWebtoon.value.userProgress.rate ?? null,
-          bookmark: localWebtoon.value.userProgress.bookmark ?? null
-        }
-
-        const progressResponse = await api.post<Progress>('/webtoon_users', initialProgressPayload, {
-          headers: { 'Content-Type': 'application/ld+json' }
-        })
-        createdWebtoon.userProgress = progressResponse.data
+      if (authStore.isAuthenticated && localWebtoon.value.userProgress && !isEmptyProgress(localWebtoon.value.userProgress)) {
+        const progress = { ...localWebtoon.value.userProgress }
+        await saveProgress(createdWebtoon.id, progress)
+        createdWebtoon.userProgress = progress
       }
 
       emit('created', createdWebtoon)
