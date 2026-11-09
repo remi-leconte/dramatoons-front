@@ -59,9 +59,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function updateToken(newToken: string) {
+  function updateToken(newToken: string, newRefreshToken: string) {
     token.value = newToken
+    refreshToken.value = newRefreshToken
     localStorage.setItem('token', newToken)
+    localStorage.setItem('refreshToken', newRefreshToken)
   }
 
   function logout() {
