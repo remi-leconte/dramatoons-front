@@ -22,6 +22,5 @@ export const createDefaultProgress = (): Progress => ({
     webtoon: undefined
 })
 
-// Un chapitre à 0 équivaut à pas de chapitre
 export const isEmptyProgress = (progress: Progress): boolean =>
     !progress.state && typeof progress.rate !== 'number' && !progress.bookmark

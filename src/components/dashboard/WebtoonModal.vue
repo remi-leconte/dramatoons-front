@@ -6,7 +6,7 @@ import { ref, computed, watch, nextTick, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../../stores/auth.ts'
 import { createDefaultProgress, isEmptyProgress } from '@/types/progress'
-import { saveProgress, confirmLeavingUnpublished } from '@/composables/dashboard/useWebtoonProgress'
+import { saveProgress, confirmLeavingUnpublished, losesAccessWithoutProgress } from '@/composables/dashboard/useWebtoonProgress'
 import { createDefaultWebtoon } from '@/types/webtoon'
 import WebtoonCoverUploader from './../modal/WebtoonCoverUploader.vue'
 import WebtoonUserProgressForm from './../modal/WebtoonUserProgressForm.vue'
@@ -238,8 +238,7 @@ const performAutoSave = async () => {
 
       await saveProgress(localWebtoon.value.id, progress)
 
-      // Dépublié et plus suivi : l'utilisateur n'a plus accès au webtoon
-      if (!localWebtoon.value.publish && !progress.id && !isCreator.value) {
+      if (!progress.id && losesAccessWithoutProgress(localWebtoon.value)) {
         emit('deleted', localWebtoon.value.id)
         emit('close')
         return

@@ -3,17 +3,16 @@ import { useAuthStore } from '../../stores/auth'
 import { createDefaultProgress, isEmptyProgress } from '@/types/progress'
 import type { Webtoon, Progress, ProgressState } from '@/types'
 
-const LEAVE_UNPUBLISHED_MESSAGE = "Ce Webtoon n'est plus disponible, si vous arrêtez de le suivre alors il disparaitra de votre bibliothèque. Continuer ?"
+const LEAVE_UNPUBLISHED_MESSAGE = "Ce Webtoon n'est plus disponible, vous n'y aurez plus accès si vous arrêtez de le suivre. Continuer ?"
 
-// Un webtoon dépublié n'est plus visible de celui qui arrête de le suivre, sauf de son créateur
+export function losesAccessWithoutProgress(webtoon: Webtoon): boolean {
+    return !webtoon.publish && webtoon.creator?.id !== useAuthStore().userId
+}
+
 export function confirmLeavingUnpublished(webtoon: Webtoon, progress: Progress): boolean {
-    const authStore = useAuthStore()
-    const losesAccess = !webtoon.publish
-        && webtoon.creator?.id !== authStore.userId
-        && !!progress.id
-        && isEmptyProgress(progress)
+    const leaving = !!progress.id && isEmptyProgress(progress) && losesAccessWithoutProgress(webtoon)
 
-    return !losesAccess || confirm(LEAVE_UNPUBLISHED_MESSAGE)
+    return !leaving || confirm(LEAVE_UNPUBLISHED_MESSAGE)
 }
 
 // L'API refuse un suivi vide : il est supprimé au lieu d'être enregistré
@@ -61,7 +60,7 @@ export function useWebtoonProgress() {
 
         try {
             await saveProgress(webtoon.id, progress)
-            return !webtoon.publish && !progress.id && webtoon.creator?.id !== useAuthStore().userId
+            return !progress.id && losesAccessWithoutProgress(webtoon)
         } catch (error) {
             console.error(error)
             Object.assign(progress, previous)
