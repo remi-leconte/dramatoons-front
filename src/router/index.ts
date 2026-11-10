@@ -56,8 +56,8 @@ const router = createRouter({
     },
     { path: '/admin/users', name: 'admin-users', component: () => import('../views/admin/UserListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
     { path: '/admin/users/:id', name: 'admin-user-detail', component: () => import('../views/admin/UserDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
-    { path: '/admin/webtoons', name: 'admin-webtoons', component: () => import('../views/admin/WebtoonListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
-    { path: '/admin/webtoons/:id', name: 'admin-webtoon-detail', component: () => import('../views/admin/WebtoonDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } }
+    { path: '/admin/webtoons', name: 'admin-webtoons', component: () => import('../views/admin/WebtoonListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_MODO', 'ROLE_ADMIN'] } },
+    { path: '/admin/webtoons/:id', name: 'admin-webtoon-detail', component: () => import('../views/admin/WebtoonDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_MODO', 'ROLE_ADMIN'] } }
   ],
 })
 

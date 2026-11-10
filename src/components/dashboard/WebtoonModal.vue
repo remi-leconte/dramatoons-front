@@ -238,22 +238,24 @@ const performAutoSave = async () => {
 
       await saveProgress(localWebtoon.value.id, progress)
 
-      if (!progress.id && losesAccessWithoutProgress(localWebtoon.value)) {
-        emit('deleted', localWebtoon.value.id)
-        emit('close')
-        return
-      }
-
-      if (isCreator.value) {
-        const webtoonPayload: WebtoonPayload = {
-          title: localWebtoon.value.title,
-          status: localWebtoon.value.status,
-          publish: localWebtoon.value.publish
-        }
+      if (isCreator.value || authStore.isModo) {
+        const webtoonPayload: Partial<WebtoonPayload> = isCreator.value
+          ? {
+              title: localWebtoon.value.title,
+              status: localWebtoon.value.status,
+              publish: localWebtoon.value.publish
+            }
+          : { publish: localWebtoon.value.publish }
 
         await api.patch(`/webtoons/${localWebtoon.value.id}`, webtoonPayload, {
           headers: { 'Content-Type': 'application/merge-patch+json' }
         })
+      }
+
+      if (!progress.id && losesAccessWithoutProgress(localWebtoon.value)) {
+        emit('deleted', localWebtoon.value.id)
+        emit('close')
+        return
       }
 
       const refreshedResponse = await api.get<Webtoon>(`/webtoons/${localWebtoon.value.id}`)
@@ -484,7 +486,7 @@ const deleteWebtoon = async () => {
             </div>
           </div>
 
-          <div v-if="localWebtoon.status === 'completed' || canDelete" class="toggles-section">
+          <div v-if="localWebtoon.status === 'completed' || canDelete || authStore.isModo" class="toggles-section">
             <div class="toggle-row">
               <span class="toggle-label">
                 <span class="status-indicator" :class="{ 'is-completed': localWebtoon.status === 'completed' }"></span>
@@ -505,7 +507,7 @@ const deleteWebtoon = async () => {
               </label>
             </div>
 
-            <div v-if="authStore.isAdmin" class="toggle-row">
+            <div v-if="authStore.isModo" class="toggle-row">
               <span class="toggle-label">Publier au catalogue</span>
               <label class="switch">
                 <input 

@@ -140,6 +140,7 @@ onUnmounted(() => {
       v-if="authStore.isAuthenticated"
       :active-tab="activeTab"
       :is-admin="authStore.isAdmin"
+      :is-modo="authStore.isModo"
       @select-tab="selectTab"
       @open-create-modal="openModal(null)"
     />
