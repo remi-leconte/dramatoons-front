@@ -29,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => roles.value.includes('ROLE_ADMIN'))
+  const isModo = computed(() => isAdmin.value || roles.value.includes('ROLE_MODO'))
 
   function setUserSession(newToken: string, newRefreshToken: string, user: User) {
     token.value = newToken
@@ -109,6 +110,7 @@ export const useAuthStore = defineStore('auth', () => {
     roles,
     isAuthenticated,
     isAdmin,
+    isModo,
     fetchUserProfile,
     setUserSession,
     updateToken,

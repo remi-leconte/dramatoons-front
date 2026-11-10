@@ -18,7 +18,7 @@ docker compose exec front npm run format
 
 ## Organisation
 - **`src/services/api.ts`** : instance axios unique. Elle ajoute le JWT et refait la requête après un refresh si l'API répond `401 Expired JWT Token`. Elle exporte aussi `COVER_BASE_URL`.
-- **`src/stores/auth.ts`** : session (`token`, `refreshToken`, `userId`, `login`, `roles`) stockée dans `localStorage`, plus `isAuthenticated` et `isAdmin`.
+- **`src/stores/auth.ts`** : session (`token`, `refreshToken`, `userId`, `login`, `roles`) stockée dans `localStorage`, plus `isAuthenticated`, `isAdmin` et `isModo` (modérateur ou administrateur).
 - **`src/router/index.ts`** : routes, avec les `meta` `requiresAuth`, `guestOnly` et `roles`.
 - **`src/types/`** : `Webtoon`, `WebtoonTitle`, `Progress` (= WebtoonUser), `User`, `HydraCollection`.
 - **`src/composables/dashboard/`** :
@@ -36,7 +36,8 @@ docker compose exec front npm run format
 | `/` | `DashboardView` si connecté (onglets `bibliotheque` et `catalogue`), sinon `LandingView` |
 | `/login`, `/register`, `/forgot-password`, `/reset-password` | Réservées aux invités. `/login?status=registered\|verified\|modifiedLogin\|resetPassword` affiche un message |
 | `/verify`, `/profile` | Validation de l'email ; profil (connexion requise) |
-| `/admin/users[/:id]`, `/admin/webtoons[/:id]` | `ROLE_ADMIN` |
+| `/admin/users[/:id]` | `ROLE_ADMIN` |
+| `/admin/webtoons[/:id]` | `ROLE_MODO` ou `ROLE_ADMIN` (le lien vers la fiche d'un lecteur n'est affiché qu'à l'admin) |
 | `/privacy`, `/install-tutorial` | Pages statiques |
 
 ## Conventions d'appel à l'API

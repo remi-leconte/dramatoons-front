@@ -4,10 +4,12 @@ import { createDefaultWebtoon } from '@/types'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
+import { useAuthStore } from '@/stores/auth'
 import WebtoonCoverUploader from '../../components/modal/WebtoonCoverUploader.vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const webtoonId = route.params.id
 
 const webtoon = ref<Webtoon>({
@@ -172,9 +174,10 @@ onMounted(() => fetchData())
             <td>{{ prog.rate || '-' }}</td>
             <td>{{ prog.bookmark || '-' }}</td>
             <td class="action-col">
-              <router-link v-if="prog.reader?.id" :to="`/admin/users/${prog.reader.id}`">
+              <router-link v-if="prog.reader?.id && authStore.isAdmin" :to="`/admin/users/${prog.reader.id}`">
                 {{ prog.reader?.login || 'Utilisateur' }} →
               </router-link>
+              <span v-else-if="prog.reader">{{ prog.reader.login || 'Utilisateur' }}</span>
               <span v-else>-</span>
             </td>
           </tr>

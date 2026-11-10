@@ -3,6 +3,7 @@
 defineProps<{
   activeTab: 'bibliotheque' | 'catalogue'
   isAdmin: boolean
+  isModo: boolean
 }>()
 
 const emit = defineEmits<{
@@ -37,8 +38,8 @@ const emit = defineEmits<{
         <span>+</span> Créer un Webtoon
       </button>
       
-      <div v-if="isAdmin" class="admin-dropdown">
-        <router-link to="/admin/users" class="admin-pill" title="Gestion des utilisateurs">Users</router-link>
+      <div v-if="isModo" class="admin-dropdown">
+        <router-link v-if="isAdmin" to="/admin/users" class="admin-pill" title="Gestion des utilisateurs">Users</router-link>
         <router-link to="/admin/webtoons" class="admin-pill" title="Gestion des webtoons">Webtoons</router-link>
       </div>
     </div>
