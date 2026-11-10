@@ -26,7 +26,7 @@ docker compose exec front npm run format
   - `useWebtoonProgress` : changement de `state` ou de `bookmark`, et `saveProgress()` (aussi utilisée par `WebtoonModal`) : `POST` si le suivi n'existe pas, sinon `PATCH`, et `DELETE` s'il devient vide (`isEmptyProgress()` : ni note ni état, chapitre vide ou 0), car l'API refuse un suivi vide.
 - **Composants** :
   - `components/dashboard/` : `DashboardHeader` (menu admin), `DashboardFilterBar`, `WebtoonCard` et `WebtoonModal`, qui crée, édite ou supprime un webtoon, gère titres, couverture et progression ;
-  - `components/modal/` : formulaire de progression et upload de couverture ;
+  - `components/modal/` : formulaire de progression et upload de couverture (JPEG ≤ 1 Mo, contrôlé avant l'envoi) ;
   - `components/HeaderSearch.vue` : recherche du bandeau (`mode=search`) ;
   - `components/CanvasView.vue` : planche explicative de la page d'accueil.
 

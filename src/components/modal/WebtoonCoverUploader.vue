@@ -12,6 +12,8 @@ const emit = defineEmits<{
   (e: 'file-selected', file: File): void
 }>()
 
+const MAX_COVER_SIZE = 1_000_000
+
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const previewImage = ref<string | null>(null)
 const hasImageError = ref(false)
@@ -35,6 +37,11 @@ const handleClick = () => {
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
+  if (file && (file.type !== 'image/jpeg' || file.size > MAX_COVER_SIZE)) {
+    alert('La couverture doit être une image JPEG de 1 Mo au maximum.')
+    target.value = ''
+    return
+  }
   if (file) {
     hasImageError.value = false
     previewImage.value = URL.createObjectURL(file)
@@ -69,7 +76,7 @@ const handleFileChange = (event: Event) => {
       v-if="isEditable"
       ref="fileInputRef"
       type="file" 
-      accept="image/*" 
+      accept="image/jpeg" 
       style="display: none;" 
       @change="handleFileChange"
     >
