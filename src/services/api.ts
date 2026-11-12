@@ -2,13 +2,15 @@ import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
 import router from '../router'
 
+const stagingHeaders = import.meta.env.VITE_STAGING_AUTH
+  ? { 'X-Staging-Auth': `Basic ${btoa(import.meta.env.VITE_STAGING_AUTH)}` }
+  : {}
+
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}`,
   headers: {
     'Accept': 'application/ld+json',
-    ...(import.meta.env.VITE_STAGING_AUTH && {
-      'X-Staging-Auth': `Basic ${btoa(import.meta.env.VITE_STAGING_AUTH)}`
-    })
+    ...stagingHeaders
   }
 })
 
@@ -23,7 +25,7 @@ function refreshAccessToken(): Promise<string> {
   refreshPromise ??= axios
     .post<{ token: string; refresh_token: string }>(`${api.defaults.baseURL}/token/refresh`, {
       refresh_token: authStore.refreshToken
-    })
+    }, { headers: stagingHeaders })
     .then((response) => {
       authStore.updateToken(response.data.token, response.data.refresh_token)
       return response.data.token
