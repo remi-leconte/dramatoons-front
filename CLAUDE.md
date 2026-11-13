@@ -11,6 +11,7 @@ docker compose exec front npm run type-check
 docker compose exec front npm run build       # type-check + build
 docker compose exec front npm run lint        # applique --fix
 docker compose exec front npm run format
+docker compose exec front npm run ci          # vérifications de la CI, sans rien corriger (voir « CI »)
 ```
 
 - `VITE_API_URL` est fixée au build en prod et staging. `VITE_STAGING_AUTH` ajoute l'en-tête `X-Staging-Auth`.
@@ -46,6 +47,14 @@ docker compose exec front npm run format
 - Les collections sont en JSON-LD. Le type `HydraCollection` accepte `member` et `hydra:member`, de même pour `totalItems` : garder les deux lectures.
 - `GET /webtoons` exige le paramètre `mode`, sinon la réponse est vide.
 - Les couvertures s'affichent via `COVER_BASE_URL`, avec `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx).
+
+## CI
+`.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Deux checks, obligatoires pour fusionner :
+- **Vérifications** : Node 24, `npm ci`, puis `npm run ci`, qui enchaîne sans rien corriger :
+  1. `type-check` (vue-tsc) ;
+  2. `oxlint` puis `eslint`, tout avertissement compte comme une erreur ;
+  3. `prettier --check` sur `src/` : le formatage de `.prettierrc.json` (corriger avec `npm run format`).
+- **Image prod** : construit l'étape `prod` du `Dockerfile`, sans `VITE_API_URL` et sans la publier.
 
 ## Git
 Workflow (branches, PR, tickets, releases) : skill `workflow-github`.
