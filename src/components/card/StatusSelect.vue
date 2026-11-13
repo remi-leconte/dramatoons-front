@@ -12,8 +12,18 @@ interface StatusOptionValue {
 const STATUS_OPTIONS = new Map<ProgressState, StatusOptionValue>([
   ['reading', { label: 'En cours', class: 'status-reading', colorVar: 'var(--status-reading)' }],
   ['pause', { label: 'En pause', class: 'status-paused', colorVar: 'var(--status-paused)' }],
-  ['break', { label: 'Pas intéressé', class: 'status-disinterested', colorVar: 'var(--status-disinterested)' }],
-  ['completed', { label: 'Terminé', class: 'status-completed', colorVar: 'var(--status-completed)' }]
+  [
+    'break',
+    {
+      label: 'Pas intéressé',
+      class: 'status-disinterested',
+      colorVar: 'var(--status-disinterested)',
+    },
+  ],
+  [
+    'completed',
+    { label: 'Terminé', class: 'status-completed', colorVar: 'var(--status-completed)' },
+  ],
 ])
 </script>
 
@@ -37,7 +47,11 @@ const closeDropdown = (e: MouseEvent) => {
   }
 }
 
-const defaultStatus: StatusOptionValue = { label: 'Aucun', class: 'status-none', colorVar: 'var(--status-none)' }
+const defaultStatus: StatusOptionValue = {
+  label: 'Aucun',
+  class: 'status-none',
+  colorVar: 'var(--status-none)',
+}
 
 const currentStatus = computed<StatusOptionValue>(() => {
   if (!props.state) return defaultStatus
@@ -59,10 +73,10 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
 
 <template>
   <div class="custom-select-container" ref="containerRef">
-    <button 
+    <button
       type="button"
-      @click.stop="isOpen = !isOpen" 
-      class="status-pill-btn" 
+      @click.stop="isOpen = !isOpen"
+      class="status-pill-btn"
       :class="[currentStatus.class, { 'is-active': isOpen, 'is-empty': !state }]"
       :title="state ? `Statut : ${currentStatus.label}` : 'Sélectionner un statut'"
     >
@@ -71,7 +85,7 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
 
     <div v-if="isOpen" class="status-pills-popover">
       <button
-        v-for="([id, data]) in STATUS_OPTIONS"
+        v-for="[id, data] in STATUS_OPTIONS"
         :key="id"
         type="button"
         class="pill-option"
@@ -85,8 +99,8 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
 </template>
 
 <style scoped>
-.custom-select-container { 
-  position: relative; 
+.custom-select-container {
+  position: relative;
   display: inline-block;
 }
 
@@ -102,9 +116,11 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
   font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  transition: transform 0.2s ease, filter 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
 }
 
 .status-pill-btn.is-empty {
@@ -118,11 +134,21 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
   transform: scale(1.05);
 }
 
-.status-none { background-color: rgba(85, 85, 85, 0.85); }
-.status-reading { background-color: rgba(33, 150, 243, 0.85); }
-.status-paused { background-color: rgba(255, 152, 0, 0.85); }
-.status-disinterested { background-color: rgba(229, 9, 20, 0.85); }
-.status-completed { background-color: rgba(76, 175, 80, 0.85); }
+.status-none {
+  background-color: rgba(85, 85, 85, 0.85);
+}
+.status-reading {
+  background-color: rgba(33, 150, 243, 0.85);
+}
+.status-paused {
+  background-color: rgba(255, 152, 0, 0.85);
+}
+.status-disinterested {
+  background-color: rgba(229, 9, 20, 0.85);
+}
+.status-completed {
+  background-color: rgba(76, 175, 80, 0.85);
+}
 
 .status-pills-popover {
   position: absolute;
@@ -136,7 +162,7 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   z-index: 100;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
 }
 
@@ -151,7 +177,9 @@ onUnmounted(() => window.removeEventListener('click', closeDropdown))
   text-align: left;
   white-space: nowrap;
   opacity: 0.7;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .pill-option:hover,

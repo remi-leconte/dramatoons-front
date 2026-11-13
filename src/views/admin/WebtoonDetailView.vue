@@ -14,10 +14,10 @@ const webtoonId = route.params.id
 
 const webtoon = ref<Webtoon>({
   ...createDefaultWebtoon(),
-  id: Number(webtoonId)
+  id: Number(webtoonId),
 })
 
-const readerProgressions = ref<Progress[]>([]);
+const readerProgressions = ref<Progress[]>([])
 const loading = ref(true)
 const saving = ref(false)
 const selectedFile = ref<File | null>(null)
@@ -30,7 +30,7 @@ const formatDate = (dateString?: string | null): string => {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
   }).format(new Date(dateString))
 }
 
@@ -40,10 +40,12 @@ const fetchData = async () => {
     const webtoonRes = await api.get<Webtoon>(`/webtoons/${webtoonId}`)
     webtoon.value = {
       ...webtoonRes.data,
-      status: webtoonRes.data.status || 'ongoing'
+      status: webtoonRes.data.status || 'ongoing',
     }
 
-    const progressRes = await api.get<HydraCollection<Progress>>(`/webtoon_users?webtoon=/webtoons/${webtoonId}`)
+    const progressRes = await api.get<HydraCollection<Progress>>(
+      `/webtoon_users?webtoon=/webtoons/${webtoonId}`,
+    )
     readerProgressions.value = progressRes.data['hydra:member'] ?? progressRes.data.member ?? []
   } catch (error) {
     console.error('Erreur lors de la récupération du détail :', error)
@@ -59,18 +61,18 @@ const handleUpdate = async () => {
       const formData = new FormData()
       formData.append('file', selectedFile.value)
       await api.post(`/webtoons/${webtoonId}/cover`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
     }
 
     const payload: WebtoonPayload = {
       title: webtoon.value.title,
       status: webtoon.value.status,
-      publish: webtoon.value.publish
+      publish: webtoon.value.publish,
     }
 
     await api.patch(`/webtoons/${webtoonId}`, payload, {
-      headers: { 'Content-Type': 'application/merge-patch+json' }
+      headers: { 'Content-Type': 'application/merge-patch+json' },
     })
 
     alert('Modifications enregistrées.')
@@ -108,11 +110,15 @@ onMounted(() => fetchData())
         <div class="field cover-field">
           <label>Cover :</label>
           <div class="cover-container">
-            <WebtoonCoverUploader 
-              :image-path="webtoon.updated ? `${webtoon.image}?t=${new Date(webtoon.updated).getTime()}` : webtoon.image"
+            <WebtoonCoverUploader
+              :image-path="
+                webtoon.updated
+                  ? `${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`
+                  : webtoon.image
+              "
               :title="webtoon.title.title"
               :is-editable="true"
-              @file-selected="(file: File) => selectedFile = file"
+              @file-selected="(file: File) => (selectedFile = file)"
             />
           </div>
         </div>
@@ -125,11 +131,15 @@ onMounted(() => fetchData())
         <div class="field toggle-row">
           <label>Terminé :</label>
           <label class="switch">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               :checked="webtoon.status === 'completed'"
-              @change="webtoon.status = (($event.target as HTMLInputElement).checked ? 'completed' : 'ongoing')"
-            >
+              @change="
+                webtoon.status = ($event.target as HTMLInputElement).checked
+                  ? 'completed'
+                  : 'ongoing'
+              "
+            />
             <span class="slider round"></span>
           </label>
         </div>
@@ -137,10 +147,7 @@ onMounted(() => fetchData())
         <div class="field toggle-row">
           <label>Publié :</label>
           <label class="switch">
-            <input 
-              type="checkbox" 
-              v-model="webtoon.publish"
-            >
+            <input type="checkbox" v-model="webtoon.publish" />
             <span class="slider round"></span>
           </label>
         </div>
@@ -152,7 +159,9 @@ onMounted(() => fetchData())
 
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" :disabled="saving">Enregistrer</button>
-          <button type="button" class="btn btn-secondary danger" @click="handleDelete">Supprimer</button>
+          <button type="button" class="btn btn-secondary danger" @click="handleDelete">
+            Supprimer
+          </button>
         </div>
       </form>
 
@@ -174,7 +183,10 @@ onMounted(() => fetchData())
             <td>{{ prog.rate || '-' }}</td>
             <td>{{ prog.bookmark || '-' }}</td>
             <td class="action-col">
-              <router-link v-if="prog.reader?.id && authStore.isAdmin" :to="`/admin/users/${prog.reader.id}`">
+              <router-link
+                v-if="prog.reader?.id && authStore.isAdmin"
+                :to="`/admin/users/${prog.reader.id}`"
+              >
                 {{ prog.reader?.login || 'Utilisateur' }} →
               </router-link>
               <span v-else-if="prog.reader">{{ prog.reader.login || 'Utilisateur' }}</span>
@@ -191,12 +203,35 @@ onMounted(() => fetchData())
 </template>
 
 <style scoped>
-.admin-page { padding: 2rem 5%; color: #fff; }
-.back-link { color: #888; text-decoration: none; font-size: 0.9rem; }
-.detail-form { max-width: 400px; margin: 1.5rem 0 2.5rem 0; display: flex; flex-direction: column; gap: 15px; }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 0.85rem; color: #888; }
-.field input:disabled { opacity: 0.6; cursor: not-allowed; }
+.admin-page {
+  padding: 2rem 5%;
+  color: #fff;
+}
+.back-link {
+  color: #888;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.detail-form {
+  max-width: 400px;
+  margin: 1.5rem 0 2.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field label {
+  font-size: 0.85rem;
+  color: #888;
+}
+.field input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .app-input-field {
   background: #252525;
   border: 1px solid #383838;
@@ -205,27 +240,114 @@ onMounted(() => fetchData())
   border-radius: 4px;
   font-size: 0.9rem;
 }
-.form-actions { display: flex; gap: 10px; margin-top: 10px; }
-.btn { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
-.btn-primary { background: #e50914; color: #fff; }
-.btn-secondary.danger { background: #8b0000; color: #fff; }
-.btn-secondary.danger:hover { background: #b20710; }
-.admin-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.admin-table th, .admin-table td { border-bottom: 1px solid #282828; padding: 10px; text-align: left; }
-.admin-table th { color: #888; font-size: 0.85rem; }
-.empty { text-align: center; color: #666; font-style: italic; }
-.action-col { text-align: right; }
-.action-col a { color: #e50914; text-decoration: none; }
-.cover-field { margin-bottom: 10px; }
-.cover-container { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+.btn-primary {
+  background: #e50914;
+  color: #fff;
+}
+.btn-secondary.danger {
+  background: #8b0000;
+  color: #fff;
+}
+.btn-secondary.danger:hover {
+  background: #b20710;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid #282828;
+  padding: 10px;
+  text-align: left;
+}
+.admin-table th {
+  color: #888;
+  font-size: 0.85rem;
+}
+.empty {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+.action-col {
+  text-align: right;
+}
+.action-col a {
+  color: #e50914;
+  text-decoration: none;
+}
+.cover-field {
+  margin-bottom: 10px;
+}
+.cover-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
 
-.toggle-row { flex-direction: row; align-items: center; justify-content: space-between; }
-.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #252525; border: 1px solid #383838; transition: .3s; }
-.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; }
-input:checked + .slider { background-color: #4CAF50; border-color: #4CAF50; }
-input:checked + .slider:before { transform: translateX(20px); }
-.slider.round { border-radius: 24px; }
-.slider.round:before { border-radius: 50%; }
+.toggle-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #252525;
+  border: 1px solid #383838;
+  transition: 0.3s;
+}
+.slider:before {
+  position: absolute;
+  content: '';
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+}
+input:checked + .slider {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+.slider.round {
+  border-radius: 24px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
 </style>

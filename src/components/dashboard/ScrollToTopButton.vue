@@ -30,9 +30,9 @@ onUnmounted(() => {
 
 <template>
   <Transition name="fade">
-    <button 
-      v-if="showScrollTop" 
-      class="scroll-top-btn" 
+    <button
+      v-if="showScrollTop"
+      class="scroll-top-btn"
       aria-label="Retourner en haut"
       @click="scrollToTop"
     >
@@ -59,7 +59,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 99;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .scroll-top-btn:hover {
@@ -69,7 +71,9 @@ onUnmounted(() => {
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .fade-enter-from,

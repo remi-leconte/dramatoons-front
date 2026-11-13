@@ -1,12 +1,16 @@
 // Gère la modale d'édition/création/suppression
 <script setup lang="ts">
-import type { Webtoon, WebtoonPayload, WebtoonTitle } from '@/types';
+import type { Webtoon, WebtoonPayload, WebtoonTitle } from '@/types'
 import api, { COVER_BASE_URL } from '../../services/api.ts'
 import { ref, computed, watch, nextTick, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../../stores/auth.ts'
 import { createDefaultProgress, isEmptyProgress } from '@/types/progress'
-import { saveProgress, confirmLeavingUnpublished, losesAccessWithoutProgress } from '@/composables/dashboard/useWebtoonProgress'
+import {
+  saveProgress,
+  confirmLeavingUnpublished,
+  losesAccessWithoutProgress,
+} from '@/composables/dashboard/useWebtoonProgress'
 import { createDefaultWebtoon } from '@/types/webtoon'
 import WebtoonCoverUploader from './../modal/WebtoonCoverUploader.vue'
 import WebtoonUserProgressForm from './../modal/WebtoonUserProgressForm.vue'
@@ -14,8 +18,8 @@ import WebtoonUserProgressForm from './../modal/WebtoonUserProgressForm.vue'
 const props = defineProps({
   webtoon: {
     type: Object as PropType<Webtoon | null>,
-    default: null
-  }
+    default: null,
+  },
 })
 const emit = defineEmits(['close', 'saved', 'created', 'deleted'])
 const authStore = useAuthStore()
@@ -63,29 +67,33 @@ const canDelete = computed(() => {
   return (localWebtoon.value.readersCount ?? 0) < maxAllowedReaders
 })
 
-watch(() => props.webtoon, (newWebtoon) => {
-  if (newWebtoon) {
-    const cloned: Webtoon = JSON.parse(JSON.stringify(newWebtoon))
-    if (!cloned.userProgress) {
-      cloned.userProgress = createDefaultProgress()
+watch(
+  () => props.webtoon,
+  (newWebtoon) => {
+    if (newWebtoon) {
+      const cloned: Webtoon = JSON.parse(JSON.stringify(newWebtoon))
+      if (!cloned.userProgress) {
+        cloned.userProgress = createDefaultProgress()
+      }
+      if (!cloned.secondaryTitles) {
+        cloned.secondaryTitles = []
+      } else if (!Array.isArray(cloned.secondaryTitles)) {
+        cloned.secondaryTitles = Object.values(cloned.secondaryTitles)
+      }
+      localWebtoon.value = cloned
+    } else {
+      localWebtoon.value = createDefaultWebtoon()
+      isEditingTitle.value = true
     }
-    if (!cloned.secondaryTitles) {
-      cloned.secondaryTitles = []
-    } else if (!Array.isArray(cloned.secondaryTitles)) {
-      cloned.secondaryTitles = Object.values(cloned.secondaryTitles)
-    }
-    localWebtoon.value = cloned
-  } else {
-    localWebtoon.value = createDefaultWebtoon()
-    isEditingTitle.value = true
-  }
 
-  errorMessage.value = ''
-  selectedFile.value = null
-  newSecondaryTitle.value = ''
-  editingSecondaryId.value = null
-  isAddingSecondaryTitle.value = false
-}, { immediate: true })
+    errorMessage.value = ''
+    selectedFile.value = null
+    newSecondaryTitle.value = ''
+    editingSecondaryId.value = null
+    isAddingSecondaryTitle.value = false
+  },
+  { immediate: true },
+)
 
 const startEditingTitle = () => {
   isEditingTitle.value = true
@@ -113,20 +121,24 @@ const addSecondaryTitle = async () => {
   const titleVal = newSecondaryTitle.value.trim()
 
   if (!Array.isArray(localWebtoon.value.secondaryTitles)) {
-    localWebtoon.value.secondaryTitles = localWebtoon.value.secondaryTitles 
-      ? Object.values(localWebtoon.value.secondaryTitles) 
+    localWebtoon.value.secondaryTitles = localWebtoon.value.secondaryTitles
+      ? Object.values(localWebtoon.value.secondaryTitles)
       : []
   }
 
   if (isEditMode.value && localWebtoon.value.id) {
     isSaving.value = true
     try {
-      const response = await api.post<WebtoonTitle>('/webtoon_titles', {
-        title: titleVal,
-        webtoon: `/webtoons/${localWebtoon.value.id}`
-      }, {
-        headers: { 'Content-Type': 'application/ld+json' }
-      })
+      const response = await api.post<WebtoonTitle>(
+        '/webtoon_titles',
+        {
+          title: titleVal,
+          webtoon: `/webtoons/${localWebtoon.value.id}`,
+        },
+        {
+          headers: { 'Content-Type': 'application/ld+json' },
+        },
+      )
       localWebtoon.value.secondaryTitles.push(response.data)
       newSecondaryTitle.value = ''
       isAddingSecondaryTitle.value = false
@@ -157,17 +169,21 @@ const saveSecondaryTitle = async (st: WebtoonTitle) => {
 
   isSaving.value = true
   try {
-    const response = await api.patch<WebtoonTitle>(`/webtoon_titles/${st.id}`, {
-      title: editingSecondaryText.value.trim()
-    }, {
-      headers: { 'Content-Type': 'application/merge-patch+json' }
-    })
+    const response = await api.patch<WebtoonTitle>(
+      `/webtoon_titles/${st.id}`,
+      {
+        title: editingSecondaryText.value.trim(),
+      },
+      {
+        headers: { 'Content-Type': 'application/merge-patch+json' },
+      },
+    )
     st.title = response.data.title
     editingSecondaryId.value = null
     emit('saved', localWebtoon.value)
   } catch (err) {
     console.error(err)
-    errorMessage.value = "Erreur lors de la modification du titre."
+    errorMessage.value = 'Erreur lors de la modification du titre.'
   } finally {
     isSaving.value = false
   }
@@ -178,8 +194,8 @@ const removeSecondaryTitle = async (index: number, st: WebtoonTitle) => {
   if (!localWebtoon.value) return
 
   if (!Array.isArray(localWebtoon.value.secondaryTitles)) {
-    localWebtoon.value.secondaryTitles = localWebtoon.value.secondaryTitles 
-      ? Object.values(localWebtoon.value.secondaryTitles) 
+    localWebtoon.value.secondaryTitles = localWebtoon.value.secondaryTitles
+      ? Object.values(localWebtoon.value.secondaryTitles)
       : []
   }
 
@@ -191,7 +207,7 @@ const removeSecondaryTitle = async (index: number, st: WebtoonTitle) => {
       emit('saved', localWebtoon.value)
     } catch (err) {
       console.error(err)
-      errorMessage.value = "Erreur lors de la suppression du titre."
+      errorMessage.value = 'Erreur lors de la suppression du titre.'
     } finally {
       isSaving.value = false
     }
@@ -221,7 +237,7 @@ const performAutoSave = async () => {
   errorMessage.value = ''
 
   if (isCreator.value && !localWebtoon.value.title.title?.trim()) {
-    errorMessage.value = "Le titre est obligatoire."
+    errorMessage.value = 'Le titre est obligatoire.'
     return
   }
 
@@ -229,10 +245,12 @@ const performAutoSave = async () => {
 
   try {
     if (isEditMode.value) {
-      const progress = localWebtoon.value.userProgress ||= createDefaultProgress()
+      const progress = (localWebtoon.value.userProgress ||= createDefaultProgress())
 
       if (!confirmLeavingUnpublished(localWebtoon.value, progress)) {
-        localWebtoon.value.userProgress = JSON.parse(JSON.stringify(props.webtoon?.userProgress ?? createDefaultProgress()))
+        localWebtoon.value.userProgress = JSON.parse(
+          JSON.stringify(props.webtoon?.userProgress ?? createDefaultProgress()),
+        )
         return
       }
 
@@ -243,12 +261,12 @@ const performAutoSave = async () => {
           ? {
               title: localWebtoon.value.title,
               status: localWebtoon.value.status,
-              publish: localWebtoon.value.publish
+              publish: localWebtoon.value.publish,
             }
           : { publish: localWebtoon.value.publish }
 
         await api.patch(`/webtoons/${localWebtoon.value.id}`, webtoonPayload, {
-          headers: { 'Content-Type': 'application/merge-patch+json' }
+          headers: { 'Content-Type': 'application/merge-patch+json' },
         })
       }
 
@@ -264,22 +282,26 @@ const performAutoSave = async () => {
       const webtoonPayload: WebtoonPayload = {
         title: localWebtoon.value.title,
         status: localWebtoon.value.status,
-        publish: localWebtoon.value.publish
+        publish: localWebtoon.value.publish,
       }
 
       const { data: createdWebtoon } = await api.post<Webtoon>('/webtoons', webtoonPayload, {
-        headers: { 'Content-Type': 'application/ld+json' }
+        headers: { 'Content-Type': 'application/ld+json' },
       })
 
       // Création des titres secondaires pré-remplis
       if (localWebtoon.value.secondaryTitles && localWebtoon.value.secondaryTitles.length > 0) {
         for (const sec of localWebtoon.value.secondaryTitles as WebtoonTitle[]) {
-          await api.post('/webtoon_titles', {
-            title: sec.title,
-            webtoon: `/webtoons/${createdWebtoon.id}`
-          }, {
-            headers: { 'Content-Type': 'application/ld+json' }
-          })
+          await api.post(
+            '/webtoon_titles',
+            {
+              title: sec.title,
+              webtoon: `/webtoons/${createdWebtoon.id}`,
+            },
+            {
+              headers: { 'Content-Type': 'application/ld+json' },
+            },
+          )
         }
       }
 
@@ -287,12 +309,16 @@ const performAutoSave = async () => {
         const formData = new FormData()
         formData.append('file', selectedFile.value)
         const coverResponse = await api.post(`/webtoons/${createdWebtoon.id}/cover`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'Content-Type': 'multipart/form-data' },
         })
         createdWebtoon.image = coverResponse.data.image || createdWebtoon.image
       }
 
-      if (authStore.isAuthenticated && localWebtoon.value.userProgress && !isEmptyProgress(localWebtoon.value.userProgress)) {
+      if (
+        authStore.isAuthenticated &&
+        localWebtoon.value.userProgress &&
+        !isEmptyProgress(localWebtoon.value.userProgress)
+      ) {
         const progress = { ...localWebtoon.value.userProgress }
         await saveProgress(createdWebtoon.id, progress)
         createdWebtoon.userProgress = progress
@@ -303,7 +329,9 @@ const performAutoSave = async () => {
   } catch (error) {
     if (isAxiosError(error)) {
       console.error(error)
-      errorMessage.value = error.response ? "Une erreur est survenue lors de la sauvegarde." : "Impossible de joindre le serveur."
+      errorMessage.value = error.response
+        ? 'Une erreur est survenue lors de la sauvegarde.'
+        : 'Impossible de joindre le serveur.'
     }
   } finally {
     isSaving.value = false
@@ -325,7 +353,7 @@ const handleCoverSelected = async (file: File) => {
       const formData = new FormData()
       formData.append('file', file)
       const coverResponse = await api.post(`/webtoons/${localWebtoon.value.id}/cover`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
       localWebtoon.value.image = coverResponse.data.image || localWebtoon.value.image
       localWebtoon.value.updated = new Date().toISOString()
@@ -340,7 +368,8 @@ const handleCoverSelected = async (file: File) => {
 }
 
 const deleteWebtoon = async () => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer ce webtoon ? Cette action est irréversible.')) return
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce webtoon ? Cette action est irréversible.'))
+    return
 
   errorMessage.value = ''
   loading.value = true
@@ -352,7 +381,9 @@ const deleteWebtoon = async () => {
   } catch (error) {
     if (isAxiosError(error)) {
       console.error(error)
-      errorMessage.value = error.response ? "Une erreur est survenue." : "Impossible de joindre le serveur."
+      errorMessage.value = error.response
+        ? 'Une erreur est survenue.'
+        : 'Impossible de joindre le serveur.'
     }
   } finally {
     loading.value = false
@@ -370,10 +401,14 @@ const deleteWebtoon = async () => {
 
       <span v-if="isSaving" class="saving-indicator">Sauvegarde...</span>
       <button class="modal-close" @click="emit('close')">&times;</button>
-      
+
       <div v-if="localWebtoon" class="modal-content">
-        <WebtoonCoverUploader 
-          :image-path="localWebtoon.updated ? `${localWebtoon.image}?t=${new Date(localWebtoon.updated).getTime()}`: localWebtoon.image"
+        <WebtoonCoverUploader
+          :image-path="
+            localWebtoon.updated
+              ? `${localWebtoon.image}?t=${new Date(localWebtoon.updated).getTime()}`
+              : localWebtoon.image
+          "
           :title="localWebtoon.title.title"
           :is-editable="isCreator"
           @file-selected="handleCoverSelected"
@@ -385,20 +420,20 @@ const deleteWebtoon = async () => {
           <div class="title-container">
             <div v-if="isEditingTitle || !isEditMode" class="modal-form form-group">
               <div class="field-with-check">
-                <input 
+                <input
                   ref="titleInputRef"
-                  id="webtoon-title" 
-                  type="text" 
+                  id="webtoon-title"
+                  type="text"
                   v-model="localWebtoon.title.title"
                   placeholder="Titre du webtoon"
                   class="app-input-field input-title-full"
                   @input="onFieldChanged"
                   @keyup.enter="isEditingTitle = false"
-                >
-                <button 
+                />
+                <button
                   v-if="isEditMode"
-                  type="button" 
-                  class="btn-confirm-title" 
+                  type="button"
+                  class="btn-confirm-title"
                   title="Valider le titre"
                   @click="isEditingTitle = false"
                 >
@@ -406,12 +441,12 @@ const deleteWebtoon = async () => {
                 </button>
               </div>
             </div>
-            <div v-else class="title-display" >
+            <div v-else class="title-display">
               <h2>{{ localWebtoon.title.title }}</h2>
               <button
-                v-if="isCreator && canDelete" 
-                type="button" 
-                class="btn-edit-title" 
+                v-if="isCreator && canDelete"
+                type="button"
+                class="btn-edit-title"
                 title="Modifier le titre"
                 @click="startEditingTitle"
               >
@@ -420,39 +455,48 @@ const deleteWebtoon = async () => {
             </div>
           </div>
 
-          <div v-if="localWebtoon.secondaryTitles?.length !== 0 || isCreator" class="secondary-titles-section">
-            <span v-if="localWebtoon.secondaryTitles?.length !== 0" class="section-subtitle">Titres alternatifs :</span>
+          <div
+            v-if="localWebtoon.secondaryTitles?.length !== 0 || isCreator"
+            class="secondary-titles-section"
+          >
+            <span v-if="localWebtoon.secondaryTitles?.length !== 0" class="section-subtitle"
+              >Titres alternatifs :</span
+            >
             <div class="titles-list">
-              <div 
-                v-for="(st, idx) in localWebtoon.secondaryTitles" 
-                :key="st.id || idx" 
+              <div
+                v-for="(st, idx) in localWebtoon.secondaryTitles"
+                :key="st.id || idx"
                 class="secondary-title-chip"
               >
                 <template v-if="editingSecondaryId === st.id">
-                  <input 
-                    type="text" 
-                    v-model="editingSecondaryText" 
+                  <input
+                    type="text"
+                    v-model="editingSecondaryText"
                     class="app-input-field chip-input"
                     @keyup.enter="saveSecondaryTitle(st)"
                   />
-                  <button type="button" class="btn-chip-action" @click="saveSecondaryTitle(st)">✓</button>
-                  <button type="button" class="btn-chip-action" @click="editingSecondaryId = null">✕</button>
+                  <button type="button" class="btn-chip-action" @click="saveSecondaryTitle(st)">
+                    ✓
+                  </button>
+                  <button type="button" class="btn-chip-action" @click="editingSecondaryId = null">
+                    ✕
+                  </button>
                 </template>
                 <template v-else>
                   <span>{{ st.title }}</span>
-                  <button 
-                    v-if="isCreator && st.id" 
-                    type="button" 
-                    class="btn-chip-action" 
+                  <button
+                    v-if="isCreator && st.id"
+                    type="button"
+                    class="btn-chip-action"
                     title="Éditer"
                     @click="startEditingSecondary(st)"
                   >
                     ✎
                   </button>
-                  <button 
-                    v-if="isCreator" 
-                    type="button" 
-                    class="btn-chip-action btn-delete-chip" 
+                  <button
+                    v-if="isCreator"
+                    type="button"
+                    class="btn-chip-action btn-delete-chip"
                     title="Supprimer"
                     @click="removeSecondaryTitle(idx, st)"
                   >
@@ -461,21 +505,22 @@ const deleteWebtoon = async () => {
                 </template>
               </div>
 
-              <div 
-                v-if="isCreator" 
-                class="secondary-title-chip"
-              >
+              <div v-if="isCreator" class="secondary-title-chip">
                 <template v-if="isAddingSecondaryTitle">
-                  <input 
+                  <input
                     ref="addSecondaryInputRef"
-                    type="text" 
-                    v-model="newSecondaryTitle" 
+                    type="text"
+                    v-model="newSecondaryTitle"
                     placeholder="Ajouter un titre alternatif..."
                     class="app-input-field chip-input"
                     @keyup.enter="addSecondaryTitle"
                   />
-                  <button type="button" class="btn-chip-action" @click="addSecondaryTitle">✓</button>
-                  <button type="button" class="btn-chip-action" @click="cancelAddingSecondaryTitle">✕</button>
+                  <button type="button" class="btn-chip-action" @click="addSecondaryTitle">
+                    ✓
+                  </button>
+                  <button type="button" class="btn-chip-action" @click="cancelAddingSecondaryTitle">
+                    ✕
+                  </button>
                 </template>
                 <template v-else>
                   <span class="clickable-placeholder" @click="startAddingSecondaryTitle">
@@ -486,23 +531,32 @@ const deleteWebtoon = async () => {
             </div>
           </div>
 
-          <div v-if="localWebtoon.status === 'completed' || canDelete || authStore.isModo" class="toggles-section">
+          <div
+            v-if="localWebtoon.status === 'completed' || canDelete || authStore.isModo"
+            class="toggles-section"
+          >
             <div class="toggle-row">
               <span class="toggle-label">
-                <span class="status-indicator" :class="{ 'is-completed': localWebtoon.status === 'completed' }"></span>
+                <span
+                  class="status-indicator"
+                  :class="{ 'is-completed': localWebtoon.status === 'completed' }"
+                ></span>
                 Série terminée
               </span>
               <label v-if="canDelete" class="switch">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   :checked="localWebtoon?.status === 'completed'"
-                  @change="() => {
-                    if (localWebtoon) {
-                      localWebtoon.status = (localWebtoon.status === 'completed' ? 'ongoing' : 'completed');
-                      onFieldChanged();
+                  @change="
+                    () => {
+                      if (localWebtoon) {
+                        localWebtoon.status =
+                          localWebtoon.status === 'completed' ? 'ongoing' : 'completed'
+                        onFieldChanged()
+                      }
                     }
-                  }"
-                >
+                  "
+                />
                 <span class="slider round"></span>
               </label>
             </div>
@@ -510,22 +564,21 @@ const deleteWebtoon = async () => {
             <div v-if="authStore.isModo" class="toggle-row">
               <span class="toggle-label">Publier au catalogue</span>
               <label class="switch">
-                <input 
-                  type="checkbox" 
-                  v-model="localWebtoon.publish"
-                  @change="onFieldChanged"
-                >
+                <input type="checkbox" v-model="localWebtoon.publish" @change="onFieldChanged" />
                 <span class="slider round"></span>
               </label>
             </div>
           </div>
-          
-          <div v-if="isEditMode && localWebtoon.readersCount !== 0 && localWebtoon.readersCount !== 1" class="modal-stats">
+
+          <div
+            v-if="isEditMode && localWebtoon.readersCount !== 0 && localWebtoon.readersCount !== 1"
+            class="modal-stats"
+          >
             <span>⭐ Note Globale : {{ localWebtoon.averageRating || '-' }}</span>
             <span>👤 Lecteurs : {{ localWebtoon.readersCount || 0 }}</span>
           </div>
 
-          <hr class="modal-separator">
+          <hr class="modal-separator" />
 
           <WebtoonUserProgressForm
             v-if="authStore.isAuthenticated"
@@ -588,16 +641,16 @@ const deleteWebtoon = async () => {
   border-radius: var(--radius-sm);
 }
 
-.modal-close { 
-  position: absolute; 
-  top: 8px; 
-  right: 12px; 
-  background: rgba(0, 0, 0, 0.4); 
-  border: none; 
-  color: #fff; 
-  font-size: 1.8rem; 
-  cursor: pointer; 
-  z-index: 10; 
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  color: #fff;
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 10;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -607,21 +660,43 @@ const deleteWebtoon = async () => {
   line-height: 1;
 }
 
-.modal-content { 
-  position: relative; 
-  z-index: 1; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 20px; 
-  margin-top: 50px; 
+.modal-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 50px;
 }
 
-.modal-right-info { flex: 1; }
-.modal-right-info h2 { margin: 0 0 8px 0; font-size: 1.4rem; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
-.modal-stats { display: flex; flex-wrap: wrap; gap: 15px; font-size: 0.85rem; color: #ddd; margin-top: 10px; }
-.modal-separator { border: 0; border-top: 1px solid var(--border-color); margin: 15px 0; }
+.modal-right-info {
+  flex: 1;
+}
+.modal-right-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.4rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.modal-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: #ddd;
+  margin-top: 10px;
+}
+.modal-separator {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 15px 0;
+}
 
-.form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
 
 .field-with-check {
   display: flex;
@@ -630,12 +705,15 @@ const deleteWebtoon = async () => {
   width: 100%;
 }
 
-.input-title-full { flex: 1; padding: 0 12px; }
+.input-title-full {
+  flex: 1;
+  padding: 0 12px;
+}
 
 .btn-confirm-title {
   background: transparent;
   border: none;
-  color: #4CAF50;
+  color: #4caf50;
   cursor: pointer;
   font-size: 1.2rem;
   font-weight: bold;
@@ -746,7 +824,7 @@ const deleteWebtoon = async () => {
 }
 
 .status-indicator.is-completed {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 /* Interrupteur On/Off (Switch) */
@@ -771,26 +849,26 @@ const deleteWebtoon = async () => {
   right: 0;
   bottom: 0;
   background-color: #555555;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 14px;
   width: 14px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 input:checked + .slider {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #4CAF50;
+  box-shadow: 0 0 1px #4caf50;
 }
 
 input:checked + .slider:before {
@@ -827,7 +905,9 @@ input:checked + .slider:before {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 3px 8px;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .btn-edit-title:hover {
@@ -836,6 +916,10 @@ input:checked + .slider:before {
 }
 
 @media (min-width: 576px) {
-  .modal-content { flex-direction: row; align-items: flex-start; gap: 30px; }
+  .modal-content {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 30px;
+  }
 }
 </style>

@@ -19,7 +19,7 @@ let debounceTimeout: ReturnType<typeof setTimeout> | null = null
 
 const handleInput = () => {
   if (debounceTimeout) clearTimeout(debounceTimeout)
-  
+
   if (!searchInput.value.trim()) {
     results.value = []
     isOpen.value = false
@@ -35,8 +35,8 @@ const handleInput = () => {
       const { data } = await api.get<HydraCollection<Webtoon>>('/webtoons', {
         params: {
           title: searchInput.value.trim(),
-          mode: 'search'
-        }
+          mode: 'search',
+        },
       })
       results.value = data['hydra:member'] ?? data.member ?? []
     } catch (error) {
@@ -68,11 +68,16 @@ const getCoverUrl = (imagePath?: string) => {
 
 const getFrenchState = (state?: ProgressState | null): string => {
   switch (state) {
-    case 'reading': return 'En cours'
-    case 'pause': return 'En pause'
-    case 'break': return 'Pas intéressé'
-    case 'completed': return 'Terminé'
-    default: return ''
+    case 'reading':
+      return 'En cours'
+    case 'pause':
+      return 'En pause'
+    case 'break':
+      return 'Pas intéressé'
+    case 'completed':
+      return 'Terminé'
+    default:
+      return ''
   }
 }
 
@@ -157,7 +162,11 @@ onUnmounted(() => {
             <div class="result-info">
               <span class="result-title">{{ webtoon.title.title }}</span>
               <div v-if="webtoon.userProgress" class="result-status">
-                <span v-if="webtoon.userProgress.rate !== null && webtoon.userProgress.rate !== undefined">
+                <span
+                  v-if="
+                    webtoon.userProgress.rate !== null && webtoon.userProgress.rate !== undefined
+                  "
+                >
                   ★ {{ webtoon.userProgress.rate }}/10
                 </span>
                 <span v-if="webtoon.userProgress.bookmark">
@@ -193,7 +202,10 @@ onUnmounted(() => {
   border: 1px solid var(--border-input);
   border-radius: 20px;
   padding: 0 10px 0 14px;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease;
 }
 
 .search-input-container:hover {
@@ -227,7 +239,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .clear-btn:hover {
@@ -267,8 +281,14 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  from { opacity: 0.3; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1.2); }
+  from {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 .results-list {
@@ -284,7 +304,9 @@ onUnmounted(() => {
   padding: 8px 10px;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .result-item:hover {
@@ -324,7 +346,9 @@ onUnmounted(() => {
   font-size: 0.9rem;
   opacity: 0;
   transform: translateX(-6px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .result-item:hover .hover-arrow {
@@ -335,7 +359,9 @@ onUnmounted(() => {
 /* Animations d'ouverture/fermeture du dropdown */
 .search-dropdown-anim-enter-active,
 .search-dropdown-anim-leave-active {
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .search-dropdown-anim-enter-from,

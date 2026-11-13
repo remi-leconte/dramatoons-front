@@ -91,14 +91,14 @@ export const useAuthStore = defineStore('auth', () => {
         roles: roles.value,
         verified: false,
         publish: false,
-        lastLogin: null
+        lastLogin: null,
       }
     },
     set(newUser) {
       if (!newUser) {
         logout()
       }
-    }
+    },
   })
 
   return {
@@ -114,6 +114,6 @@ export const useAuthStore = defineStore('auth', () => {
     fetchUserProfile,
     setUserSession,
     updateToken,
-    logout
+    logout,
   }
 })

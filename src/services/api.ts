@@ -9,12 +9,12 @@ const stagingHeaders = import.meta.env.VITE_STAGING_AUTH
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}`,
   headers: {
-    'Accept': 'application/ld+json',
-    ...stagingHeaders
-  }
+    Accept: 'application/ld+json',
+    ...stagingHeaders,
+  },
 })
 
-export const COVER_BASE_URL = `${api.defaults.baseURL}/upload/cover/`;
+export const COVER_BASE_URL = `${api.defaults.baseURL}/upload/cover/`
 
 let refreshPromise: Promise<string> | null = null
 
@@ -23,9 +23,13 @@ function refreshAccessToken(): Promise<string> {
   const authStore = useAuthStore()
 
   refreshPromise ??= axios
-    .post<{ token: string; refresh_token: string }>(`${api.defaults.baseURL}/token/refresh`, {
-      refresh_token: authStore.refreshToken
-    }, { headers: stagingHeaders })
+    .post<{ token: string; refresh_token: string }>(
+      `${api.defaults.baseURL}/token/refresh`,
+      {
+        refresh_token: authStore.refreshToken,
+      },
+      { headers: stagingHeaders },
+    )
     .then((response) => {
       authStore.updateToken(response.data.token, response.data.refresh_token)
       return response.data.token
@@ -45,7 +49,10 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${authStore.token}`
     }
 
-    if (['post', 'put'].includes(config.method?.toLowerCase() ?? '') && !config.headers['Content-Type']) {
+    if (
+      ['post', 'put'].includes(config.method?.toLowerCase() ?? '') &&
+      !config.headers['Content-Type']
+    ) {
       config.headers['Content-Type'] = 'application/ld+json'
     }
 
@@ -53,7 +60,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 api.interceptors.response.use(
@@ -61,7 +68,8 @@ api.interceptors.response.use(
   async (error) => {
     const authStore = useAuthStore()
     const originalRequest = error.config
-    const isExpiredToken = error.response &&
+    const isExpiredToken =
+      error.response &&
       error.response.status === 401 &&
       error.response.data?.message === 'Expired JWT Token'
 
@@ -86,7 +94,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error)
-  }
+  },
 )
 
 export default api

@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="auth-card text-center">
       <h2>Vérification de votre compte</h2>
-      
+
       <div v-if="loading" class="status-container">
         <p class="loading-text">Validation du jeton en cours, veuillez patienter...</p>
       </div>
@@ -10,7 +10,9 @@
       <div v-else-if="successMessage" class="status-container">
         <p class="alert-success">{{ successMessage }}</p>
         <div class="auth-footer">
-          <router-link to="/login" class="btn-primary-link">Aller à la page de connexion</router-link>
+          <router-link to="/login" class="btn-primary-link"
+            >Aller à la page de connexion</router-link
+          >
         </div>
       </div>
 
@@ -44,7 +46,7 @@ onMounted(async () => {
   const token = Array.isArray(queryToken) ? queryToken[0] : queryToken
 
   if (!token) {
-    errorMessage.value = "Le jeton de vérification est manquant."
+    errorMessage.value = 'Le jeton de vérification est manquant.'
     loading.value = false
     return
   }
@@ -52,14 +54,13 @@ onMounted(async () => {
   try {
     const payload: VerifyPayload = { token }
     await api.post<{ message?: string }>('/users/verify', payload)
-    
-    router.push({ path: '/login', query: { status: 'verified' } })
 
+    router.push({ path: '/login', query: { status: 'verified' } })
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue."
+      errorMessage.value = 'Une erreur est survenue.'
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     loading.value = false

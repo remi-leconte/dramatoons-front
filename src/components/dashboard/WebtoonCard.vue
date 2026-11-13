@@ -8,8 +8,8 @@ import StatusSelect from '../card/StatusSelect.vue'
 const props = defineProps({
   webtoon: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 const emit = defineEmits(['status-change', 'bookmark-change'])
 
@@ -42,11 +42,14 @@ const currentBookmark = computed(() => {
   return bm !== null && bm !== undefined && !isNaN(Number(bm)) ? Number(bm) : 0
 })
 
-watch(() => props.webtoon.userProgress?.bookmark, () => {
-  if (debounceTimer === null) {
-    tempBookmark.value = null
-  }
-})
+watch(
+  () => props.webtoon.userProgress?.bookmark,
+  () => {
+    if (debounceTimer === null) {
+      tempBookmark.value = null
+    }
+  },
+)
 
 const debouncedEmitBookmark = (value: number) => {
   if (debounceTimer) {
@@ -87,60 +90,56 @@ const saveBookmarkInput = () => {
 <template>
   <article class="webtoon-card">
     <div class="poster-wrapper">
-      <img 
+      <img
         v-if="webtoon.image && !hasImageError"
-        :src="`${COVER_BASE_URL}${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`" 
+        :src="`${COVER_BASE_URL}${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`"
         :alt="webtoon.title.title || 'Webtoon cover'"
         @error="hasImageError = true"
-      >
+      />
       <div v-else class="cover-placeholder">
         <span class="placeholder-text">{{ webtoon.title.title || 'Sans titre' }}</span>
       </div>
-      
+
       <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
-        <StatusSelect 
+        <StatusSelect
           :state="webtoon.userProgress?.state"
           @update:state="(newState) => emit('status-change', newState)"
         />
       </div>
 
       <div class="overlay">
-        <div 
-          v-if="authStore.isAuthenticated" 
-          class="quick-actions-container"
-          @click.stop
-        >
+        <div v-if="authStore.isAuthenticated" class="quick-actions-container" @click.stop>
           <div v-if="isEditingBookmark" class="bookmark-edit-wrapper">
-            <input 
-              type="number" 
+            <input
+              type="number"
               v-model.number="bookmarkInput"
               min="0"
               class="quick-bookmark-input"
               @keyup.enter="saveBookmarkInput"
               @blur="saveBookmarkInput"
-            >
+            />
           </div>
           <div v-else class="quick-chapter-controls">
-            <button 
-              v-if="currentBookmark > 0" 
-              type="button" 
-              class="quick-btn" 
+            <button
+              v-if="currentBookmark > 0"
+              type="button"
+              class="quick-btn"
               title="-1 chapitre"
               @click.stop="updateBookmark(-1)"
             >
               -
             </button>
             <span
-              v-if="currentBookmark > 0" 
+              v-if="currentBookmark > 0"
               class="chapter-badge"
               title="Cliquer pour modifier"
               @click.stop="startEditingBookmark"
             >
               Chap. {{ currentBookmark }}
             </span>
-            <button 
-              type="button" 
-              class="quick-btn" 
+            <button
+              type="button"
+              class="quick-btn"
               title="+1 chapitre"
               @click.stop="updateBookmark(1)"
             >
@@ -150,48 +149,80 @@ const saveBookmarkInput = () => {
         </div>
       </div>
     </div>
-    
+
     <div class="info">
       <div class="title-row">
         <h3 class="title" :title="webtoon.title.title">
           {{ webtoon.title.title }}
         </h3>
 
-        <div v-if="secondaryTitlesText" class="secondary-titles-badge" :title="`Titres alternatifs : ${secondaryTitlesText}`">
+        <div
+          v-if="secondaryTitlesText"
+          class="secondary-titles-badge"
+          :title="`Titres alternatifs : ${secondaryTitlesText}`"
+        >
           +{{ secondaryTitlesArray.length }}
         </div>
       </div>
 
       <div class="stats-row">
-        <span v-if="authStore.isAuthenticated && webtoon.userProgress" title="Votre note" class="user-rating">🏷️ {{ webtoon.userProgress.rate || '-' }}</span>
-        <span v-if="webtoon.publish" title="Note moyenne globale">⭐ {{ webtoon.averageRating || '-' }}</span>
-        <span v-if="webtoon.publish" title="Nombre de lecteurs">👤 {{ webtoon.readersCount || 0 }}</span>
+        <span
+          v-if="authStore.isAuthenticated && webtoon.userProgress"
+          title="Votre note"
+          class="user-rating"
+          >🏷️ {{ webtoon.userProgress.rate || '-' }}</span
+        >
+        <span v-if="webtoon.publish" title="Note moyenne globale"
+          >⭐ {{ webtoon.averageRating || '-' }}</span
+        >
+        <span v-if="webtoon.publish" title="Nombre de lecteurs"
+          >👤 {{ webtoon.readersCount || 0 }}</span
+        >
       </div>
 
       <div v-if="webtoon.status === 'completed'" class="status-inline-badge">
         <span class="badge-completed" title="Ce Webtoon est terminé">Terminé</span>
       </div>
     </div>
-
   </article>
 </template>
 
 <style scoped>
-.webtoon-card { transition: transform 0.3s ease; cursor: pointer; }
-.webtoon-card:hover { transform: scale(1.05); }
+.webtoon-card {
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+.webtoon-card:hover {
+  transform: scale(1.05);
+}
 
-.poster-wrapper { position: relative; aspect-ratio: 2 / 3; box-shadow: 0 10px 20px rgba(0,0,0,0.5); overflow: hidden; border-radius: 4px; }
-.poster-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.poster-wrapper {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  border-radius: 4px;
+}
+.poster-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-.grid-select-position { position: absolute; top: 8px; right: 8px; z-index: 20; }
+.grid-select-position {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+}
 
-.overlay { 
-  position: absolute; 
-  bottom: 0; 
-  left: 0; 
-  right: 0; 
-  padding: 8px; 
-  background: linear-gradient(transparent, rgba(0,0,0,0.85)); 
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
   border-radius: 0 0 4px 4px;
   display: flex;
   align-items: center;
@@ -210,12 +241,12 @@ const saveBookmarkInput = () => {
   gap: 4px;
 }
 
-.chapter-badge { 
-  background: #e50914; 
-  font-size: 0.7rem; 
-  padding: 2px 6px; 
-  border-radius: 2px; 
-  font-weight: bold; 
+.chapter-badge {
+  background: #e50914;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: bold;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s ease;
@@ -240,7 +271,10 @@ const saveBookmarkInput = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .poster-wrapper:hover .quick-btn {
@@ -285,7 +319,9 @@ const saveBookmarkInput = () => {
   -moz-appearance: textfield;
 }
 
-.info { margin-top: 10px; }
+.info {
+  margin-top: 10px;
+}
 
 .title-row {
   display: flex;
@@ -313,10 +349,38 @@ const saveBookmarkInput = () => {
   flex-shrink: 0;
 }
 
-.genre { font-size: 0.75rem; color: #aaaaaa; margin-top: 4px; }
-.badge-completed { font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; color: #fff; display: inline-block; background-color: #4CAF50; margin-top: 6px; }
+.genre {
+  font-size: 0.75rem;
+  color: #aaaaaa;
+  margin-top: 4px;
+}
+.badge-completed {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+  color: #fff;
+  display: inline-block;
+  background-color: #4caf50;
+  margin-top: 6px;
+}
 
-.stats-row { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; color: #cccccc; margin-top: 6px; align-items: center; }
-.stats-row span { display: flex; align-items: center; gap: 2px; }
-.user-rating { color: #ffcc00; font-weight: bold; }
+.stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #cccccc;
+  margin-top: 6px;
+  align-items: center;
+}
+.stats-row span {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.user-rating {
+  color: #ffcc00;
+  font-weight: bold;
+}
 </style>
