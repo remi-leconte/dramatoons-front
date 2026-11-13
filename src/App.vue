@@ -1,12 +1,7 @@
-/* Affiche l'entête du site qui comprend :
-- Le logo
-- Le formulaire de recherche par titre
-- Les liens vers "Mon Profil" et "Déconnexion" lorsque l'utilisateur est connecté
-- Les liens vers "Créer un compte" et "Connexion" lorsque l'utilisateur est déconnecté
-Et le footer qui comprend :
-- le copyright
-- Le lien vers "Politique de confidentialité"
-*/
+/* Affiche l'entête du site qui comprend : - Le logo - Le formulaire de recherche par titre - Les
+liens vers "Mon Profil" et "Déconnexion" lorsque l'utilisateur est connecté - Les liens vers "Créer
+un compte" et "Connexion" lorsque l'utilisateur est déconnecté Et le footer qui comprend : - le
+copyright - Le lien vers "Politique de confidentialité" */
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from './stores/auth'
@@ -32,7 +27,7 @@ const closeSearchModal = () => {
 }
 
 const handleLogout = () => {
-  authStore.logout() 
+  authStore.logout()
   router.push('/')
 }
 </script>
@@ -45,11 +40,8 @@ const handleLogout = () => {
         <span class="logo-badge">.OVH</span>
       </router-link>
 
-      <HeaderSearch 
-        v-if="authStore.isAuthenticated" 
-        @select-webtoon="handleSelectWebtoon" 
-      />
-      
+      <HeaderSearch v-if="authStore.isAuthenticated" @select-webtoon="handleSelectWebtoon" />
+
       <div class="nav-actions">
         <template v-if="authStore.isAuthenticated">
           <router-link to="/profile" class="btn-secondary">Mon Profil</router-link>
@@ -65,7 +57,7 @@ const handleLogout = () => {
 
     <router-view />
 
-    <WebtoonModal 
+    <WebtoonModal
       v-if="isSearchModalOpen"
       :webtoon="selectedSearchWebtoon"
       @close="closeSearchModal"
@@ -151,7 +143,8 @@ body {
 }
 
 /* Boutons */
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   padding: 8px 18px;
   border-radius: 4px;
   font-weight: 600;
@@ -200,13 +193,18 @@ body {
   border-radius: 8px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
 }
 
 /* Form Auth */
-.auth-card h2 { margin-bottom: 25px; font-size: 1.8rem; }
+.auth-card h2 {
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+}
 
-.input-group { margin-bottom: 15px; }
+.input-group {
+  margin-bottom: 15px;
+}
 
 .auth-card input {
   width: 100%;
@@ -223,19 +221,33 @@ body {
   border-color: #e50914;
 }
 
-.full-width { width: 100%; margin-top: 10px; }
+.full-width {
+  width: 100%;
+  margin-top: 10px;
+}
 
-.auth-options { margin-top: 15px; text-align: center; }
+.auth-options {
+  margin-top: 15px;
+  text-align: center;
+}
 
-.forgot-link, .auth-footer a {
+.forgot-link,
+.auth-footer a {
   color: #aaa;
   font-size: 0.85rem;
   text-decoration: none;
 }
 
-.forgot-link:hover, .auth-footer a:hover { color: #e50914; }
+.forgot-link:hover,
+.auth-footer a:hover {
+  color: #e50914;
+}
 
-.auth-footer { margin-top: 20px; text-align: center; color: #666; }
+.auth-footer {
+  margin-top: 20px;
+  text-align: center;
+  color: #666;
+}
 
 /* Footer */
 .app-footer {
@@ -288,7 +300,8 @@ body {
     gap: 8px;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     padding: 6px 10px;
     font-size: 0.8rem;
   }

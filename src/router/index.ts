@@ -23,19 +23,19 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: () => import('../views/auth/LoginView.vue'),
-      meta: { guestOnly: true }
+      meta: { guestOnly: true },
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('../views/auth/RegisterView.vue'),
-      meta: { guestOnly: true }
+      meta: { guestOnly: true },
     },
     {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/auth/ProfileView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true },
     },
     {
       path: '/verify',
@@ -46,18 +46,38 @@ const router = createRouter({
       path: '/forgot-password',
       name: 'forgot-password',
       component: () => import('../views/auth/ForgotPasswordView.vue'),
-      meta: { guestOnly: true }
+      meta: { guestOnly: true },
     },
     {
       path: '/reset-password',
       name: 'reset-password',
       component: () => import('../views/auth/ResetPasswordView.vue'),
-      meta: { guestOnly: true }
+      meta: { guestOnly: true },
     },
-    { path: '/admin/users', name: 'admin-users', component: () => import('../views/admin/UserListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
-    { path: '/admin/users/:id', name: 'admin-user-detail', component: () => import('../views/admin/UserDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] } },
-    { path: '/admin/webtoons', name: 'admin-webtoons', component: () => import('../views/admin/WebtoonListView.vue'), meta: { requiresAuth: true, roles: ['ROLE_MODO', 'ROLE_ADMIN'] } },
-    { path: '/admin/webtoons/:id', name: 'admin-webtoon-detail', component: () => import('../views/admin/WebtoonDetailView.vue'), meta: { requiresAuth: true, roles: ['ROLE_MODO', 'ROLE_ADMIN'] } }
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('../views/admin/UserListView.vue'),
+      meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] },
+    },
+    {
+      path: '/admin/users/:id',
+      name: 'admin-user-detail',
+      component: () => import('../views/admin/UserDetailView.vue'),
+      meta: { requiresAuth: true, roles: ['ROLE_ADMIN'] },
+    },
+    {
+      path: '/admin/webtoons',
+      name: 'admin-webtoons',
+      component: () => import('../views/admin/WebtoonListView.vue'),
+      meta: { requiresAuth: true, roles: ['ROLE_MODO', 'ROLE_ADMIN'] },
+    },
+    {
+      path: '/admin/webtoons/:id',
+      name: 'admin-webtoon-detail',
+      component: () => import('../views/admin/WebtoonDetailView.vue'),
+      meta: { requiresAuth: true, roles: ['ROLE_MODO', 'ROLE_ADMIN'] },
+    },
   ],
 })
 
@@ -73,8 +93,8 @@ router.beforeEach(async (to) => {
     }
   }
 
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const guestOnly = to.matched.some(record => record.meta.guestOnly)
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const guestOnly = to.matched.some((record) => record.meta.guestOnly)
   const requiredRoles = to.meta.roles as string[] | undefined
 
   if (requiresAuth && !authStore.isAuthenticated) {
@@ -86,7 +106,7 @@ router.beforeEach(async (to) => {
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
-    const hasRole = authStore.roles.some(role => requiredRoles.includes(role))
+    const hasRole = authStore.roles.some((role) => requiredRoles.includes(role))
 
     if (!hasRole) {
       return { name: 'home' }

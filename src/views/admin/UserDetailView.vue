@@ -16,12 +16,12 @@ const user = ref<User>({
   roles: [],
   verified: false,
   publish: false,
-  lastLogin: null
+  lastLogin: null,
 })
 
 const initialEmail = ref('')
 const selectedRole = ref<string>('ROLE_USER')
-const userProgressions = ref<Progress[]>([]);
+const userProgressions = ref<Progress[]>([])
 const loading = ref(true)
 const saving = ref(false)
 
@@ -35,7 +35,7 @@ const formatDate = (dateString?: string | null): string => {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
   }).format(new Date(dateString))
 }
 
@@ -52,8 +52,10 @@ const fetchData = async () => {
     user.value = userRes.data
     initialEmail.value = userRes.data.email
     selectedRole.value = getPrimaryRole(userRes.data.roles)
-    
-    const progressRes = await api.get<HydraCollection<Progress>>(`/webtoon_users?reader=/users/${userId}`)
+
+    const progressRes = await api.get<HydraCollection<Progress>>(
+      `/webtoon_users?reader=/users/${userId}`,
+    )
     userProgressions.value = progressRes.data['hydra:member'] ?? progressRes.data.member ?? []
   } catch (error) {
     console.error('Erreur lors de la récupération du détail :', error)
@@ -69,7 +71,7 @@ const handleUpdate = async () => {
 
     const payload: Partial<User> = {
       login: user.value.login,
-      email: user.value.email
+      email: user.value.email,
     }
 
     if (isAdmin.value) {
@@ -77,12 +79,12 @@ const handleUpdate = async () => {
     }
 
     await api.patch(`/users/${userId}`, payload, {
-      headers: { 'Content-Type': 'application/merge-patch+json' }
+      headers: { 'Content-Type': 'application/merge-patch+json' },
     })
 
     if (emailChanged) {
       await api.post('/users/resend-verification', {
-        email: user.value.email
+        email: user.value.email,
       })
       initialEmail.value = user.value.email
       alert('Modifications enregistrées. Un e-mail de vérification a été renvoyé.')
@@ -127,7 +129,7 @@ onMounted(() => fetchData())
           <label>Email :</label>
           <input v-model="user.email" type="email" class="app-input-field" required />
         </div>
-        
+
         <div v-if="isAdmin" class="field">
           <label>Rôle :</label>
           <select v-model="selectedRole" class="app-input-field">
@@ -143,7 +145,9 @@ onMounted(() => fetchData())
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" :disabled="saving">Enregistrer</button>
-          <button type="button" class="btn btn-secondary danger" @click="handleDelete">Supprimer</button>
+          <button type="button" class="btn btn-secondary danger" @click="handleDelete">
+            Supprimer
+          </button>
         </div>
       </form>
 
@@ -165,7 +169,9 @@ onMounted(() => fetchData())
             <td>{{ prog.rate || '-' }}</td>
             <td>{{ prog.bookmark || '-' }}</td>
             <td class="action-col">
-                <router-link v-if="prog.webtoon?.id" :to="`/admin/webtoons/${prog.webtoon.id}`">{{prog.webtoon.title.title}} →</router-link>
+              <router-link v-if="prog.webtoon?.id" :to="`/admin/webtoons/${prog.webtoon.id}`"
+                >{{ prog.webtoon.title.title }} →</router-link
+              >
             </td>
           </tr>
           <tr v-if="userProgressions.length === 0">
@@ -178,12 +184,35 @@ onMounted(() => fetchData())
 </template>
 
 <style scoped>
-.admin-page { padding: 2rem 5%; color: #fff; }
-.back-link { color: #888; text-decoration: none; font-size: 0.9rem; }
-.detail-form { max-width: 400px; margin: 1.5rem 0 2.5rem 0; display: flex; flex-direction: column; gap: 15px; }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 0.85rem; color: #888; }
-.field input:disabled { opacity: 0.6; cursor: not-allowed; }
+.admin-page {
+  padding: 2rem 5%;
+  color: #fff;
+}
+.back-link {
+  color: #888;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.detail-form {
+  max-width: 400px;
+  margin: 1.5rem 0 2.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field label {
+  font-size: 0.85rem;
+  color: #888;
+}
+.field input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .app-input-field {
   background: #252525;
   border: 1px solid #383838;
@@ -192,13 +221,42 @@ onMounted(() => fetchData())
   border-radius: 4px;
   font-size: 0.9rem;
 }
-.form-actions { display: flex; gap: 10px; margin-top: 10px; }
-.action-col { text-align: right; }
-.action-col a { color: #e50914; text-decoration: none; }
-.btn-secondary.danger { background: #8b0000; }
-.btn-secondary.danger:hover { background: #b20710; }
-.admin-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.admin-table th, .admin-table td { border-bottom: 1px solid #282828; padding: 10px; text-align: left; }
-.admin-table th { color: #888; font-size: 0.85rem; }
-.empty { text-align: center; color: #666; font-style: italic; }
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.action-col {
+  text-align: right;
+}
+.action-col a {
+  color: #e50914;
+  text-decoration: none;
+}
+.btn-secondary.danger {
+  background: #8b0000;
+}
+.btn-secondary.danger:hover {
+  background: #b20710;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid #282828;
+  padding: 10px;
+  text-align: left;
+}
+.admin-table th {
+  color: #888;
+  font-size: 0.85rem;
+}
+.empty {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
 </style>

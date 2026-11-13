@@ -18,9 +18,19 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const {
-  activeTab, title, includedStatuses, excludedStatuses,
-  sortBy, sortOrder, isFilterVisible, currentSortOptions,
-  cycleStatusFilter, toggleSort, toggleFilterVisibility, buildQueryUrl, initPreferences
+  activeTab,
+  title,
+  includedStatuses,
+  excludedStatuses,
+  sortBy,
+  sortOrder,
+  isFilterVisible,
+  currentSortOptions,
+  cycleStatusFilter,
+  toggleSort,
+  toggleFilterVisibility,
+  buildQueryUrl,
+  initPreferences,
 } = useWebtoonSearch()
 
 const { changeStatus, changeBookmark } = useWebtoonProgress()
@@ -71,26 +81,33 @@ const selectTab = (tab: 'bibliotheque' | 'catalogue') => {
   resetAndFetchWebtoons()
 }
 
-const openModal = (webtoon: Webtoon | null = null) => { 
-  selectedWebtoon.value = webtoon; 
-  isModalOpen.value = true;
-  document.body.classList.add('modal-open');
+const openModal = (webtoon: Webtoon | null = null) => {
+  selectedWebtoon.value = webtoon
+  isModalOpen.value = true
+  document.body.classList.add('modal-open')
 }
 
-const closeModal = () => { 
-  selectedWebtoon.value = null; 
-  isModalOpen.value = false;
-  document.body.classList.remove('modal-open');
+const closeModal = () => {
+  selectedWebtoon.value = null
+  isModalOpen.value = false
+  document.body.classList.remove('modal-open')
 }
 
 const handleModalSave = (updated: Webtoon) => {
-  const index = webtoons.value.findIndex(w => w.id === updated.id)
+  const index = webtoons.value.findIndex((w) => w.id === updated.id)
   if (index !== -1) webtoons.value[index] = updated
   selectedWebtoon.value = updated
 }
-const handleWebtoonCreated = (created: Webtoon) => { webtoons.value.unshift(created); selectedWebtoon.value = created }
-const handleModalDelete = (id: number) => { webtoons.value = webtoons.value.filter(item => item.id !== id) }
-const removeWebtoon = (webtoon: Webtoon) => { webtoons.value = webtoons.value.filter(item => item !== webtoon) }
+const handleWebtoonCreated = (created: Webtoon) => {
+  webtoons.value.unshift(created)
+  selectedWebtoon.value = created
+}
+const handleModalDelete = (id: number) => {
+  webtoons.value = webtoons.value.filter((item) => item.id !== id)
+}
+const removeWebtoon = (webtoon: Webtoon) => {
+  webtoons.value = webtoons.value.filter((item) => item !== webtoon)
+}
 
 const focusSearchInput = () => {
   const inputEl = document.querySelector('.header-search-input') as HTMLInputElement | null
@@ -99,15 +116,22 @@ const focusSearchInput = () => {
   }
 }
 
-watch([title, includedStatuses, excludedStatuses, sortBy, sortOrder], async () => {
-  if (isInitializing.value) return
-  await resetAndFetchWebtoons()
-}, { deep: true })
+watch(
+  [title, includedStatuses, excludedStatuses, sortBy, sortOrder],
+  async () => {
+    if (isInitializing.value) return
+    await resetAndFetchWebtoons()
+  },
+  { deep: true },
+)
 
-watch(() => route.query.title, (newTitle) => {
-  const parsed = (Array.isArray(newTitle) ? newTitle[0] : newTitle) || ''
-  if (title.value !== parsed) title.value = parsed
-})
+watch(
+  () => route.query.title,
+  (newTitle) => {
+    const parsed = (Array.isArray(newTitle) ? newTitle[0] : newTitle) || ''
+    if (title.value !== parsed) title.value = parsed
+  },
+)
 
 let observer: IntersectionObserver | null = null
 
@@ -115,22 +139,25 @@ onMounted(async () => {
   isInitializing.value = true
   await authStore.fetchUserProfile()
   initPreferences()
-  
+
   const queryTitle = route.query.title
   title.value = (Array.isArray(queryTitle) ? queryTitle[0] : queryTitle) || ''
   resetAndFetchWebtoons()
   isInitializing.value = false
 
-  observer = new IntersectionObserver(([entry]) => {
-    if (entry?.isIntersecting) fetchWebtoons()
-  }, { threshold: 0.1 })
+  observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry?.isIntersecting) fetchWebtoons()
+    },
+    { threshold: 0.1 },
+  )
 
   if (observerTarget.value) observer.observe(observerTarget.value)
 })
 
-onUnmounted(() => { 
-  observer?.disconnect();
-  document.body.classList.remove('modal-open');
+onUnmounted(() => {
+  observer?.disconnect()
+  document.body.classList.remove('modal-open')
 })
 </script>
 
@@ -158,44 +185,45 @@ onUnmounted(() => {
       @toggle-sort="toggleSort"
       @toggle-visibility="toggleFilterVisibility"
     />
-    
+
     <div v-if="webtoons.length > 0" class="webtoon-grid">
-      <WebtoonCard 
-        v-for="(webtoon, index) in webtoons" 
+      <WebtoonCard
+        v-for="(webtoon, index) in webtoons"
         :key="webtoon.id || index"
         :webtoon="webtoon"
         @click="openModal(webtoon)"
-        @status-change="async (newState) => (await changeStatus(webtoon, newState)) && removeWebtoon(webtoon)"
-        @bookmark-change="async (newBookmark) => (await changeBookmark(webtoon, newBookmark)) && removeWebtoon(webtoon)"
+        @status-change="
+          async (newState) => (await changeStatus(webtoon, newState)) && removeWebtoon(webtoon)
+        "
+        @bookmark-change="
+          async (newBookmark) =>
+            (await changeBookmark(webtoon, newBookmark)) && removeWebtoon(webtoon)
+        "
       />
     </div>
 
     <div v-else-if="webtoons.length == 0 && !loading" class="empty-library">
       <p v-if="activeTab == 'bibliotheque'">
-        Votre bibliothèque est vide, vous pouvez suivre des webtoons via la 
-        <a href="#" @click.prevent="focusSearchInput">barre de recherche rapide</a> 
-        ou le 
+        Votre bibliothèque est vide, vous pouvez suivre des webtoons via la
+        <a href="#" @click.prevent="focusSearchInput">barre de recherche rapide</a>
+        ou le
         <a href="#" @click.prevent="selectTab('catalogue')">catalogue</a>.
       </p>
-      <p v-else>
-        Aucun résultat pour votre recherche.
-      </p>
+      <p v-else>Aucun résultat pour votre recherche.</p>
     </div>
 
     <div ref="observerTarget" class="pagination-trigger">
       <div v-if="loading" class="loader-infinite">Chargement des prochains webtoons...</div>
-      <p v-if="!nextPageUrl && webtoons.length > 0" class="end-message">
-        Fin.
-      </p>
+      <p v-if="!nextPageUrl && webtoons.length > 0" class="end-message">Fin.</p>
     </div>
   </main>
 
   <ScrollToTopButton />
 
-  <WebtoonModal 
-    v-if="isModalOpen" 
-    :webtoon="selectedWebtoon" 
-    @close="closeModal" 
+  <WebtoonModal
+    v-if="isModalOpen"
+    :webtoon="selectedWebtoon"
+    @close="closeModal"
     @saved="handleModalSave"
     @created="handleWebtoonCreated"
     @deleted="handleModalDelete"
@@ -205,7 +233,9 @@ onUnmounted(() => {
 <style scoped>
 .content {
   padding: 2rem 5%;
-  transition: filter 0.3s ease, opacity 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .content-dimmed {

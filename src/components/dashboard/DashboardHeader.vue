@@ -1,4 +1,5 @@
-// Gère l'en-tête de la page avec la gestion des onglets ("Bibliothèque" / "Catalogue") et les actions principales (Créer un webtoon, liens Admin)
+// Gère l'en-tête de la page avec la gestion des onglets ("Bibliothèque" / "Catalogue") et les
+actions principales (Créer un webtoon, liens Admin)
 <script setup lang="ts">
 defineProps<{
   activeTab: 'bibliotheque' | 'catalogue'
@@ -15,17 +16,17 @@ const emit = defineEmits<{
 <template>
   <div class="dashboard-header">
     <div class="tabs-container">
-      <button 
-        class="tab-button" 
-        :class="{ active: activeTab === 'bibliotheque' }" 
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'bibliotheque' }"
         title="Affiche les webtoons pour lesquels vous avez enregistré soit un état, une note et/ou une page."
         @click="emit('selectTab', 'bibliotheque')"
       >
         Bibliothèque
       </button>
-      <button 
-        class="tab-button" 
-        :class="{ active: activeTab === 'catalogue' }" 
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'catalogue' }"
         title="Affiche tous les webtoons du site."
         @click="emit('selectTab', 'catalogue')"
       >
@@ -37,10 +38,18 @@ const emit = defineEmits<{
       <button class="btn-create" @click="emit('openCreateModal')">
         <span>+</span> Créer un Webtoon
       </button>
-      
+
       <div v-if="isModo" class="admin-dropdown">
-        <router-link v-if="isAdmin" to="/admin/users" class="admin-pill" title="Gestion des utilisateurs">Users</router-link>
-        <router-link to="/admin/webtoons" class="admin-pill" title="Gestion des webtoons">Webtoons</router-link>
+        <router-link
+          v-if="isAdmin"
+          to="/admin/users"
+          class="admin-pill"
+          title="Gestion des utilisateurs"
+          >Users</router-link
+        >
+        <router-link to="/admin/webtoons" class="admin-pill" title="Gestion des webtoons"
+          >Webtoons</router-link
+        >
       </div>
     </div>
   </div>

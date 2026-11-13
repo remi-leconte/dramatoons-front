@@ -5,7 +5,7 @@ import { COVER_BASE_URL } from '../../services/api'
 const props = defineProps({
   imagePath: { type: String, default: '' },
   isEditable: { type: Boolean, default: false },
-  title: { type: String, default: '' }
+  title: { type: String, default: '' },
 })
 
 const emit = defineEmits<{
@@ -18,9 +18,12 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const previewImage = ref<string | null>(null)
 const hasImageError = ref(false)
 
-watch(() => props.imagePath, () => {
-  hasImageError.value = false
-})
+watch(
+  () => props.imagePath,
+  () => {
+    hasImageError.value = false
+  },
+)
 
 const currentImageUrl = computed(() => {
   if (previewImage.value) return previewImage.value
@@ -52,45 +55,63 @@ const handleFileChange = (event: Event) => {
 
 <template>
   <div class="modal-left">
-    <div 
-      class="image-container"
-      :class="{ 'is-clickable': isEditable }"
-      @click="handleClick"
-    >
+    <div class="image-container" :class="{ 'is-clickable': isEditable }" @click="handleClick">
       <img
         v-if="currentImageUrl && !hasImageError"
         :src="currentImageUrl"
         :alt="title || 'Webtoon cover'"
         @error="hasImageError = true"
-      >
+      />
       <div v-else class="cover-placeholder">
         <span class="placeholder-text">{{ title || 'Sans image' }}</span>
       </div>
 
       <div v-if="isEditable" class="image-overlay">
-        <span>{{ currentImageUrl && !hasImageError ? "Changer l'image" : "Ajouter une image" }}</span>
+        <span>{{
+          currentImageUrl && !hasImageError ? "Changer l'image" : 'Ajouter une image'
+        }}</span>
       </div>
     </div>
 
-    <input 
+    <input
       v-if="isEditable"
       ref="fileInputRef"
-      type="file" 
-      accept="image/jpeg" 
-      style="display: none;" 
+      type="file"
+      accept="image/jpeg"
+      style="display: none"
       @change="handleFileChange"
-    >
+    />
   </div>
 </template>
 
 <style scoped>
-.modal-left { align-self: center; width: 140px; }
-.image-container { position: relative; width: 100%; aspect-ratio: 2 / 3; border-radius: 6px; overflow: hidden; background: #252525; }
-.image-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.image-container.is-clickable { cursor: pointer; }
+.modal-left {
+  align-self: center;
+  width: 140px;
+}
+.image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #252525;
+}
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.image-container.is-clickable {
+  cursor: pointer;
+}
 .image-overlay {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
   display: flex;
@@ -103,5 +124,7 @@ const handleFileChange = (event: Event) => {
   text-align: center;
   padding: 5px;
 }
-.image-container.is-clickable:hover .image-overlay { opacity: 1; }
+.image-container.is-clickable:hover .image-overlay {
+  opacity: 1;
+}
 </style>

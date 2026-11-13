@@ -5,36 +5,53 @@
       <p class="last-updated">Dernière mise à jour : 27 septembre 2026</p>
 
       <p>
-        <strong>Dramatoons</strong> (<a href="https://dramatoons.ovh" target="_blank" rel="noopener">https://dramatoons.ovh</a>) est un projet personnel de suivi et de gestion de webtoons.
+        <strong>Dramatoons</strong> (<a href="https://dramatoons.ovh" target="_blank" rel="noopener"
+          >https://dramatoons.ovh</a
+        >) est un projet personnel de suivi et de gestion de webtoons.
       </p>
 
       <h2>1. Données collectées</h2>
       <p>Nous collectons uniquement les informations nécessaires au fonctionnement du service :</p>
       <ul>
-        <li><strong>Informations de compte :</strong> Identifiants de connexion (adresse e-mail, nom d'utilisateur) lors de l'inscription.</li>
-        <li><strong>Données d'utilisation :</strong> Progression de lecture (statut de lecture, chapitres sauvegardés, notes personnelles et préférences d'affichage).</li>
+        <li>
+          <strong>Informations de compte :</strong> Identifiants de connexion (adresse e-mail, nom
+          d'utilisateur) lors de l'inscription.
+        </li>
+        <li>
+          <strong>Données d'utilisation :</strong> Progression de lecture (statut de lecture,
+          chapitres sauvegardés, notes personnelles et préférences d'affichage).
+        </li>
       </ul>
 
       <h2>2. Utilisation des données</h2>
       <p>Les données collectées sont strictement utilisées pour :</p>
       <ul>
         <li>Permettre la création et la gestion de votre compte utilisateur.</li>
-        <li>Synchroniser vos préférences de tri, vos notes et votre avancement de lecture sur la plateforme et via l'extension navigateur.</li>
+        <li>
+          Synchroniser vos préférences de tri, vos notes et votre avancement de lecture sur la
+          plateforme et via l'extension navigateur.
+        </li>
       </ul>
 
       <h2>3. Partage des données</h2>
       <p>
-        Aucune donnée personnelle n'est vendue, louée ou transmise à des tiers à des fins commerciales ou publicitaires.
+        Aucune donnée personnelle n'est vendue, louée ou transmise à des tiers à des fins
+        commerciales ou publicitaires.
       </p>
 
       <h2>4. Extension Navigateur (Chrome / Edge)</h2>
       <p>
-        L'extension navigateur Dramatoons n'interagit qu'avec l'API officielle de <code>dramatoons.ovh</code> pour lire votre progression de lecture. Elle ne collecte ni ne transmet aucun historique de navigation ou donnée personnelle issue d'autres sites web.
+        L'extension navigateur Dramatoons n'interagit qu'avec l'API officielle de
+        <code>dramatoons.ovh</code> pour lire votre progression de lecture. Elle ne collecte ni ne
+        transmet aucun historique de navigation ou donnée personnelle issue d'autres sites web.
       </p>
 
       <h2>5. Vos droits et contact</h2>
       <p>
-        Conformément à la réglementation sur la protection des données (RGPD), vous disposez d'un droit d'accès, de modification et de suppression de vos données. Pour toute demande, vous pouvez contacter l'administrateur du site à l'adresse suivante : <strong>dramatoons@mailo.com</strong>.
+        Conformément à la réglementation sur la protection des données (RGPD), vous disposez d'un
+        droit d'accès, de modification et de suppression de vos données. Pour toute demande, vous
+        pouvez contacter l'administrateur du site à l'adresse suivante :
+        <strong>dramatoons@mailo.com</strong>.
       </p>
 
       <div class="privacy-back">
@@ -81,7 +98,8 @@
   color: #e50914;
 }
 
-.privacy-card p, .privacy-card li {
+.privacy-card p,
+.privacy-card li {
   color: #ccc;
   font-size: 0.95rem;
 }
