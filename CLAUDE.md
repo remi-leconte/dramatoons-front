@@ -14,8 +14,20 @@ docker compose exec front npm run format
 docker compose exec front npm run ci          # vérifications de la CI, sans rien corriger (voir « CI »)
 ```
 
-- `VITE_API_URL` est fixée au build en prod et staging. `VITE_STAGING_AUTH` ajoute l'en-tête `X-Staging-Auth`.
+- `compose.override.yaml` (dev) se superpose automatiquement à `compose.yaml` ; en recette et en prod, c'est `compose.prod.yaml` (voir « Configuration »).
 - Il n'y a pas de tests écrits (Vitest est configuré).
+
+## Configuration
+L'adresse de l'API est lue au démarrage, pas au build : la même image sert la recette et la prod.
+- **`public/config.js`**, versionné : définit `window.APP_CONFIG` (`apiUrl`, `stagingAuth`) avec les valeurs du dev. `index.html` le charge avant l'application, et `src/services/api.ts` le lit. Si `stagingAuth` n'est pas vide, chaque requête porte l'en-tête `X-Staging-Auth`.
+- **En recette et en prod**, le conteneur nginx réécrit `config.js` à son démarrage (`docker/40-config-js.sh`, à partir de `docker/config.js.template`) avec ses variables d'environnement `API_URL` et `STAGING_AUTH`, et le sert sans cache. Sans `API_URL`, il ne démarre pas. Ces valeurs sont placées entre apostrophes dans `config.js` : elles ne doivent contenir ni `'` ni `\`.
+- Chaque serveur a un `.env.local`, non versionné, passé à Compose par `docker compose --env-file .env.local …`. Il contient :
+  - `COMPOSE_FILE=compose.yaml:compose.prod.yaml` ;
+  - `DEPLOY_ENV` (`staging` ou `prod`) : nom du projet Compose ;
+  - `HTTP_PORT` : port local de nginx ;
+  - `API_URL` (obligatoire) et `STAGING_AUTH` (recette seulement, `login:mot de passe`).
+- Compose remplace les `$` des valeurs de `.env.local` : une valeur qui en contient se met entre apostrophes (`'…'`).
+- Il n'y a pas de variable `VITE_*` : une nouvelle valeur de configuration s'ajoute dans `public/config.js`, `docker/config.js.template`, `docker/40-config-js.sh` et l'`environment` de `compose.prod.yaml`.
 
 ## Organisation
 - **`src/services/api.ts`** : instance axios unique. Elle ajoute le JWT et refait la requête après un refresh si l'API répond `401 Expired JWT Token`. Elle exporte aussi `COVER_BASE_URL`.
@@ -54,7 +66,7 @@ docker compose exec front npm run ci          # vérifications de la CI, sans ri
   1. `type-check` (vue-tsc) ;
   2. `oxlint` puis `eslint`, tout avertissement compte comme une erreur ;
   3. `prettier --check` sur `src/` : le formatage de `.prettierrc.json` (corriger avec `npm run format`).
-- **Image prod** : construit l'étape `prod` du `Dockerfile`, sans `VITE_API_URL` et sans la publier.
+- **Image prod** : construit l'étape `prod` du `Dockerfile`, sans la publier.
 
 ## Git
 Workflow (branches, PR, tickets, releases) : skill `workflow-github`.
