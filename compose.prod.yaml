@@ -1,0 +1,11 @@
+name: dramatoons_front_${DEPLOY_ENV:?DEPLOY_ENV vaut staging ou prod}
+
+services:
+  front:
+    build:
+      target: prod
+    environment:
+      API_URL: ${API_URL:?}
+      STAGING_AUTH: ${STAGING_AUTH:-}
+    ports:
+      - "127.0.0.1:${HTTP_PORT:?}:80"
