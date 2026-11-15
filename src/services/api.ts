@@ -2,12 +2,12 @@ import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
 import router from '../router'
 
-const stagingHeaders = import.meta.env.VITE_STAGING_AUTH
-  ? { 'X-Staging-Auth': `Basic ${btoa(import.meta.env.VITE_STAGING_AUTH)}` }
-  : {}
+const { apiUrl, stagingAuth } = window.APP_CONFIG
+
+const stagingHeaders = stagingAuth ? { 'X-Staging-Auth': `Basic ${btoa(stagingAuth)}` } : {}
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}`,
+  baseURL: apiUrl,
   headers: {
     Accept: 'application/ld+json',
     ...stagingHeaders,
