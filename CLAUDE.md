@@ -12,10 +12,11 @@ docker compose exec front npm run build       # type-check + build
 docker compose exec front npm run lint        # applique --fix
 docker compose exec front npm run format
 docker compose exec front npm run ci          # vérifications de la CI, sans rien corriger (voir « CI »)
+docker compose exec front npm test            # tests Vitest, un seul passage (voir « Tests »)
+docker compose exec front npm run test:unit   # tests Vitest relancés à chaque modification (mode watch)
 ```
 
 - `compose.override.yaml` (dev) se superpose automatiquement à `compose.yaml` ; en recette et en prod, c'est `compose.prod.yaml` (voir « Configuration »).
-- Il n'y a pas de tests écrits (Vitest est configuré).
 
 ## Configuration
 L'adresse de l'API est lue au démarrage, pas au build : la même image sert la recette et la prod.
@@ -60,12 +61,20 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 - `GET /webtoons` exige le paramètre `mode`, sinon la réponse est vide.
 - Les couvertures s'affichent via `COVER_BASE_URL`, avec `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx).
 
+## Tests
+Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`), dans un faux navigateur (`jsdom` : `window`, `localStorage`…).
+- Un fichier `*.spec.ts` dans un dossier `__tests__/` à côté du code testé (ex. `src/types/__tests__/progress.spec.ts`). Seuls ces dossiers sont lus par `tsconfig.vitest.json` et les règles Vitest d'ESLint (oxlint, lui, applique son plugin `vitest` à tout le projet) ; `tsconfig.app.json` les exclut. Les descriptions (`describe`, `it`) sont en français.
+- Les tests ne contactent jamais l'API : `vi.mock('@/services/api', …)` remplace l'instance axios par des fonctions simulées (`vi.fn<…>()`, typées comme l'exige oxlint), dont on vérifie les appels (`toHaveBeenCalledWith`). Les règles de droits et de visibilité restent testées côté API.
+- Un store Pinia s'utilise après `setActivePinia(createPinia())` dans `beforeEach` ; `window.confirm` se remplace par `vi.stubGlobal('confirm', …)`.
+- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`).
+
 ## CI
-`.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Deux checks, obligatoires pour fusionner :
+`.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Trois checks, obligatoires pour fusionner :
 - **Vérifications** : Node 24, `npm ci`, puis `npm run ci`, qui enchaîne sans rien corriger :
   1. `type-check` (vue-tsc) ;
   2. `oxlint` puis `eslint`, tout avertissement compte comme une erreur ;
   3. `prettier --check` sur `src/` : le formatage de `.prettierrc.json` (corriger avec `npm run format`).
+- **Tests** : Node 24, `npm ci`, puis `npm test`.
 - **Image prod** : construit l'étape `prod` du `Dockerfile`, sans la publier.
 
 ## Git
