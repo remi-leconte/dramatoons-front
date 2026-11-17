@@ -1,7 +1,5 @@
 services:
   front:
-    build:
-      context: .
     restart: unless-stopped
     networks:
       - global_proxy_network
