@@ -81,7 +81,8 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 `.github/workflows/publish.yml` construit l'étape `prod` du Dockerfile (`linux/amd64`) et la publie, publique, sur `ghcr.io/remi-leconte/dramatoons-front`.
 - Déclenché par un `push` sur `release/*` (donc la fusion d'une PR) et par un tag `v*`, jamais par une PR : seul ce qui est déjà passé par la CI est publié.
 - Étiquettes : `release-vX.Y.Z` (dernière fusion dans la release) et `sha-<commit>` sur `release/vX.Y.Z` ; `vX.Y.Z` sur un tag. Pas de `latest`.
-- Droits : le `GITHUB_TOKEN` du workflow, limité à `packages: write` ; aucun secret.
+- Job « Publication image », distinct du check « Image prod » de la CI. Les publications d'une même branche passent l'une après l'autre, sans annulation ; seule exception de GitHub : sur trois fusions très rapprochées, celle du milieu, encore en attente, est remplacée et son `sha-<commit>` n'est pas publié.
+- Droits : le `GITHUB_TOKEN` du workflow, limité à `contents: read` et `packages: write` ; aucun secret.
 - Les serveurs construisent encore leur image (`build:` dans `compose.prod.yaml`) : ils utiliseront les images publiées avec le déploiement automatique.
 
 ## Git
