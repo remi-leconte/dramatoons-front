@@ -16,13 +16,13 @@ docker compose exec front npm test            # tests Vitest, un seul passage (v
 docker compose exec front npm run test:unit   # tests Vitest relancés à chaque modification (mode watch)
 ```
 
-- `compose.override.yaml` (dev) se superpose automatiquement à `compose.yaml` ; en recette et en prod, c'est `compose.prod.yaml` (voir « Configuration »).
+- `compose.override.yaml` (dev) se superpose automatiquement à `compose.yaml` et construit l'image `dev` ; en recette et en prod, c'est `compose.prod.yaml`, qui utilise l'image publiée (voir « Configuration » et « Publication et déploiement »).
 
 ## Configuration
 L'adresse de l'API est lue au démarrage, pas au build : la même image sert la recette et la prod.
 - **`public/config.js`**, versionné : définit `window.APP_CONFIG` (`apiUrl`, `stagingAuth`) avec les valeurs du dev. `index.html` le charge avant l'application, et `src/services/api.ts` le lit. Si `stagingAuth` n'est pas vide, chaque requête porte l'en-tête `X-Staging-Auth`.
 - **En recette et en prod**, le conteneur nginx réécrit `config.js` à son démarrage (`docker/40-config-js.sh`, à partir de `docker/config.js.template`) avec ses variables d'environnement `API_URL` et `STAGING_AUTH`, et le sert sans cache. Sans `API_URL`, il ne démarre pas. Ces valeurs sont placées entre apostrophes dans `config.js` : elles ne doivent contenir ni `'` ni `\`.
-- Chaque serveur a un `.env.local`, non versionné, passé à Compose par `docker compose --env-file .env.local …`. Il contient :
+- Chaque serveur a un `.env.local`, non versionné, passé à Compose par `docker compose --env-file .env.local --env-file .env.image …`. `.env.image`, écrit par chaque déploiement, contient seulement `IMAGE_TAG` (`sha-<commit>` de l'image qui tourne) ; sans lui, Compose refuse. `.env.local` contient :
   - `COMPOSE_FILE=compose.yaml:compose.prod.yaml` ;
   - `DEPLOY_ENV` (`staging` ou `prod`) : nom du projet Compose ;
   - `HTTP_PORT` : port local de nginx ;
@@ -77,13 +77,20 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 - **Tests** : Node 24, `npm ci`, puis `npm test`.
 - **Image prod** : construit l'étape `prod` du `Dockerfile`, sans la publier.
 
-## Publication des images
+## Publication et déploiement
 `.github/workflows/publish.yml` construit l'étape `prod` du Dockerfile (`linux/amd64`) et la publie, publique, sur `ghcr.io/remi-leconte/dramatoons-front`.
 - Déclenché par un `push` sur `release/*` (donc la fusion d'une PR) et par un tag `v*`, jamais par une PR : seul ce qui est déjà passé par la CI est publié.
 - Étiquettes : `release-vX.Y.Z` (dernière fusion dans la release) et `sha-<commit>` sur `release/vX.Y.Z` ; `vX.Y.Z` sur un tag. Pas de `latest`.
 - Job « Publication image », distinct du check « Image prod » de la CI. Les publications d'une même branche passent l'une après l'autre, sans annulation ; seule exception de GitHub : sur trois fusions très rapprochées, celle du milieu, encore en attente, est remplacée et son `sha-<commit>` n'est pas publié.
 - Droits : le `GITHUB_TOKEN` du workflow, limité à `contents: read` et `packages: write` ; aucun secret.
-- Les serveurs construisent encore leur image (`build:` dans `compose.prod.yaml`) : ils utiliseront les images publiées avec le déploiement automatique.
+
+Sur `release/*`, le job « Déploiement recette » suit la publication :
+- Il tourne dans l'environnement GitHub `staging`, dont les secrets (`SSH_HOST`, `SSH_KNOWN_HOSTS`, `SSH_PRIVATE_KEY`) ne sont donnés qu'aux branches `release/*`.
+- Il se connecte au serveur avec une clé dédiée, limitée côté serveur à un script de déploiement (hors dépôt), et ne lui transmet que `front` et le commit. Le script télécharge `compose.yaml` et `compose.prod.yaml` de ce commit, récupère l'image `sha-<commit>`, redémarre le conteneur, vérifie que le site répond, puis supprime les anciennes images.
+- Le serveur ne construit rien et n'a plus besoin du code : seul `.env.local` y reste.
+- Revenir à une version précédente : relancer (« Re-run jobs ») le workflow d'un commit précédent de la release.
+- Les journaux de GitHub Actions sont publics : le script n'y écrit ni configuration ni journaux des conteneurs.
+- La production n'est pas encore déployée par ce workflow.
 
 ## Git
 Workflow (branches, PR, tickets, releases) : skill `workflow-github`.
