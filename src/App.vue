@@ -76,7 +76,7 @@ const handleLogout = () => {
 <style>
 body {
   margin: 0;
-  background-color: #39ff14;
+  background-color: #0f0f0f;
   font-family: 'Inter', sans-serif;
   color: #ffffff;
 }
