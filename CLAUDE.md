@@ -60,7 +60,7 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 - `PATCH` doit préciser `Content-Type: application/merge-patch+json` à chaque appel : l'intercepteur ne pose `application/ld+json` que sur `POST` et `PUT`.
 - Les relations s'envoient sous forme d'IRI : `webtoon: '/webtoons/12'`.
 - Les collections sont en JSON-LD. Le type `HydraCollection` accepte `member` et `hydra:member`, de même pour `totalItems` : garder les deux lectures.
-- `GET /webtoons` exige le paramètre `mode`, sinon la réponse est vide.
+- `GET /webtoons` exige le paramètre `mode`, sinon la réponse est vide. Son tri se demande par `sortBy` et `sortOrder`, pas par `order[…]` (ignoré : le listing passe par un fournisseur sur mesure de l'API) ; `GET /users`, lui, utilise `order[…]`.
 - Les couvertures s'affichent via `COVER_BASE_URL`, avec `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx).
 
 ## Tests
@@ -68,7 +68,7 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 - Un fichier `*.spec.ts` dans un dossier `__tests__/` à côté du code testé (ex. `src/types/__tests__/progress.spec.ts`). Seuls ces dossiers sont lus par `tsconfig.vitest.json` et les règles Vitest d'ESLint (oxlint, lui, applique son plugin `vitest` à tout le projet) ; `tsconfig.app.json` les exclut. Les descriptions (`describe`, `it`) sont en français.
 - Les tests ne contactent jamais l'API : `vi.mock('@/services/api', …)` remplace l'instance axios par des fonctions simulées (`vi.fn<…>()`, typées comme l'exige oxlint), dont on vérifie les appels (`toHaveBeenCalledWith`). Les règles de droits et de visibilité restent testées côté API.
 - Un store Pinia s'utilise après `setActivePinia(createPinia())` dans `beforeEach` ; `window.confirm` se remplace par `vi.stubGlobal('confirm', …)`.
-- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`) ; rechargement après une mise à jour (`createPreloadErrorHandler`, `trackRequestedPath`).
+- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`) ; rechargement après une mise à jour (`createPreloadErrorHandler`, `trackRequestedPath`) ; tri de l'administration des webtoons (`WebtoonListView`, monté avec `@vue/test-utils`).
 
 ## CI
 `.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Trois checks, obligatoires pour fusionner :
