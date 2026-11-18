@@ -23,7 +23,7 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 - **`public/config.js`**, versionné : définit `window.APP_CONFIG` (`apiUrl`, `stagingAuth`) avec les valeurs du dev. `index.html` le charge avant l'application, et `src/services/api.ts` le lit. Si `stagingAuth` n'est pas vide, chaque requête porte l'en-tête `X-Staging-Auth`.
 - **Cache** (`docker/nginx.conf`) : `index.html` et les routes de l'application sont revalidés à chaque visite (`no-cache`), car `index.html` désigne les fichiers de la version en cours ; les fichiers de `assets/`, dont le nom contient une empreinte qui change à chaque version, sont gardés un an. Un fichier de `assets/` absent (ancienne version) renvoie 404, sans repli sur `index.html`.
 - **En recette et en prod**, le conteneur nginx réécrit `config.js` à son démarrage (`docker/40-config-js.sh`, à partir de `docker/config.js.template`) avec ses variables d'environnement `API_URL` et `STAGING_AUTH`, et le sert sans cache. Sans `API_URL`, il ne démarre pas. Ces valeurs sont placées entre apostrophes dans `config.js` : elles ne doivent contenir ni `'` ni `\`.
-- Chaque serveur a un `.env.local`, non versionné, passé à Compose par `docker compose --env-file .env.local --env-file .env.image …`. `.env.image` contient seulement l'`IMAGE_TAG` de l'image qui tourne (`sha-<commit>` en recette d'une release, `vX.Y.Z` pour la recette de `main` et la prod), écrit par le script de déploiement, ou à la main en prod ; sans lui, Compose refuse. `.env.local` contient :
+- Chaque serveur a un `.env.local`, non versionné, passé à Compose par `docker compose --env-file .env.local --env-file .env.image …`. `.env.image` contient seulement l'`IMAGE_TAG` de l'image qui tourne (`sha-<commit>` en recette d'une release, `vX.Y.Z` pour la recette de `main` et la prod), écrit par le script de déploiement ; sans lui, Compose refuse. `.env.local` contient :
   - `COMPOSE_FILE=compose.yaml:compose.prod.yaml` ;
   - `DEPLOY_ENV` (`staging` ou `prod`) : nom du projet Compose ;
   - `HTTP_PORT` : port local de nginx ;
@@ -81,13 +81,13 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 
 ## Publication et déploiement
 `.github/workflows/publish.yml` construit l'étape `prod` du Dockerfile (`linux/amd64`) et la publie, publique, sur `ghcr.io/remi-leconte/dramatoons-front`.
-- Déclenché par un `push` sur `release/*` (donc la fusion d'une PR) et par un tag `v*`, jamais par une PR : seul ce qui est déjà passé par la CI est publié.
-- Étiquettes : `release-vX.Y.Z` (dernière fusion dans la release) et `sha-<commit>` sur `release/vX.Y.Z` ; `vX.Y.Z` sur un tag. Pas de `latest`.
+- Déclenché par un `push` sur `release/*` (donc la fusion d'une PR), jamais par une PR : seul ce qui est déjà passé par la CI est publié.
+- Étiquettes : `release-vX.Y.Z` (dernière fusion dans la release) et `sha-<commit>`. Pas de `latest`. L'étiquette `vX.Y.Z` est ajoutée à la livraison, sans reconstruire l'image (voir « Livraison »).
 - Job « Publication image », distinct du check « Image prod » de la CI. Les publications d'une même branche passent l'une après l'autre, sans annulation ; seule exception de GitHub : sur trois fusions très rapprochées, celle du milieu, encore en attente, est remplacée et son `sha-<commit>` n'est pas publié.
 - Droits : aucun par défaut (`permissions: {}`). Le job « Publication image » n'a que le `GITHUB_TOKEN`, limité à `contents: read` et `packages: write`, et aucun secret ; les secrets SSH ne servent qu'au job « Déploiement recette » (ci-dessous).
 
 Sur `release/*`, le job « Déploiement recette » suit la publication :
-- Il tourne dans l'environnement GitHub `staging`, dont les secrets (`SSH_HOST`, `SSH_KNOWN_HOSTS`, `SSH_PRIVATE_KEY`) ne sont donnés qu'aux branches `release/*`.
+- Il tourne dans l'environnement GitHub `staging`, dont les secrets (`SSH_HOST`, `SSH_KNOWN_HOSTS`, `SSH_PRIVATE_KEY`) ne sont donnés qu'aux branches `release/*` et à `main` (livraison).
 - Il se connecte au serveur avec une clé dédiée, limitée côté serveur à un script de déploiement (hors dépôt), et ne lui transmet que `front` et le commit. Le script télécharge `compose.yaml` et `compose.prod.yaml` de ce commit, récupère l'image `sha-<commit>`, redémarre le conteneur, vérifie que le site répond, puis supprime les anciennes images.
 - La recette déployée ainsi ne construit rien : son dossier ne contient que `.env.local`, `.env.image` et les fichiers compose téléchargés, sans le code.
 - Revenir à une version précédente :
@@ -95,9 +95,16 @@ Sur `release/*`, le job « Déploiement recette » suit la publication :
   - GitHub ne permet de relancer un job que dans les 30 jours qui suivent son run ; au-delà, lancer à la main sur le serveur le script de déploiement avec le commit voulu ;
   - seuls les commits fusionnés depuis l'arrivée du déploiement automatique (#149 et remi-leconte/dramatoons-api#111) se redéploient ainsi : avant, `compose.prod.yaml` construisait l'image à partir du code, absent du dossier de la recette. Pour revenir à un commit plus ancien, relancer l'ancienne recette, qui se construit dans un autre dossier du serveur contenant le code (procédure hors dépôt). Ce dossier y reste jusqu'au retrait de git du serveur, dernière étape de la mise en place du déploiement.
 - Les journaux de GitHub Actions sont publics : le script n'y écrit ni configuration ni journaux des conteneurs.
-- Recette de `main` et production, pas encore automatisées. Le tag `vX.Y.Z` publie l'image `vX.Y.Z`, sans déploiement. À partir de la v2.4.0, `compose.prod.yaml` ne construit plus l'image : l'ancienne méthode (code à jour sur le serveur, puis `up -d --build`) ne fonctionne plus.
-  - Recette de `main` : le script de déploiement accepte aussi un tag (`front vX.Y.Z` au lieu du commit), lancé à la main sur le serveur.
-  - Production : dans son dossier sur le serveur, récupérer `compose.yaml` et `compose.prod.yaml` du tag `vX.Y.Z`, écrire `IMAGE_TAG=vX.Y.Z` dans `.env.image`, puis `docker compose --env-file .env.local --env-file .env.image pull` et `… up -d`.
+
+## Livraison
+`.github/workflows/livraison.yml` livre une release à sa fusion dans `main` (`push` sur `main`) :
+1. **Release fusionnée** : retrouve la PR fusionnée et sa branche `release/vX.Y.Z`. Une autre fusion dans `main` (hotfix…) ne livre rien. Le workflow échoue sans rien livrer si le contenu de `main` diffère de celui du dernier commit de la release (hotfix non repris dans la release, conflit résolu à la fusion) ou si le tag `vX.Y.Z` existe déjà.
+2. **Version** : ajoute l'étiquette `vX.Y.Z` à l'image `sha-<dernier commit de la release>`, celle qui a été recettée, sans la reconstruire, puis pose le tag `vX.Y.Z` sur `main`. Un tag posé avec le `GITHUB_TOKEN` ne déclenche aucun workflow : la suite se fait donc dans celui-ci.
+3. **Déploiement recette** : déploie `vX.Y.Z` en recette (environnement `staging`, qui autorise `release/*` et `main`), pour une dernière vérification.
+4. **Déploiement production** : attend l'approbation de l'utilisateur, puis déploie `vX.Y.Z`. L'environnement GitHub `production` exige cette approbation, sans contournement par un administrateur, et ne donne ses secrets qu'à `main`. Sa clé SSH est distincte de celle de la recette : le serveur la limite au déploiement de la production, qui n'accepte qu'une version `vX.Y.Z`.
+
+- Approuver la production de l'API (remi-leconte/dramatoons-api) avant celle du front : le nouveau front peut appeler des points d'entrée que seule la nouvelle API connaît.
+- Revenir à la version précédente en production : dans le run « Livraison » de cette version, relancer **seulement** le job « Déploiement production » (« Re-run this job », dans les 30 jours, avec une nouvelle approbation), ou lancer à la main sur le serveur le script de déploiement avec `vX.Y.Z`.
 
 ## Git
 Workflow (branches, PR, tickets, releases) : skill `workflow-github`.
