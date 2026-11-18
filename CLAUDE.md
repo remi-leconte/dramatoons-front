@@ -21,6 +21,7 @@ docker compose exec front npm run test:unit   # tests Vitest relancés à chaque
 ## Configuration
 L'adresse de l'API est lue au démarrage, pas au build : la même image sert la recette et la prod.
 - **`public/config.js`**, versionné : définit `window.APP_CONFIG` (`apiUrl`, `stagingAuth`) avec les valeurs du dev. `index.html` le charge avant l'application, et `src/services/api.ts` le lit. Si `stagingAuth` n'est pas vide, chaque requête porte l'en-tête `X-Staging-Auth`.
+- **Cache** (`docker/nginx.conf`) : `index.html` et les routes de l'application sont revalidés à chaque visite (`no-cache`), car `index.html` désigne les fichiers de la version en cours ; les fichiers de `assets/`, dont le nom contient une empreinte qui change à chaque version, sont gardés un an. Un fichier de `assets/` absent (ancienne version) renvoie 404, sans repli sur `index.html`.
 - **En recette et en prod**, le conteneur nginx réécrit `config.js` à son démarrage (`docker/40-config-js.sh`, à partir de `docker/config.js.template`) avec ses variables d'environnement `API_URL` et `STAGING_AUTH`, et le sert sans cache. Sans `API_URL`, il ne démarre pas. Ces valeurs sont placées entre apostrophes dans `config.js` : elles ne doivent contenir ni `'` ni `\`.
 - Chaque serveur a un `.env.local`, non versionné, passé à Compose par `docker compose --env-file .env.local --env-file .env.image …`. `.env.image` contient seulement l'`IMAGE_TAG` de l'image qui tourne (`sha-<commit>` en recette d'une release, `vX.Y.Z` pour la recette de `main` et la prod), écrit par le script de déploiement, ou à la main en prod ; sans lui, Compose refuse. `.env.local` contient :
   - `COMPOSE_FILE=compose.yaml:compose.prod.yaml` ;
@@ -32,6 +33,7 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 
 ## Organisation
 - **`src/services/api.ts`** : instance axios unique. Elle ajoute le JWT et refait la requête après un refresh si l'API répond `401 Expired JWT Token`. Elle exporte aussi `COVER_BASE_URL`.
+- **`src/services/reloadOnUpdate.ts`** : après une mise en production, un onglet resté ouvert réclame des fichiers de l'ancienne version qui n'existent plus. Sur l'événement `vite:preloadError`, l'application se recharge une fois sur la page demandée (suivie par `trackRequestedPath`, car l'adresse affichée est encore l'ancienne au moment de l'échec). Garde-fou : pas de nouveau rechargement dans les 10 secondes (`sessionStorage`), ni sans `sessionStorage`.
 - **`src/stores/auth.ts`** : session (`token`, `refreshToken`, `userId`, `login`, `roles`) stockée dans `localStorage`, plus `isAuthenticated`, `isAdmin` et `isModo` (modérateur ou administrateur).
 - **`src/router/index.ts`** : routes, avec les `meta` `requiresAuth`, `guestOnly` et `roles`.
 - **`src/types/`** : `Webtoon`, `WebtoonTitle`, `Progress` (= WebtoonUser), `User`, `HydraCollection`.
@@ -66,7 +68,7 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 - Un fichier `*.spec.ts` dans un dossier `__tests__/` à côté du code testé (ex. `src/types/__tests__/progress.spec.ts`). Seuls ces dossiers sont lus par `tsconfig.vitest.json` et les règles Vitest d'ESLint (oxlint, lui, applique son plugin `vitest` à tout le projet) ; `tsconfig.app.json` les exclut. Les descriptions (`describe`, `it`) sont en français.
 - Les tests ne contactent jamais l'API : `vi.mock('@/services/api', …)` remplace l'instance axios par des fonctions simulées (`vi.fn<…>()`, typées comme l'exige oxlint), dont on vérifie les appels (`toHaveBeenCalledWith`). Les règles de droits et de visibilité restent testées côté API.
 - Un store Pinia s'utilise après `setActivePinia(createPinia())` dans `beforeEach` ; `window.confirm` se remplace par `vi.stubGlobal('confirm', …)`.
-- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`).
+- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`) ; rechargement après une mise à jour (`createPreloadErrorHandler`, `trackRequestedPath`).
 
 ## CI
 `.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Trois checks, obligatoires pour fusionner :
