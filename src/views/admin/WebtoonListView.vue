@@ -44,7 +44,9 @@ const fetchWebtoons = async (page = 1) => {
     if (searchFilters.value.title) params.append('title', searchFilters.value.title.trim())
     if (searchFilters.value.onlyUnpublished) params.append('publish', 'false')
 
-    params.append(`order[${sortKey.value}]`, sortOrder.value)
+    // Le listing des webtoons (fournisseur sur mesure de l'API) lit sortBy et sortOrder, pas order[…]
+    params.append('sortBy', sortKey.value)
+    params.append('sortOrder', sortOrder.value)
 
     const { data } = await api.get<HydraCollection<Webtoon>>(`/webtoons?${params.toString()}`)
     webtoons.value = data['hydra:member'] ?? data.member ?? []
