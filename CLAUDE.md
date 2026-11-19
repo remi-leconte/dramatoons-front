@@ -71,7 +71,7 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 - Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`) ; rechargement après une mise à jour (`createPreloadErrorHandler`, `trackRequestedPath`) ; tri de l'administration des webtoons (`WebtoonListView`, monté avec `@vue/test-utils`).
 
 ## CI
-`.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Trois checks, obligatoires pour fusionner :
+`.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Trois checks, obligatoires pour fusionner (vers `release/*`, s'y ajoute la relecture IA, ci-dessous) :
 - **Vérifications** : Node 24, `npm ci`, puis `npm run ci`, qui enchaîne sans rien corriger :
   1. `type-check` (vue-tsc) ;
   2. `oxlint` puis `eslint`, tout avertissement compte comme une erreur ;
@@ -84,7 +84,8 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 - Seulement pour les PR de `remi-leconte` dont la branche vient du dépôt : le jeton de l'abonnement Claude (secret `CLAUDE_CODE_OAUTH_TOKEN`) n'est jamais utilisé pour une PR extérieure. Pour toute autre PR, le check est rouge (« pas de relecture IA ») plutôt que sauté, car un check sauté compte comme réussi : une telle PR se relit à la main. Un brouillon n'est pas relu. Un nouveau push annule la relecture en cours.
 - Le job rassemble d'abord, sans IA, le contexte dans `_relecture/` : la PR, son ticket, le ticket principal et ses sous-tickets, et les PR ouvertes des autres dépôts pour ces tickets. Les PR d'un même ticket sont ainsi relues ensemble, pour la cohérence entre l'API et le front.
 - Une branche hors convention, ou dont le ticket est introuvable, n'arrête pas le job : la relecture la signale comme remarque.
-- Claude lit ensuite les consignes de `relecture/consignes.md` du dépôt `dramatoons-workspace` (cloné dans `_workspace/`), avec les règles métier et le workflow. Il n'a que des outils de lecture, aucun accès à GitHub, et rend un verdict JSON.
+- Claude lit ensuite les consignes de `relecture/consignes.md` du dépôt `dramatoons-workspace` (cloné dans `_workspace/`), avec les règles métier et le workflow. Ses seuls outils disponibles sont Read, Glob et Grep (`--tools`) : ni Bash, ni écriture, ni sous-agent, ni accès à GitHub. Il rend un verdict JSON.
+- Le check « Relecture IA » est obligatoire pour fusionner dans `release/*` (ruleset des releases), en plus des trois checks de la CI. Les PR `release/*` → `main` ne sont pas relues, leur contenu l'ayant été ticket par ticket : le ruleset de `main` ne doit pas l'exiger, sans quoi elles resteraient bloquées faute de run.
 - Check rouge à la moindre remarque, vert sinon. Le verdict et les remarques sont publiés en commentaire de la PR par un second job, seul à avoir le droit d'écrire sur la PR.
 - La relecture ne fusionne rien, et la fusion automatique de GitHub n'est pas utilisée : un ticket qui touche l'API et le front a une PR dans chaque dépôt, que GitHub fusionnerait chacune de son côté. Claude fusionne toutes les PR du ticket ensemble, une fois toutes vertes, ou aucune (skill `workflow-github`).
 - Chaque relecture consomme le quota de l'abonnement. Si le quota est atteint, le check échoue : relancer le job plus tard (« Re-run failed jobs »).
