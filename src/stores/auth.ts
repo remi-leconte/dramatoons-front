@@ -29,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => roles.value.includes('ROLE_ADMIN'))
+  const isModo = computed(() => isAdmin.value || roles.value.includes('ROLE_MODO'))
 
   function setUserSession(newToken: string, newRefreshToken: string, user: User) {
     token.value = newToken
@@ -59,9 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function updateToken(newToken: string) {
+  function updateToken(newToken: string, newRefreshToken: string) {
     token.value = newToken
+    refreshToken.value = newRefreshToken
     localStorage.setItem('token', newToken)
+    localStorage.setItem('refreshToken', newRefreshToken)
   }
 
   function logout() {
@@ -88,14 +91,14 @@ export const useAuthStore = defineStore('auth', () => {
         roles: roles.value,
         verified: false,
         publish: false,
-        lastLogin: null
+        lastLogin: null,
       }
     },
     set(newUser) {
       if (!newUser) {
         logout()
       }
-    }
+    },
   })
 
   return {
@@ -107,9 +110,10 @@ export const useAuthStore = defineStore('auth', () => {
     roles,
     isAuthenticated,
     isAdmin,
+    isModo,
     fetchUserProfile,
     setUserSession,
     updateToken,
-    logout
+    logout,
   }
 })

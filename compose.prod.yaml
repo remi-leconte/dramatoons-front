@@ -1,0 +1,11 @@
+name: dramatoons_front_${DEPLOY_ENV:?DEPLOY_ENV vaut staging ou prod}
+
+services:
+  front:
+    # Image publiée par publish.yml : le serveur ne construit rien
+    image: ghcr.io/remi-leconte/dramatoons-front:${IMAGE_TAG:?IMAGE_TAG vaut sha-<commit> ou vX.Y.Z}
+    environment:
+      API_URL: ${API_URL:?}
+      STAGING_AUTH: ${STAGING_AUTH:-}
+    ports:
+      - "127.0.0.1:${HTTP_PORT:?}:80"

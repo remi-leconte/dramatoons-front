@@ -10,33 +10,35 @@
       <div v-if="errorMessage" class="error-alert">
         {{ errorMessage }}
       </div>
-      
+
       <form @submit.prevent="handleLogin">
         <div class="input-group">
           <label for="identifier">Nom d'utilisateur</label>
-          <input 
+          <input
             id="identifier"
-            v-model="form.identifier" 
-            type="text" 
-            placeholder="login" 
+            v-model="form.identifier"
+            type="text"
+            placeholder="login"
             required
             :disabled="loading"
-          >
+          />
         </div>
 
         <div class="input-group">
           <div class="label-wrapper">
             <label for="password">Mot de passe</label>
-            <router-link to="/forgot-password" class="forgot-link">Mot de passe oublié ?</router-link>
+            <router-link to="/forgot-password" class="forgot-link"
+              >Mot de passe oublié ?</router-link
+            >
           </div>
-          <input 
+          <input
             id="password"
-            v-model="form.password" 
-            type="password" 
-            placeholder="••••••••" 
+            v-model="form.password"
+            type="password"
+            placeholder="••••••••"
             required
             :disabled="loading"
-          >
+          />
         </div>
 
         <button type="submit" class="btn-primary full-width" :disabled="loading">
@@ -68,13 +70,13 @@ const errorMessage = ref('')
 const infoMessage = ref('')
 
 interface LoginForm {
-  identifier: string;
-  password: string;
+  identifier: string
+  password: string
 }
 
 const form = ref<LoginForm>({
   identifier: '',
-  password: ''
+  password: '',
 })
 
 type AuthStatusQuery = 'registered' | 'verified' | 'modifiedLogin' | 'resetPassword'
@@ -83,43 +85,48 @@ watch(
   () => route?.query?.status as AuthStatusQuery | undefined,
   (newStatus) => {
     if (newStatus === 'registered') {
-      infoMessage.value = "Votre compte a bien été créé ! Un e-mail de vérification vous a été envoyé. Vous pouvez vous connecter."
+      infoMessage.value =
+        'Votre compte a bien été créé ! Un e-mail de vérification vous a été envoyé. Vous pouvez vous connecter.'
     } else if (newStatus === 'verified') {
-      infoMessage.value = "Votre adresse e-mail a été validée avec succès ! Vous pouvez maintenant vous connecter."
+      infoMessage.value =
+        'Votre adresse e-mail a été validée avec succès ! Vous pouvez maintenant vous connecter.'
     } else if (newStatus === 'modifiedLogin') {
       infoMessage.value = "Votre nom d'utilisateur a changé. Veuillez vous reconnecter."
     } else if (newStatus === 'resetPassword') {
-      infoMessage.value = "Votre mot de passe a été modifié avec succès."
+      infoMessage.value = 'Votre mot de passe a été modifié avec succès.'
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleLogin = async () => {
   loading.value = true
   errorMessage.value = ''
-  
+
   try {
-    const response = await api.post<LoginResponse>('/login', {
-      login: form.value.identifier,
-      password: form.value.password
-    } satisfies LoginPayload, {
-      headers: { 'Content-Type': 'application/json' }
-    })
+    const response = await api.post<LoginResponse>(
+      '/login',
+      {
+        login: form.value.identifier,
+        password: form.value.password,
+      } satisfies LoginPayload,
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
     const { token, refresh_token, user } = response.data
 
     authStore.setUserSession(token, refresh_token, user)
     router.push('/')
-    
   } catch (error) {
     if (isAxiosError(error) && error.response) {
       if (error.response.status === 401) {
-        errorMessage.value = "Identifiants incorrects. Veuillez réessayer."
+        errorMessage.value = 'Identifiants incorrects. Veuillez réessayer.'
       } else {
-        errorMessage.value = "Une erreur est survenue."
+        errorMessage.value = 'Une erreur est survenue.'
       }
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     loading.value = false

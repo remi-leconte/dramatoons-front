@@ -10,58 +10,56 @@
       <div v-if="errorMessage" class="error-alert">
         {{ errorMessage }}
       </div>
-      
+
       <form @submit.prevent="handleUpdateProfile">
         <div class="input-group">
           <label for="username">Nom d'utilisateur</label>
-          <input 
+          <input
             id="username"
-            v-model="form.login" 
-            type="text" 
+            v-model="form.login"
+            type="text"
             required
             :disabled="loading || deleting"
-          >
+          />
         </div>
 
         <div class="input-group">
           <label for="email">Adresse Email</label>
-          <input 
+          <input
             id="email"
-            v-model="form.email" 
-            type="email" 
+            v-model="form.email"
+            type="email"
             required
             :disabled="loading || deleting"
-          >
-          
+          />
+
           <div class="email-status">
-            <span v-if="form.verified" class="badge verified">
-              ✓ Email vérifié
-            </span>
+            <span v-if="form.verified" class="badge verified"> ✓ Email vérifié </span>
             <div v-else class="unverified-container">
               <span class="badge unverified">⚠ Email non vérifié</span>
-              <button 
-                type="button" 
-                class="btn-link" 
+              <button
+                type="button"
+                class="btn-link"
                 :disabled="sendingVerification || loading || deleting"
                 @click="handleResendVerification"
               >
-                {{ sendingVerification ? 'Envoi...' : "Renvoyer le lien de validation" }}
+                {{ sendingVerification ? 'Envoi...' : 'Renvoyer le lien de validation' }}
               </button>
             </div>
           </div>
         </div>
 
-        <hr class="divider">
+        <hr class="divider" />
 
         <div class="input-group">
           <label for="newPassword">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
-          <input 
+          <input
             id="newPassword"
-            v-model="form.newPassword" 
-            type="password" 
-            placeholder="••••••••" 
+            v-model="form.newPassword"
+            type="password"
+            placeholder="••••••••"
             :disabled="loading || deleting"
-          >
+          />
         </div>
 
         <button type="submit" class="btn-primary full-width" :disabled="loading || deleting">
@@ -69,12 +67,12 @@
         </button>
       </form>
 
-      <hr class="divider">
+      <hr class="divider" />
 
       <div class="danger-zone">
-        <button 
-          type="button" 
-          class="btn-danger full-width" 
+        <button
+          type="button"
+          class="btn-danger full-width"
           :disabled="loading || deleting"
           @click="showDeleteModal = true"
         >
@@ -86,20 +84,23 @@
     <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal-content">
         <h3>Confirmation de suppression</h3>
-        <p>Êtes-vous sûr de vouloir supprimer votre compte et toute votre progression de lecture ? Cette action est irréversible.</p>
-        
+        <p>
+          Êtes-vous sûr de vouloir supprimer votre compte et toute votre progression de lecture ?
+          Cette action est irréversible.
+        </p>
+
         <div class="modal-actions">
-          <button 
-            type="button" 
-            class="btn-secondary" 
+          <button
+            type="button"
+            class="btn-secondary"
             :disabled="deleting"
             @click="showDeleteModal = false"
           >
             Non, annuler
           </button>
-          <button 
-            type="button" 
-            class="btn-danger" 
+          <button
+            type="button"
+            class="btn-danger"
             :disabled="deleting"
             @click="handleDeleteAccount"
           >
@@ -142,7 +143,7 @@ const form = ref<ProfileForm>({
   login: '',
   email: '',
   verified: false,
-  newPassword: ''
+  newPassword: '',
 })
 
 onMounted(async () => {
@@ -157,9 +158,9 @@ onMounted(async () => {
     form.value.verified = data.verified ?? false
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue lors de la récupération du profil."
+      errorMessage.value = 'Une erreur est survenue lors de la récupération du profil.'
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   }
 })
@@ -170,11 +171,11 @@ const handleUpdateProfile = async () => {
   loading.value = true
   errorMessage.value = ''
   infoMessage.value = ''
-  
+
   try {
     const payload: UserUpdatePayload = {
       login: form.value.login,
-      email: form.value.email
+      email: form.value.email,
     }
 
     if (form.value.newPassword) {
@@ -184,9 +185,9 @@ const handleUpdateProfile = async () => {
     const loginChanged = authStore.login !== form.value.login
 
     const { data } = await api.patch<User>(`/users/${form.value.id}`, payload, {
-      headers: { 'Content-Type': 'application/merge-patch+json' }
+      headers: { 'Content-Type': 'application/merge-patch+json' },
     })
-    
+
     form.value.verified = data.verified ?? false
     form.value.login = data.login
     form.value.email = data.email
@@ -195,15 +196,14 @@ const handleUpdateProfile = async () => {
       authStore.logout()
       router.push({ path: '/login', query: { status: 'modifiedLogin' } })
     } else {
-      infoMessage.value = "Profil mis à jour avec succès !"
-      form.value.newPassword = "" 
+      infoMessage.value = 'Profil mis à jour avec succès !'
+      form.value.newPassword = ''
     }
-
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue lors de la mise à jour."
+      errorMessage.value = 'Une erreur est survenue lors de la mise à jour.'
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     loading.value = false
@@ -217,15 +217,15 @@ const handleResendVerification = async () => {
 
   try {
     await api.post<{ message?: string }>('/users/resend-verification', {
-      email: form.value.email
+      email: form.value.email,
     })
 
-    infoMessage.value = "Un nouveau lien de validation a été envoyé sur votre adresse email."
+    infoMessage.value = 'Un nouveau lien de validation a été envoyé sur votre adresse email.'
   } catch (error) {
     if (isAxiosError(error) && error.response) {
       errorMessage.value = "Une erreur est survenue lors de l'envoi."
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     sendingVerification.value = false
@@ -237,7 +237,7 @@ const handleDeleteAccount = async () => {
 
   deleting.value = true
   errorMessage.value = ''
-  
+
   try {
     await api.delete(`/users/${form.value.id}`)
     showDeleteModal.value = false
@@ -246,9 +246,9 @@ const handleDeleteAccount = async () => {
   } catch (error) {
     showDeleteModal.value = false
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Erreur lors de la suppression du compte."
+      errorMessage.value = 'Erreur lors de la suppression du compte.'
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     deleting.value = false
@@ -432,7 +432,7 @@ const handleDeleteAccount = async () => {
   max-width: 450px;
   width: 90%;
   color: white;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   text-align: left;
 }
 

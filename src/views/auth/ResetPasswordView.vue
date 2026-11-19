@@ -6,7 +6,7 @@
       <div v-if="errorMessage" class="error-alert">
         {{ errorMessage }}
       </div>
-      
+
       <div v-if="!token" class="error-alert">
         Le jeton de réinitialisation est manquant. Veuillez réitérer votre demande.
       </div>
@@ -14,26 +14,26 @@
       <form v-else @submit.prevent="handleResetPassword">
         <div class="input-group">
           <label for="password">Nouveau mot de passe</label>
-          <input 
+          <input
             id="password"
-            v-model="newPassword" 
-            type="password" 
+            v-model="newPassword"
+            type="password"
             required
             placeholder="••••••••"
             :disabled="loading"
-          >
+          />
         </div>
 
         <div class="input-group">
           <label for="confirmPassword">Confirmez le mot de passe</label>
-          <input 
+          <input
             id="confirmPassword"
-            v-model="confirmPassword" 
-            type="password" 
+            v-model="confirmPassword"
+            type="password"
             required
             placeholder="••••••••"
             :disabled="loading"
-          >
+          />
         </div>
 
         <button type="submit" class="btn-primary full-width" :disabled="loading">
@@ -68,17 +68,17 @@ const confirmPassword = ref('')
 
 const handleResetPassword = async () => {
   if (!token.value) {
-    errorMessage.value = "Le jeton de réinitialisation est manquant."
+    errorMessage.value = 'Le jeton de réinitialisation est manquant.'
     return
   }
 
   if (newPassword.value !== confirmPassword.value) {
-    errorMessage.value = "Les mots de passe ne correspondent pas."
+    errorMessage.value = 'Les mots de passe ne correspondent pas.'
     return
   }
 
   if (newPassword.value.length < 6) {
-    errorMessage.value = "Le mot de passe doit contenir au moins 6 caractères."
+    errorMessage.value = 'Le mot de passe doit contenir au moins 6 caractères.'
     return
   }
 
@@ -88,16 +88,16 @@ const handleResetPassword = async () => {
   try {
     const payload: ResetPasswordPayload = {
       token: token.value,
-      password: newPassword.value
+      password: newPassword.value,
     }
 
     await api.post('/users/reset-password', payload)
     router.push({ path: '/login', query: { status: 'resetPassword' } })
   } catch (error) {
     if (isAxiosError(error) && error.response) {
-      errorMessage.value = "Une erreur est survenue."
+      errorMessage.value = 'Une erreur est survenue.'
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     loading.value = false

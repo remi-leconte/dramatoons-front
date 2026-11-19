@@ -2,26 +2,27 @@
   <div class="auth-container">
     <div class="auth-card">
       <h2>Réinitialiser le mot de passe</h2>
-      
+
       <div v-if="errorMessage" class="error-alert">
         {{ errorMessage }}
       </div>
-      
+
       <form v-if="!isSent" @submit.prevent="handleResetRequest">
         <p class="auth-description">
-          Entrez votre adresse email. Nous vous enverrons un lien pour créer un nouveau mot de passe.
+          Entrez votre adresse email. Nous vous enverrons un lien pour créer un nouveau mot de
+          passe.
         </p>
-        
+
         <div class="input-group">
-          <input 
-            v-model="email" 
-            type="email" 
-            placeholder="votre@email.com" 
+          <input
+            v-model="email"
+            type="email"
+            placeholder="votre@email.com"
             required
             :disabled="loading"
-          >
+          />
         </div>
-        
+
         <button type="submit" class="btn-primary full-width" :disabled="loading">
           {{ loading ? 'Envoi en cours...' : 'Envoyer le lien' }}
         </button>
@@ -30,7 +31,9 @@
       <div v-else class="success-message">
         <div class="success-icon">✓</div>
         <p>Si cet email existe dans notre base, un message vient d'être envoyé.</p>
-        <router-link to="/login" class="btn-secondary full-width">Retour à la connexion</router-link>
+        <router-link to="/login" class="btn-secondary full-width"
+          >Retour à la connexion</router-link
+        >
       </div>
 
       <div class="auth-footer" v-if="!isSent">
@@ -54,21 +57,21 @@ const errorMessage = ref('')
 const handleResetRequest = async () => {
   loading.value = true
   errorMessage.value = ''
-  
+
   try {
     const payload: ForgotPasswordPayload = { email: email.value }
     await api.post<{ message?: string }>('/users/forgot-password', payload)
-    
+
     isSent.value = true
   } catch (error) {
     if (isAxiosError(error) && error.response) {
       if (error.response.status === 422) {
-        errorMessage.value = "Email incorrect. Veuillez réessayer."
+        errorMessage.value = 'Email incorrect. Veuillez réessayer.'
       } else {
-        errorMessage.value = "Une erreur est survenue."
+        errorMessage.value = 'Une erreur est survenue.'
       }
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   } finally {
     loading.value = false

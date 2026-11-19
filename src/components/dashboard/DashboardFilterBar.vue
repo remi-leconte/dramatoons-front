@@ -34,17 +34,20 @@ const STATUS_PILLS: StatusPill[] = [
   { key: 'reading', label: 'En cours' },
   { key: 'pause', label: 'En pause' },
   { key: 'break', label: 'Pas intéressé' },
-  { key: 'completed', label: 'Terminé' }
+  { key: 'completed', label: 'Terminé' },
 ]
 
 const searchInput = ref(props.title)
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null
 
-watch(() => props.title, (newVal) => {
-  if (newVal !== searchInput.value) {
-    searchInput.value = newVal
-  }
-})
+watch(
+  () => props.title,
+  (newVal) => {
+    if (newVal !== searchInput.value) {
+      searchInput.value = newVal
+    }
+  },
+)
 
 const handleInput = () => {
   if (debounceTimeout) clearTimeout(debounceTimeout)
@@ -71,7 +74,12 @@ const clearSearch = () => {
         title="Afficher les filtres"
       >
         <span class="floating-text">Filtres &gt;</span>
-        <span v-if="props.includedStatuses.length > 0 || props.excludedStatuses.length > 0 || props.title" class="filter-badge-dot"></span>
+        <span
+          v-if="
+            props.includedStatuses.length > 0 || props.excludedStatuses.length > 0 || props.title
+          "
+          class="filter-badge-dot"
+        ></span>
       </button>
     </Transition>
 
@@ -88,7 +96,7 @@ const clearSearch = () => {
                 class="filter-pill"
                 :class="{
                   'is-included': props.includedStatuses.includes(pill.key),
-                  'is-excluded': props.excludedStatuses.includes(pill.key)
+                  'is-excluded': props.excludedStatuses.includes(pill.key),
                 }"
                 @click="emit('cycleStatus', pill.key)"
               >
@@ -170,7 +178,9 @@ const clearSearch = () => {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   border-left: none;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s ease;
   transform: translateX(0);
   opacity: 1;
 }
@@ -394,7 +404,9 @@ const clearSearch = () => {
 
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 .fade-slide-enter-from,

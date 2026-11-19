@@ -2,7 +2,7 @@
   <div class="auth-container">
     <div class="auth-card">
       <h2>Créer un compte</h2>
-      
+
       <div v-if="successMessage" class="alert-success">
         {{ successMessage }}
       </div>
@@ -10,46 +10,46 @@
       <div v-if="errorMessage" class="alert-error">
         {{ errorMessage }}
       </div>
-      
+
       <form @submit.prevent="handleRegister">
         <div class="input-group">
           <label for="username">Nom d'utilisateur</label>
-          <input 
+          <input
             id="username"
-            v-model="form.username" 
-            type="text" 
-            placeholder="Votre pseudo" 
+            v-model="form.username"
+            type="text"
+            placeholder="Votre pseudo"
             required
             :disabled="loading"
-          >
+          />
         </div>
 
         <div class="input-group">
           <label for="email">Adresse Email</label>
-          <input 
+          <input
             id="email"
-            v-model="form.email" 
-            type="email" 
-            placeholder="votre@email.com" 
+            v-model="form.email"
+            type="email"
+            placeholder="votre@email.com"
             required
             :disabled="loading"
-          >
+          />
         </div>
 
         <div class="input-group">
           <label for="password">Mot de passe</label>
-          <input 
+          <input
             id="password"
-            v-model="form.password" 
-            type="password" 
-            placeholder="••••••••" 
+            v-model="form.password"
+            type="password"
+            placeholder="••••••••"
             required
             :disabled="loading"
-          >
+          />
         </div>
 
         <button type="submit" class="btn-primary full-width" :disabled="loading">
-          {{ loading ? 'Création en cours...' : 'S\'inscrire' }}
+          {{ loading ? 'Création en cours...' : "S'inscrire" }}
         </button>
       </form>
 
@@ -86,31 +86,31 @@ interface RegisterForm {
 const form = ref<RegisterForm>({
   username: '',
   email: '',
-  password: ''
+  password: '',
 })
 
 const handleRegister = async () => {
   loading.value = true
   errorMessage.value = ''
   successMessage.value = ''
-  
+
   try {
     const payload: RegisterPayload = {
       email: form.value.email,
       password: form.value.password,
-      login: form.value.username
+      login: form.value.username,
     }
 
     await api.post<User>('/users', payload)
     router.push({ path: '/login', query: { status: 'registered' } })
-
   } catch (error) {
     if (isAxiosError<ApiErrorResponse>(error) && error.response) {
-      errorMessage.value = error.response.data['hydra:description'] 
-        || error.response.data.message 
-        || "Une erreur est survenue lors de l'inscription."
+      errorMessage.value =
+        error.response.data['hydra:description'] ||
+        error.response.data.message ||
+        "Une erreur est survenue lors de l'inscription."
     } else {
-      errorMessage.value = "Impossible de joindre le serveur."
+      errorMessage.value = 'Impossible de joindre le serveur.'
     }
   }
 }

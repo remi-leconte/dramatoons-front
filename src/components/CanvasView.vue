@@ -7,10 +7,14 @@
       </div>
 
       <div class="case case-1-perso-1">
-        <img src="../assets/board/case1-perso1.png" alt="Si je ne peux pas lire de Webtoons sur ce site, à quoi sert-il ?" class="img" />
+        <img
+          src="../assets/board/case1-perso1.png"
+          alt="Si je ne peux pas lire de Webtoons sur ce site, à quoi sert-il ?"
+          class="img"
+        />
       </div>
       <div class="case case-1-perso-1-text">
-        <p>Si je ne peux<br>pas lire de Webtoons sur ce site, à quoi<br>sert-il ?</p>
+        <p>Si je ne peux<br />pas lire de Webtoons sur ce site, à quoi<br />sert-il ?</p>
       </div>
 
       <!------------------------------Case 2------------------------------------>
@@ -19,39 +23,64 @@
       </div>
 
       <div class="case case-2-perso-1">
-        <img src="../assets/board/case2-perso1.png" alt="Dramatoons te permet de suivre la lecture de tes Webtoons préférés." class="img" />
+        <img
+          src="../assets/board/case2-perso1.png"
+          alt="Dramatoons te permet de suivre la lecture de tes Webtoons préférés."
+          class="img"
+        />
       </div>
 
       <div class="case case-2-perso-1-text">
-        <p>Dramatoons<br>te permet de suivre<br>la lecture de tes Webtoons préférés.</p>
+        <p>Dramatoons<br />te permet de suivre<br />la lecture de tes Webtoons préférés.</p>
       </div>
 
       <!------------------------------Case 3------------------------------------>
       <div class="case case-3">
-        <img src="../assets/board/extension_1.png" alt="Liste" class="img" style="position: relative;top: -116px;">
+        <img
+          src="../assets/board/extension_1.png"
+          alt="Liste"
+          class="img"
+          style="position: relative; top: -116px"
+        />
       </div>
 
       <div class="case case-3-perso-1">
-        <img src="../assets/board/case3-perso1.png" alt="Ensuite, télécharge l'extension 'Dramatoons Highlighter' sur ton navigateur." class="img" />
+        <img
+          src="../assets/board/case3-perso1.png"
+          alt="Ensuite, télécharge l'extension 'Dramatoons Highlighter' sur ton navigateur."
+          class="img"
+        />
       </div>
 
       <div class="case case-3-perso-1-text">
-
-        <p>Ensuite, télécharge l'extension <router-link to="/install-tutorial">Dramatoons Highlighter</router-link> sur ton navigateur.</p>
+        <p>
+          Ensuite, télécharge l'extension
+          <router-link to="/install-tutorial">Dramatoons Highlighter</router-link> sur ton
+          navigateur.
+        </p>
         <!--<a href="https://addons.mozilla.org/fr/firefox/addon/dramatoons-highlighter/" target="_blank">Dramatoons Highlighter</a>-->
       </div>
 
       <!------------------------------Case 4------------------------------------>
       <div class="case case-4">
-        <img src="../assets/board/extension_site_1.png" alt="Liste 3" class="img" style="position: relative;top: -25px;" />
+        <img
+          src="../assets/board/extension_site_1.png"
+          alt="Liste 3"
+          class="img"
+          style="position: relative; top: -25px"
+        />
       </div>
 
       <div class="case case-4-perso-1">
-        <img src="../assets/board/case4-perso1.png" alt="Avec cette extension je peux voir où j'en suis dans mes lectures !" class="img" />
+        <img
+          src="../assets/board/case4-perso1.png"
+          alt="Avec cette extension je peux voir où j'en suis dans mes lectures !"
+          class="img"
+        />
       </div>
 
       <div class="case case-4-perso-1-text">
-        <p>Avec cette<br>extension, je peux voir où j'en suis dans mes lectures !</p>
+        <p>Avec cette<br />extension, je peux voir où j'en suis dans mes lectures !</p>
       </div>
     </div>
   </section>
@@ -92,7 +121,7 @@
 
 #canvas-explication p {
   transform: scaleX(1.1);
-  font-size: 15.0px;
+  font-size: 15px;
   line-height: 1.1;
   color: #000;
 }

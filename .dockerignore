@@ -1,0 +1,11 @@
+.git
+.github
+.vscode
+.devcontainer
+node_modules
+dist
+coverage
+.eslintcache
+.env
+.env.*
+compose*.yaml

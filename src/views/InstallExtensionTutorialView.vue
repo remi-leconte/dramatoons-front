@@ -9,19 +9,19 @@
           Pour une installation en un clic avec mises à jour automatiques :
         </p>
         <div class="store-buttons">
-          <a 
-            href="https://addons.mozilla.org/fr/firefox/addon/dramatoons-highlighter/" 
-            target="_blank" 
-            rel="noopener" 
+          <a
+            href="https://addons.mozilla.org/fr/firefox/addon/dramatoons-highlighter/"
+            target="_blank"
+            rel="noopener"
             class="store-btn firefox"
           >
             <span>Obtenir pour <strong>Firefox</strong></span>
           </a>
 
-          <a 
-            href="https://microsoftedge.microsoft.com/addons/detail/cjnoabamjhohobpnmmkjfhipfhcjadeb" 
-            target="_blank" 
-            rel="noopener" 
+          <a
+            href="https://microsoftedge.microsoft.com/addons/detail/cjnoabamjhohobpnmmkjfhipfhcjadeb"
+            target="_blank"
+            rel="noopener"
             class="store-btn edge"
           >
             <span>Obtenir pour <strong>Microsoft Edge</strong></span>
@@ -37,26 +37,39 @@
         <div class="info-note">
           <p>
             <strong>Pourquoi une installation manuelle ?</strong><br />
-            La publication d'extensions sur le Chrome Web Store requiert un compte développeur payant. S'agissant d'un projet personnel et gratuit, l'extension est mise à disposition gratuitement en installation manuelle direct via GitHub.
+            La publication d'extensions sur le Chrome Web Store requiert un compte développeur
+            payant. S'agissant d'un projet personnel et gratuit, l'extension est mise à disposition
+            gratuitement en installation manuelle direct via GitHub.
           </p>
         </div>
 
         <h3>Étape 1 : Télécharger l'extension</h3>
         <ol class="steps-list">
           <li>
-            Accédez au dépôt 
-            <a href="https://github.com/remi-leconte/dramatoons-extension-chromium" target="_blank" rel="noopener">GitHub</a> 
-            ou téléchargez directement l'archive 
-            <a href="https://github.com/remi-leconte/dramatoons-extension-chromium/archive/refs/heads/main.zip" target="_blank" rel="noopener">.zip</a>.
+            Accédez au dépôt
+            <a
+              href="https://github.com/remi-leconte/dramatoons-extension-chromium"
+              target="_blank"
+              rel="noopener"
+              >GitHub</a
+            >
+            ou téléchargez directement l'archive
+            <a
+              href="https://github.com/remi-leconte/dramatoons-extension-chromium/archive/refs/heads/main.zip"
+              target="_blank"
+              rel="noopener"
+              >.zip</a
+            >.
           </li>
           <li>
-            Une fois le fichier téléchargé, faites un clic droit dessus et sélectionnez « Extraire tout » pour décompresser le dossier.
+            Une fois le fichier téléchargé, faites un clic droit dessus et sélectionnez « Extraire
+            tout » pour décompresser le dossier.
           </li>
         </ol>
 
         <h3>Étape 2 : Activer l'extension dans le navigateur</h3>
         <p>Ouvrez votre navigateur (Chrome ou Brave) puis :</p>
-        
+
         <p>Dans la barre d'adresse, saisissez :</p>
         <ul>
           <li><code>chrome://extensions</code> (sur Chrome)</li>
@@ -64,14 +77,21 @@
         </ul>
 
         <ol start="3" class="steps-list">
-          <li>En haut à droite de la page, activez le commutateur <strong>« Mode développeur »</strong>.</li>
-          <li>En haut à gauche, cliquez sur le bouton <strong>« Charger l'extension non empaquetée »</strong>.</li>
+          <li>
+            En haut à droite de la page, activez le commutateur
+            <strong>« Mode développeur »</strong>.
+          </li>
+          <li>
+            En haut à gauche, cliquez sur le bouton
+            <strong>« Charger l'extension non empaquetée »</strong>.
+          </li>
           <li>Sélectionnez le dossier dézippé à l'étape 1.</li>
         </ol>
 
         <div class="completion-box">
           <p>
-            🎉 <strong>Installation terminée !</strong> L'extension est prête. Vous pouvez l'épingler dans votre barre d'outils via l'icône en forme de puzzle.
+            🎉 <strong>Installation terminée !</strong> L'extension est prête. Vous pouvez
+            l'épingler dans votre barre d'outils via l'icône en forme de puzzle.
           </p>
         </div>
       </section>
@@ -142,7 +162,8 @@
   margin-bottom: 1rem;
 }
 
-.tutorial-card p, .tutorial-card li {
+.tutorial-card p,
+.tutorial-card li {
   color: #ccc;
   font-size: 0.95rem;
 }
@@ -188,7 +209,9 @@
   color: #ffffff !important;
   text-decoration: none;
   font-size: 0.9rem;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
   flex: 1 1 200px;
   text-align: center;
 }
@@ -224,7 +247,8 @@
 }
 
 /* Listes et Étapes */
-.steps-list, .manual-section ul {
+.steps-list,
+.manual-section ul {
   padding-left: 20px;
   margin-bottom: 1rem;
 }

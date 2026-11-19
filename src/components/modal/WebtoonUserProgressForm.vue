@@ -4,17 +4,19 @@ import type { ProgressState } from '@/types'
 
 const rawProgress = defineModel('progress', {
   type: Object,
-  default: () => ({ bookmark: null, rate: null, state: null, id: null })
+  default: () => ({ bookmark: null, rate: null, state: null, id: null }),
 })
 
 const progress = computed({
   get: () => rawProgress.value || { bookmark: null, rate: null, state: null, id: null },
-  set: (val) => { rawProgress.value = val }
+  set: (val) => {
+    rawProgress.value = val
+  },
 })
 
 defineProps({
   loading: { type: Boolean, default: false },
-  canDelete: { type: Boolean, default: false }
+  canDelete: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['delete', 'validate', 'change'])
@@ -23,7 +25,7 @@ const STATUS_OPTIONS: { key: ProgressState; label: string; class: string }[] = [
   { key: 'reading', label: 'En cours', class: 'pill-reading' },
   { key: 'pause', label: 'En pause', class: 'pill-pause' },
   { key: 'break', label: 'Pas intéressé', class: 'pill-break' },
-  { key: 'completed', label: 'Terminé', class: 'pill-completed' }
+  { key: 'completed', label: 'Terminé', class: 'pill-completed' },
 ]
 
 const toggleStatus = (stateKey: ProgressState) => {
@@ -50,8 +52,8 @@ const handleBookmarkInput = () => {
 }
 
 const currentRate = computed(() => {
-  return progress.value.rate !== null && progress.value.rate !== undefined 
-    ? Number(progress.value.rate) 
+  return progress.value.rate !== null && progress.value.rate !== undefined
+    ? Number(progress.value.rate)
     : 0
 })
 
@@ -100,10 +102,10 @@ const resetRate = () => {
         <label for="progress-bookmark" class="field-label">Ma progression</label>
       </div>
       <div class="chapter-control">
-        <button 
-          type="button" 
-          class="stepper-btn" 
-          @click="adjustBookmark(-1)" 
+        <button
+          type="button"
+          class="stepper-btn"
+          @click="adjustBookmark(-1)"
           :disabled="currentBookmark <= 0"
           title="-1 chapitre"
         >
@@ -111,24 +113,19 @@ const resetRate = () => {
         </button>
 
         <div class="input-unit-wrapper">
-          <input 
+          <input
             id="progress-bookmark"
-            type="number" 
-            v-model.number="progress.bookmark" 
-            min="0" 
+            type="number"
+            v-model.number="progress.bookmark"
+            min="0"
             placeholder="0"
-            class="app-input-field input-chapter" 
+            class="app-input-field input-chapter"
             @input="handleBookmarkInput"
-          >
+          />
           <span class="unit-label">Chap.</span>
         </div>
 
-        <button 
-          type="button" 
-          class="stepper-btn" 
-          @click="adjustBookmark(1)" 
-          title="+1 chapitre"
-        >
+        <button type="button" class="stepper-btn" @click="adjustBookmark(1)" title="+1 chapitre">
           +
         </button>
       </div>
@@ -139,31 +136,31 @@ const resetRate = () => {
         <label for="progress-rate" class="field-label">Ma note</label>
       </div>
       <div class="rating-control">
-        <button 
-          type="button" 
-          class="stepper-btn" 
-          @click="adjustRate(-0.1)" 
+        <button
+          type="button"
+          class="stepper-btn"
+          @click="adjustRate(-0.1)"
           :disabled="currentRate <= 0"
           title="-0.1"
         >
           -
         </button>
 
-        <input 
+        <input
           id="progress-rate"
-          type="range" 
-          min="0" 
-          max="10" 
-          step="0.1" 
+          type="range"
+          min="0"
+          max="10"
+          step="0.1"
           :value="currentRate"
           class="rating-slider"
           @input="handleSliderInput"
-        >
+        />
 
-        <button 
-          type="button" 
-          class="stepper-btn" 
-          @click="adjustRate(0.1)" 
+        <button
+          type="button"
+          class="stepper-btn"
+          @click="adjustRate(0.1)"
           :disabled="currentRate >= 10"
           title="+0.1"
         >
@@ -171,13 +168,17 @@ const resetRate = () => {
         </button>
 
         <span class="rating-display">
-          {{ progress.rate !== null && progress.rate !== undefined ? Number(progress.rate).toFixed(1) : '-' }}
+          {{
+            progress.rate !== null && progress.rate !== undefined
+              ? Number(progress.rate).toFixed(1)
+              : '-'
+          }}
         </span>
 
-        <button 
-          type="button" 
-          class="btn-reset-rate" 
-          @click="resetRate" 
+        <button
+          type="button"
+          class="btn-reset-rate"
+          @click="resetRate"
           title="Réinitialiser la note"
           :disabled="progress.rate === null || progress.rate === undefined"
         >
@@ -187,10 +188,10 @@ const resetRate = () => {
     </div>
 
     <div v-if="canDelete" class="modal-actions">
-      <button 
-        type="button" 
-        class="btn btn-primary btn-delete" 
-        @click="emit('delete')" 
+      <button
+        type="button"
+        class="btn btn-primary btn-delete"
+        @click="emit('delete')"
         :disabled="loading"
       >
         Supprimer le webtoon
@@ -261,7 +262,9 @@ const resetRate = () => {
   align-items: center;
   justify-content: center;
   opacity: 0.7;
-  transition: opacity 0.2s ease, color 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    color 0.2s ease;
 }
 
 .btn-reset-rate:hover:not(:disabled) {
