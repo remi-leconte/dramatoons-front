@@ -104,7 +104,7 @@ Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`),
 - Droits : aucun par défaut (`permissions: {}`). Le job « Publication image » n'a que le `GITHUB_TOKEN`, limité à `contents: read` et `packages: write`, et aucun secret ; dans ce workflow, les secrets (SSH, `PROJECT_TOKEN`) ne servent qu'au job « Déploiement recette » (ci-dessous).
 
 Sur `release/*`, le job « Déploiement recette » suit la publication :
-- Il tourne dans l'environnement GitHub `staging`, dont les secrets (`SSH_HOST`, `SSH_KNOWN_HOSTS`, `SSH_PRIVATE_KEY`) ne sont donnés qu'aux branches `release/*`.
+- Il tourne dans l'environnement GitHub `staging`, dont les secrets (`SSH_HOST`, `SSH_KNOWN_HOSTS`, `SSH_PRIVATE_KEY`, `PROJECT_TOKEN`) ne sont donnés qu'aux branches `release/*`.
 - Il se connecte au serveur avec une clé dédiée, limitée côté serveur à un script de déploiement (hors dépôt), et ne lui transmet que `front` et le commit. Le script télécharge `compose.yaml` et `compose.prod.yaml` de ce commit, récupère l'image `sha-<commit>`, redémarre le conteneur, vérifie que le site répond, puis supprime les anciennes images.
 - La recette déployée ainsi ne construit rien : son dossier ne contient que `.env.local`, `.env.image` et les fichiers compose téléchargés, sans le code.
 - Revenir à une version précédente :
