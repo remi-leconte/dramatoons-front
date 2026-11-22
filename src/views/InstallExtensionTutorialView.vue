@@ -32,45 +32,37 @@
       <hr class="divider" />
 
       <section class="manual-section">
-        <h2>Installation manuelle (Google Chrome / Brave)</h2>
+        <h2>Installation manuelle (Chrome, Brave et autres navigateurs Chromium)</h2>
 
         <div class="info-note">
           <p>
             <strong>Pourquoi une installation manuelle ?</strong><br />
             La publication d'extensions sur le Chrome Web Store requiert un compte développeur
             payant. S'agissant d'un projet personnel et gratuit, l'extension est mise à disposition
-            gratuitement en installation manuelle direct via GitHub.
+            gratuitement en installation manuelle directe via GitHub. Elle fonctionne sur Google
+            Chrome, Brave et tous les navigateurs basés sur Chromium.
           </p>
         </div>
 
         <h3>Étape 1 : Télécharger l'extension</h3>
         <ol class="steps-list">
           <li>
-            Accédez au dépôt
-            <a
-              href="https://github.com/remi-leconte/dramatoons-extension-chromium"
-              target="_blank"
-              rel="noopener"
-              >GitHub</a
+            Ouvrez la
+            <a :href="DERNIERE_RELEASE" target="_blank" rel="noopener" data-test="telechargement"
+              >dernière version de l'extension</a
             >
-            ou téléchargez directement l'archive
-            <a
-              href="https://github.com/remi-leconte/dramatoons-extension-chromium/archive/refs/heads/main.zip"
-              target="_blank"
-              rel="noopener"
-              >.zip</a
-            >.
+            sur GitHub, puis téléchargez le fichier
+            <code>dramatoons-highlighter-X.Y.Z.zip</code> de la section « Assets ».
           </li>
           <li>
-            Une fois le fichier téléchargé, faites un clic droit dessus et sélectionnez « Extraire
-            tout » pour décompresser le dossier.
+            Décompressez-le dans un dossier à lui (clic droit, « Extraire tout ») et gardez ce
+            dossier : le navigateur charge l'extension depuis celui-ci, elle disparaît s'il est
+            supprimé.
           </li>
         </ol>
 
         <h3>Étape 2 : Activer l'extension dans le navigateur</h3>
-        <p>Ouvrez votre navigateur (Chrome ou Brave) puis :</p>
-
-        <p>Dans la barre d'adresse, saisissez :</p>
+        <p>Ouvrez votre navigateur puis, dans la barre d'adresse, saisissez :</p>
         <ul>
           <li><code>chrome://extensions</code> (sur Chrome)</li>
           <li><code>brave://extensions</code> (sur Brave)</li>
@@ -85,7 +77,7 @@
             En haut à gauche, cliquez sur le bouton
             <strong>« Charger l'extension non empaquetée »</strong>.
           </li>
-          <li>Sélectionnez le dossier dézippé à l'étape 1.</li>
+          <li>Sélectionnez le dossier décompressé à l'étape 1.</li>
         </ol>
 
         <div class="completion-box">
@@ -94,6 +86,21 @@
             l'épingler dans votre barre d'outils via l'icône en forme de puzzle.
           </p>
         </div>
+
+        <h3>Mettre à jour l'extension</h3>
+        <p>
+          Installée manuellement, l'extension ne se met pas à jour seule. Pour passer à une nouvelle
+          version :
+        </p>
+        <ol class="steps-list">
+          <li>téléchargez le nouveau fichier <code>.zip</code> depuis la même page ;</li>
+          <li>remplacez le contenu du dossier de l'extension par celui du nouveau fichier ;</li>
+          <li>
+            sur la page des extensions, cliquez sur <strong>« Recharger »</strong> (↻) sous
+            Dramatoons Highlighter.
+          </li>
+        </ol>
+        <p>Le dossier restant le même, vous restez connecté.</p>
       </section>
 
       <div class="tutorial-back">
@@ -102,6 +109,11 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+const DERNIERE_RELEASE =
+  'https://github.com/remi-leconte/dramatoons-browser-extension/releases/latest'
+</script>
 
 <style scoped>
 .tutorial-container {

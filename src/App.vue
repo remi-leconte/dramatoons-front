@@ -1,7 +1,7 @@
 /* Affiche l'entête du site qui comprend : - Le logo - Le formulaire de recherche par titre - Les
 liens vers "Mon Profil" et "Déconnexion" lorsque l'utilisateur est connecté - Les liens vers "Créer
 un compte" et "Connexion" lorsque l'utilisateur est déconnecté Et le footer qui comprend : - le
-copyright - Le lien vers "Politique de confidentialité" */
+copyright - Les liens vers "Installer l'extension" et "Politique de confidentialité" */
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from './stores/auth'
@@ -67,7 +67,12 @@ const handleLogout = () => {
     <footer class="app-footer">
       <div class="footer-content">
         <span>&copy; {{ new Date().getFullYear() }} Dramatoons.ovh</span>
-        <router-link to="/privacy" class="footer-link">Politique de confidentialité</router-link>
+        <div class="footer-links">
+          <router-link to="/install-tutorial" class="footer-link"
+            >Installer l'extension</router-link
+          >
+          <router-link to="/privacy" class="footer-link">Politique de confidentialité</router-link>
+        </div>
       </div>
     </footer>
   </div>
@@ -270,6 +275,12 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .footer-link {
