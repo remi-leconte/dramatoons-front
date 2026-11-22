@@ -4,6 +4,7 @@ import { createDefaultWebtoon } from '@/types'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
+import { coverUrl } from '../../services/cover'
 import { useAuthStore } from '@/stores/auth'
 import WebtoonCoverUploader from '../../components/modal/WebtoonCoverUploader.vue'
 
@@ -111,11 +112,7 @@ onMounted(() => fetchData())
           <label>Cover :</label>
           <div class="cover-container">
             <WebtoonCoverUploader
-              :image-path="
-                webtoon.updated
-                  ? `${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`
-                  : webtoon.image
-              "
+              :image-url="coverUrl(webtoon.image, webtoon.updated)"
               :title="webtoon.title.title"
               :is-editable="true"
               @file-selected="(file: File) => (selectedFile = file)"

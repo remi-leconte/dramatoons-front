@@ -1,7 +1,8 @@
 // Gère la modale d'édition/création/suppression
 <script setup lang="ts">
 import type { Webtoon, WebtoonPayload, WebtoonTitle } from '@/types'
-import api, { COVER_BASE_URL } from '../../services/api.ts'
+import api from '../../services/api.ts'
+import { coverUrl } from '../../services/cover'
 import { ref, computed, watch, nextTick, type PropType } from 'vue'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../../stores/auth.ts'
@@ -47,9 +48,10 @@ const addSecondaryInputRef = ref<HTMLInputElement | null>(null)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-const bannerUrl = computed(() => {
-  if (!localWebtoon.value?.image) return null
-  return `${COVER_BASE_URL}${localWebtoon.value.image}${localWebtoon.value.updated ? `?t=${new Date(localWebtoon.value.updated).getTime()}` : ''}`
+const bannerUrl = computed(() => coverUrl(localWebtoon.value?.image, localWebtoon.value?.updated))
+const hasBannerError = ref(false)
+watch(bannerUrl, () => {
+  hasBannerError.value = false
 })
 
 const creatorHasProgress = computed(() => {
@@ -394,8 +396,8 @@ const deleteWebtoon = async () => {
 <template>
   <div class="modal-overlay" @click="emit('close')">
     <div class="modal-container modal-has-banner" @click.stop>
-      <div v-if="bannerUrl" class="modal-banner">
-        <img :src="bannerUrl" alt="" />
+      <div v-if="bannerUrl && !hasBannerError" class="modal-banner">
+        <img :src="bannerUrl" alt="" @error="hasBannerError = true" />
         <div class="banner-gradient"></div>
       </div>
 
@@ -404,11 +406,7 @@ const deleteWebtoon = async () => {
 
       <div v-if="localWebtoon" class="modal-content">
         <WebtoonCoverUploader
-          :image-path="
-            localWebtoon.updated
-              ? `${localWebtoon.image}?t=${new Date(localWebtoon.updated).getTime()}`
-              : localWebtoon.image
-          "
+          :image-url="bannerUrl"
           :title="localWebtoon.title.title"
           :is-editable="isCreator"
           @file-selected="handleCoverSelected"
