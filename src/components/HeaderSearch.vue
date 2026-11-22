@@ -2,7 +2,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import type { Webtoon, HydraCollection, ProgressState } from '@/types'
-import api, { COVER_BASE_URL } from '../services/api'
+import api from '../services/api'
+import { coverUrl } from '../services/cover'
 
 const emit = defineEmits<{
   (e: 'selectWebtoon', webtoon: Webtoon): void
@@ -61,10 +62,8 @@ const selectItem = (webtoon: Webtoon) => {
   clearSearch()
 }
 
-const getCoverUrl = (imagePath?: string) => {
-  if (!imagePath) return null
-  return `${COVER_BASE_URL}${imagePath}`
-}
+// Couvertures qui n'ont pas pu se charger : leur résultat affiche le visuel de remplacement
+const coversEnErreur = ref(new Set<number | undefined>())
 
 const getFrenchState = (state?: ProgressState | null): string => {
   switch (state) {
@@ -150,10 +149,11 @@ onUnmounted(() => {
             @click="selectItem(webtoon)"
           >
             <img
-              v-if="webtoon.image"
-              :src="getCoverUrl(webtoon.image)!"
+              v-if="coverUrl(webtoon.image, webtoon.updated) && !coversEnErreur.has(webtoon.id)"
+              :src="coverUrl(webtoon.image, webtoon.updated)!"
               :alt="webtoon.title.title"
               class="result-cover"
+              @error="coversEnErreur.add(webtoon.id)"
             />
             <div v-else class="result-cover cover-placeholder">
               <span class="placeholder-icon">📖</span>

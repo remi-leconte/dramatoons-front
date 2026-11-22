@@ -21,7 +21,7 @@ export interface Webtoon {
   status: WebtoonStatus
   publish: boolean
   chapter?: number
-  image: string
+  image?: string | null
   updated?: string
   averageRating?: number
   readersCount?: number
@@ -38,7 +38,7 @@ export const createDefaultWebtoon = (): Webtoon => ({
   status: 'ongoing',
   publish: false,
   chapter: 0,
-  image: '',
+  image: null,
   updated: undefined,
   averageRating: undefined,
   readersCount: undefined,

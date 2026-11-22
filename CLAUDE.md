@@ -33,6 +33,7 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 
 ## Organisation
 - **`src/services/api.ts`** : instance axios unique. Elle ajoute le JWT et refait la requête après un refresh si l'API répond `401 Expired JWT Token`. Elle exporte aussi `COVER_BASE_URL`.
+- **`src/services/cover.ts`** : `coverUrl(image, updated)`, l'adresse de la couverture d'un webtoon, ou `null` s'il n'en a pas.
 - **`src/services/reloadOnUpdate.ts`** : après une mise en production, un onglet resté ouvert réclame des fichiers de l'ancienne version qui n'existent plus. Sur l'événement `vite:preloadError`, l'application se recharge une fois sur la page demandée (suivie par `trackRequestedPath`, car l'adresse affichée est encore l'ancienne au moment de l'échec). Garde-fou : pas de nouveau rechargement dans les 10 secondes (`sessionStorage`), ni sans `sessionStorage`.
 - **`src/stores/auth.ts`** : session (`token`, `refreshToken`, `userId`, `login`, `roles`) stockée dans `localStorage`, plus `isAuthenticated`, `isAdmin` et `isModo` (modérateur ou administrateur).
 - **`src/router/index.ts`** : routes, avec les `meta` `requiresAuth`, `guestOnly` et `roles`.
@@ -61,14 +62,14 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 - Les relations s'envoient sous forme d'IRI : `webtoon: '/webtoons/12'`.
 - Les collections sont en JSON-LD. Le type `HydraCollection` accepte `member` et `hydra:member`, de même pour `totalItems` : garder les deux lectures.
 - `GET /webtoons` exige le paramètre `mode`, sinon la réponse est vide. Son tri se demande par `sortBy` et `sortOrder`, pas par `order[…]` (ignoré : le listing passe par un fournisseur sur mesure de l'API) ; `GET /users`, lui, utilise `order[…]`.
-- Les couvertures s'affichent via `COVER_BASE_URL`, avec `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx).
+- Les couvertures s'affichent via `coverUrl()` (`src/services/cover.ts`), qui ajoute `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx). Un webtoon sans couverture n'a pas d'`image` (`null`, absente de la réponse de l'API) : `coverUrl()` renvoie alors `null`, et chaque endroit affiche son visuel de remplacement (titre sur la carte et dans la fenêtre, icône dans la recherche, pas de bannière), sans requête ; il l'affiche aussi si l'image ne se charge pas (`@error`).
 
 ## Tests
 Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`), dans un faux navigateur (`jsdom` : `window`, `localStorage`…).
 - Un fichier `*.spec.ts` dans un dossier `__tests__/` à côté du code testé (ex. `src/types/__tests__/progress.spec.ts`). Seuls ces dossiers sont lus par `tsconfig.vitest.json` et les règles Vitest d'ESLint (oxlint, lui, applique son plugin `vitest` à tout le projet) ; `tsconfig.app.json` les exclut. Les descriptions (`describe`, `it`) sont en français.
 - Les tests ne contactent jamais l'API : `vi.mock('@/services/api', …)` remplace l'instance axios par des fonctions simulées (`vi.fn<…>()`, typées comme l'exige oxlint), dont on vérifie les appels (`toHaveBeenCalledWith`). Les règles de droits et de visibilité restent testées côté API.
 - Un store Pinia s'utilise après `setActivePinia(createPinia())` dans `beforeEach` ; `window.confirm` se remplace par `vi.stubGlobal('confirm', …)`.
-- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`) ; rechargement après une mise à jour (`createPreloadErrorHandler`, `trackRequestedPath`) ; tri de l'administration des webtoons (`WebtoonListView`, monté avec `@vue/test-utils`) ; lien de téléchargement du tutoriel d'installation de l'extension (`InstallExtensionTutorialView`), vers la dernière release de `dramatoons-browser-extension`.
+- Tests existants : logique des suivis (`isEmptyProgress`, `saveProgress`, `losesAccessWithoutProgress`, `confirmLeavingUnpublished`, `useWebtoonProgress`) ; rechargement après une mise à jour (`createPreloadErrorHandler`, `trackRequestedPath`) ; tri de l'administration des webtoons (`WebtoonListView`, monté avec `@vue/test-utils`) ; lien de téléchargement du tutoriel d'installation de l'extension (`InstallExtensionTutorialView`), vers la dernière release de `dramatoons-browser-extension` ; adresse des couvertures (`coverUrl`) et visuel de remplacement d'un webtoon sans couverture ou dont l'image ne se charge pas (`HeaderSearch`, `WebtoonCard`, `WebtoonModal`, `WebtoonCoverUploader`, `WebtoonDetailView`).
 
 ## CI
 `.github/workflows/ci.yml` (GitHub Actions) tourne sur chaque PR vers `main` ou `release/*`, sur un runner Ubuntu de GitHub. Trois checks, obligatoires pour fusionner (vers `release/*`, s'y ajoute la relecture IA, ci-dessous) :
