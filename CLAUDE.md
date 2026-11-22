@@ -62,7 +62,7 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 - Les relations s'envoient sous forme d'IRI : `webtoon: '/webtoons/12'`.
 - Les collections sont en JSON-LD. Le type `HydraCollection` accepte `member` et `hydra:member`, de même pour `totalItems` : garder les deux lectures.
 - `GET /webtoons` exige le paramètre `mode`, sinon la réponse est vide. Son tri se demande par `sortBy` et `sortOrder`, pas par `order[…]` (ignoré : le listing passe par un fournisseur sur mesure de l'API) ; `GET /users`, lui, utilise `order[…]`.
-- Les couvertures s'affichent via `coverUrl()` (`src/services/cover.ts`), qui ajoute `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx). Un webtoon sans couverture n'a pas d'`image` (`null`, absente de la réponse de l'API) : `coverUrl()` renvoie alors `null`, et chaque endroit affiche son visuel de remplacement (titre sur la carte et dans la fenêtre, icône dans la recherche, pas de bannière), sans requête ; il l'affiche aussi si l'image ne se charge pas (`@error`).
+- Les couvertures s'affichent via `coverUrl()` (`src/services/cover.ts`), qui ajoute `?t=<updated>` pour contourner le cache navigateur (6 mois côté nginx). Un webtoon sans couverture a `image` à `null`, ou absente selon la réponse de l'API (elle omet les champs `null`, sauf dans `/webtoon_users`) : `coverUrl()` renvoie alors `null`, et chaque endroit affiche son visuel de remplacement (titre sur la carte et dans la fenêtre, icône dans la recherche, pas de bannière), sans requête ; il l'affiche aussi si l'image ne se charge pas (`@error`).
 
 ## Tests
 Vitest (`vitest.config.ts` reprend la configuration de Vite, donc l'alias `@/`), dans un faux navigateur (`jsdom` : `window`, `localStorage`…).

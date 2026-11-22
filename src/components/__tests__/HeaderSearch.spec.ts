@@ -54,4 +54,20 @@ describe('HeaderSearch (recherche du bandeau)', () => {
     expect(vue.find('img.result-cover').exists()).toBe(false)
     expect(vue.find('.cover-placeholder').exists()).toBe(true)
   })
+
+  it("essaie de nouveau la couverture d'un webtoon dont l'image a changé depuis une erreur", async () => {
+    const vue = await rechercher([{ id: 1, title: { title: 'Solo' }, image: 'absente.jpg' }])
+    await vue.get('img.result-cover').trigger('error')
+
+    vi.mocked(api.get).mockResolvedValue({
+      data: { member: [{ id: 1, title: { title: 'Solo' }, image: 'nouvelle.jpg' }] },
+    })
+    await vue.get('input').setValue('solo l')
+    await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
+
+    expect(vue.get('img.result-cover').attributes('src')).toBe(
+      'https://api.test/upload/cover/nouvelle.jpg',
+    )
+  })
 })

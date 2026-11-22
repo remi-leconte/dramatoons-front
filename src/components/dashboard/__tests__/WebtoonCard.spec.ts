@@ -45,4 +45,13 @@ describe('WebtoonCard (carte de la bibliothèque et du catalogue)', () => {
     expect(vue.find('.poster-wrapper img').exists()).toBe(false)
     expect(vue.find('.cover-placeholder').exists()).toBe(true)
   })
+
+  it('affiche de nouveau une image après une erreur, quand la couverture change', async () => {
+    const vue = afficher('abc.jpg')
+    await vue.get('.poster-wrapper img').trigger('error')
+
+    await vue.setProps({ webtoon: { ...vue.props('webtoon'), image: 'def.jpg' } })
+
+    expect(vue.get('.poster-wrapper img').attributes('src')).toContain('def.jpg')
+  })
 })

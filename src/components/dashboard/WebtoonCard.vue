@@ -16,6 +16,9 @@ const emit = defineEmits(['status-change', 'bookmark-change'])
 const authStore = useAuthStore()
 const hasImageError = ref(false)
 const imageUrl = computed(() => coverUrl(props.webtoon.image, props.webtoon.updated))
+watch(imageUrl, () => {
+  hasImageError.value = false
+})
 const isEditingBookmark = ref(false)
 const bookmarkInput = ref<number | null>(null)
 
