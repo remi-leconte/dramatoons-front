@@ -2,7 +2,7 @@
   <div class="privacy-container">
     <div class="privacy-card">
       <h1>Politique de confidentialité</h1>
-      <p class="last-updated">Dernière mise à jour : 27 septembre 2026</p>
+      <p class="last-updated">Dernière mise à jour : 22 novembre 2026</p>
 
       <p>
         <strong>Dramatoons</strong> (<a href="https://dramatoons.ovh" target="_blank" rel="noopener"
@@ -19,7 +19,7 @@
         </li>
         <li>
           <strong>Données d'utilisation :</strong> Progression de lecture (statut de lecture,
-          chapitres sauvegardés, notes personnelles et préférences d'affichage).
+          chapitres sauvegardés, notes personnelles).
         </li>
       </ul>
 
@@ -28,8 +28,8 @@
       <ul>
         <li>Permettre la création et la gestion de votre compte utilisateur.</li>
         <li>
-          Synchroniser vos préférences de tri, vos notes et votre avancement de lecture sur la
-          plateforme et via l'extension navigateur.
+          Enregistrer vos notes et votre avancement de lecture, consultables sur le site et dans
+          l'extension navigateur.
         </li>
       </ul>
 
@@ -39,12 +39,29 @@
         commerciales ou publicitaires.
       </p>
 
-      <h2>4. Extension Navigateur (Chrome / Edge)</h2>
+      <h2>4. Extension navigateur Dramatoons Highlighter</h2>
       <p>
-        L'extension navigateur Dramatoons n'interagit qu'avec l'API officielle de
-        <code>dramatoons.ovh</code> pour lire votre progression de lecture. Elle ne collecte ni ne
-        transmet aucun historique de navigation ou donnée personnelle issue d'autres sites web.
+        L'extension fonctionne sur Firefox, Chrome, Edge et les autres navigateurs basés sur
+        Chromium. Elle ne communique qu'avec l'API de Dramatoons (<code>api.dramatoons.ovh</code>).
       </p>
+      <ul>
+        <li>
+          <strong>Ce qu'elle transmet :</strong> à l'API de Dramatoons seulement, votre login et
+          votre mot de passe au moment de la connexion, puis ses jetons de session à chaque échange,
+          uniquement pour vous authentifier.
+        </li>
+        <li>
+          <strong>Ce qu'elle garde dans votre navigateur :</strong> les jetons de session, jusqu'à
+          votre déconnexion ; pour chaque onglet où vous l'activez, la liste des webtoons de votre
+          bibliothèque, oubliée quand vous la désactivez, fermez l'onglet ou vous déconnectez.
+        </li>
+        <li>
+          <strong>Ce qu'elle ne fait pas :</strong> elle lit le texte des pages des onglets où vous
+          l'activez, pour y surligner vos webtoons, mais n'en envoie rien, ni à Dramatoons ni à un
+          tiers. Elle ne collecte ni historique de navigation ni donnée d'autres sites. Dans un
+          onglet où elle n'est pas activée, elle ne fait rien.
+        </li>
+      </ul>
 
       <h2>5. Vos droits et contact</h2>
       <p>
