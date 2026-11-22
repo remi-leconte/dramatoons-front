@@ -46,8 +46,9 @@
       </p>
       <ul>
         <li>
-          <strong>Ce qu'elle transmet :</strong> votre login et votre mot de passe, à l'API de
-          Dramatoons seulement, au moment de la connexion.
+          <strong>Ce qu'elle transmet :</strong> à l'API de Dramatoons seulement, votre login et
+          votre mot de passe au moment de la connexion, puis ses jetons de session à chaque échange,
+          uniquement pour vous authentifier.
         </li>
         <li>
           <strong>Ce qu'elle garde dans votre navigateur :</strong> les jetons de session, jusqu'à
