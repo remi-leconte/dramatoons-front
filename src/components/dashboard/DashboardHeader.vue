@@ -45,7 +45,7 @@ const emit = defineEmits<{
           to="/admin/users"
           class="admin-pill"
           title="Gestion des utilisateurs"
-          >Users</router-link
+          >Utilisateurs</router-link
         >
         <router-link to="/admin/webtoons" class="admin-pill" title="Gestion des webtoons"
           >Webtoons</router-link
