@@ -112,8 +112,7 @@ Sur `release/*`, le job « Déploiement recette » suit la publication :
 - La recette déployée ainsi ne construit rien : son dossier ne contient que `.env.local`, `.env.image` et les fichiers compose téléchargés, sans le code.
 - Revenir à une version précédente :
   - dans GitHub, ouvrir le run « Publication » d'un commit précédent de la release et relancer **seulement** son job « Déploiement recette » (« Re-run this job ») : GitHub ne relance pas la publication dont il dépend, et l'image déjà publiée, celle qui a été recettée, est redéployée. « Re-run all jobs » reconstruirait l'image, qui pourrait différer, et déplacerait `release-vX.Y.Z` sur ce commit : à éviter ;
-  - GitHub ne permet de relancer un job que dans les 30 jours qui suivent son run ; au-delà, lancer à la main sur le serveur le script de déploiement avec le commit voulu ;
-  - seuls les commits fusionnés depuis l'arrivée du déploiement automatique (#149 et remi-leconte/dramatoons-api#111) se redéploient ainsi : avant, `compose.prod.yaml` construisait l'image à partir du code, absent du dossier de la recette. Pour revenir à un commit plus ancien, relancer l'ancienne recette, qui se construit dans un autre dossier du serveur contenant le code (procédure hors dépôt). Ce dossier y reste jusqu'au retrait de git du serveur, dernière étape de la mise en place du déploiement.
+  - GitHub ne permet de relancer un job que dans les 30 jours qui suivent son run ; au-delà, lancer à la main sur le serveur le script de déploiement avec le commit voulu.
 - Les journaux de GitHub Actions sont publics : le script n'y écrit ni configuration ni journaux des conteneurs.
 - Après un déploiement réussi, le job passe en `In QA` le ticket de la PR fusionnée, lu dans le nom de sa branche (voir « Statuts des tickets »). Une fusion qui ne vient pas d'une branche de ticket (synchronisation `main` → release) ne change aucun statut.
 
@@ -126,9 +125,7 @@ Sur `release/*`, le job « Déploiement recette » suit la publication :
 - Droits : aucun par défaut (`permissions: {}`). « Release fusionnée » a `contents: read` et `pull-requests: read` ; « Version », `contents: write` (tag) et `packages: write` (étiquette de l'image) ; « Déploiement production » n'a aucun droit, seulement les secrets de son environnement (SSH, `PROJECT_TOKEN`).
 - Les livraisons passent l'une après l'autre (groupe de concurrence `livraison`) : tant que son déploiement en production attend l'approbation, un run bloque la livraison suivante, et une nouvelle fusion dans `main` remplacerait celle qui attend. Si la version ne doit finalement pas partir en production, **rejeter** le job « Déploiement production » (« Reject »), puis corriger par un hotfix.
 - Approuver la production de l'API (remi-leconte/dramatoons-api) avant celle du front : le nouveau front peut appeler des points d'entrée que seule la nouvelle API connaît.
-- Revenir à la version précédente en production :
-  - dans le run « Livraison » de la version précédente, relancer **seulement** le job « Déploiement production » (« Re-run this job », dans les 30 jours, avec une nouvelle approbation), ou lancer à la main sur le serveur le script de déploiement avec le `vX.Y.Z` de cette version ;
-  - seules les versions livrées par ce workflow (à partir de la v2.4.0) se redéploient ainsi : les plus anciennes n'ont ni `compose.prod.yaml` qui utilise une image publiée, ni run « Livraison ». Pour revenir avant la v2.4.0, relancer l'ancienne production, qui se construit dans un autre dossier du serveur contenant le code (procédure hors dépôt). Ce dossier y reste jusqu'au retrait de git du serveur.
+- Revenir à la version précédente en production : dans le run « Livraison » de la version précédente, relancer **seulement** le job « Déploiement production » (« Re-run this job », dans les 30 jours, avec une nouvelle approbation), ou lancer à la main sur le serveur le script de déploiement avec le `vX.Y.Z` de cette version.
 
 ## Statuts des tickets
 Les jobs « Déploiement recette » et « Déploiement production » finissent par une étape « Statuts des tickets », qui change le champ Status du projet GitHub Dramatoons avec `gh project` :
