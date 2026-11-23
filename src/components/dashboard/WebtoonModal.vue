@@ -26,10 +26,6 @@ const emit = defineEmits(['close', 'saved', 'created', 'deleted'])
 const authStore = useAuthStore()
 
 const isEditMode = computed(() => !!props.webtoon)
-const isCreator = computed(() => {
-  if (!isEditMode.value) return true
-  return authStore.userId === props.webtoon?.creator?.id
-})
 
 const localWebtoon = ref<Webtoon | null>(null)
 const loading = ref(false)
@@ -54,21 +50,8 @@ watch(bannerUrl, () => {
   hasBannerError.value = false
 })
 
-const creatorHasProgress = computed(() => {
-  if (!localWebtoon.value?.userProgress) return false
-  const p = localWebtoon.value.userProgress
-  return Boolean(p.id || p.state || p.rate !== null || p.bookmark !== null)
-})
-
-const canEdit = computed(() => {
-  if (!isEditMode.value) return true
-  if (!localWebtoon.value) return false
-  if (localWebtoon.value.publish || !isCreator.value) {
-    return false
-  }
-  const maxAllowedReaders = creatorHasProgress.value ? 2 : 1
-  return (localWebtoon.value.readersCount ?? 0) < maxAllowedReaders
-})
+// Calculé par l'API, qui voit tous les suivis (« Pas intéressé » compris), contrairement à readersCount
+const canEdit = computed(() => !isEditMode.value || localWebtoon.value?.canEdit === true)
 const canDelete = computed(() => isEditMode.value && canEdit.value)
 
 watch(

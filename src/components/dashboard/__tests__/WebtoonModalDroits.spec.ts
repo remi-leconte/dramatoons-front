@@ -31,6 +31,7 @@ const RIEN = {
   modificationOuSuppression: false,
   couverture: false,
   serieTerminee: false,
+  suppression: false,
 }
 const TOUT = {
   titre: true,
@@ -38,8 +39,10 @@ const TOUT = {
   modificationOuSuppression: true,
   couverture: true,
   serieTerminee: true,
+  suppression: true,
 }
 
+// canEdit vient de l'API : la fenêtre ne recalcule pas ce droit
 function webtoon(champs: Partial<Webtoon>): Webtoon {
   return {
     id: 1,
@@ -48,6 +51,7 @@ function webtoon(champs: Partial<Webtoon>): Webtoon {
     status: 'ongoing',
     publish: false,
     readersCount: 0,
+    canEdit: false,
     creator: { id: CREATEUR },
     userProgress: { id: 3, state: 'reading' },
     ...champs,
@@ -77,6 +81,7 @@ function modifiable(vue: Fenetre) {
     modificationOuSuppression: vue.find('.btn-chip-action').exists(),
     couverture: vue.getComponent(WebtoonCoverUploader).props('isEditable'),
     serieTerminee: interrupteur(vue, 'Série terminée'),
+    suppression: vue.getComponent(WebtoonUserProgressForm).props('canDelete'),
   }
 }
 
@@ -98,27 +103,41 @@ afterEach(() => {
 })
 
 describe('WebtoonModal (droits de modification du webtoon)', () => {
-  it('le créateur d’un webtoon publié ne modifie ni ses titres, ni sa couverture, ni son statut', () => {
+  it('un webtoon que l’API dit non modifiable ne propose de modifier ni ses titres, ni sa couverture, ni son statut, ni de le supprimer', () => {
     const vue = afficher(webtoon({ publish: true }))
 
     expect(modifiable(vue)).toEqual(RIEN)
     expect(vue.text()).toContain('Solo alternatif')
   })
 
-  it('le créateur d’un webtoon dépublié suivi par un autre utilisateur ne le modifie pas non plus', () => {
-    expect(modifiable(afficher(webtoon({ readersCount: 2 })))).toEqual(RIEN)
+  it('le nombre de lecteurs ne compte pas : un webtoon sans lecteur compté reste non modifiable si l’API le dit', () => {
+    // Cas d'un autre utilisateur « Pas intéressé » : il suit le webtoon sans compter dans readersCount
+    expect(modifiable(afficher(webtoon({ readersCount: 0, canEdit: false })))).toEqual(RIEN)
   })
 
-  it('le créateur d’un webtoon dépublié que personne d’autre ne suit peut tout modifier', () => {
-    expect(modifiable(afficher(webtoon({ readersCount: 1 })))).toEqual(TOUT)
+  it('un webtoon que l’API dit modifiable propose de tout modifier', () => {
+    expect(modifiable(afficher(webtoon({ canEdit: true })))).toEqual(TOUT)
+  })
+
+  it('noter le webtoon dans la fenêtre ne le rend pas modifiable', async () => {
+    const vue = afficher(webtoon({ readersCount: 1, userProgress: undefined }))
+
+    await vue.getComponent(WebtoonUserProgressForm).vm.$emit('update:progress', { rate: 8 })
+
+    expect(modifiable(vue)).toEqual(RIEN)
   })
 
   it('à la création d’un webtoon, tout est modifiable', () => {
     // Aucun titre facultatif n'existe encore : seul l'ajout est proposé
-    expect(modifiable(afficher(null))).toEqual({ ...TOUT, modificationOuSuppression: false })
+    // Rien à supprimer non plus
+    expect(modifiable(afficher(null))).toEqual({
+      ...TOUT,
+      modificationOuSuppression: false,
+      suppression: false,
+    })
   })
 
-  it('le suivi du créateur d’un webtoon publié est enregistré sans modifier le webtoon', async () => {
+  it('le suivi d’un webtoon non modifiable est enregistré sans modifier le webtoon', async () => {
     const vue = afficher(webtoon({ publish: true }))
 
     await enregistrerLeSuivi(vue)
@@ -128,8 +147,8 @@ describe('WebtoonModal (droits de modification du webtoon)', () => {
     expect(vue.text()).not.toContain('Une erreur est survenue')
   })
 
-  it('le créateur d’un webtoon qu’il peut modifier enregistre aussi le webtoon', async () => {
-    const vue = afficher(webtoon({ readersCount: 1 }))
+  it('le suivi d’un webtoon modifiable enregistre aussi le webtoon', async () => {
+    const vue = afficher(webtoon({ canEdit: true }))
 
     await enregistrerLeSuivi(vue)
 

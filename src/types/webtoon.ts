@@ -25,6 +25,7 @@ export interface Webtoon {
   updated?: string
   averageRating?: number
   readersCount?: number
+  canEdit?: boolean
   creator?: User
   userProgress?: Progress
 }
