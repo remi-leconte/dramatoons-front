@@ -83,11 +83,10 @@ const handleUpdate = async () => {
     })
 
     if (emailChanged) {
-      await api.post('/users/resend-verification', {
-        email: user.value.email,
-      })
       initialEmail.value = user.value.email
-      alert('Modifications enregistrées. Un e-mail de vérification a été renvoyé.')
+      alert(
+        'Modifications enregistrées. Un e-mail de vérification a été envoyé à la nouvelle adresse.',
+      )
     } else {
       alert('Modifications enregistrées.')
     }
