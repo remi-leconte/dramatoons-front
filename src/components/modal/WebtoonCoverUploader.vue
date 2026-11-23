@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { COVER_BASE_URL } from '../../services/api'
+import { ref, watch, computed, type PropType } from 'vue'
 
 const props = defineProps({
-  imagePath: { type: String, default: '' },
+  imageUrl: { type: String as PropType<string | null>, default: null },
   isEditable: { type: Boolean, default: false },
   title: { type: String, default: '' },
 })
@@ -19,7 +18,7 @@ const previewImage = ref<string | null>(null)
 const hasImageError = ref(false)
 
 watch(
-  () => props.imagePath,
+  () => props.imageUrl,
   () => {
     hasImageError.value = false
   },
@@ -27,8 +26,7 @@ watch(
 
 const currentImageUrl = computed(() => {
   if (previewImage.value) return previewImage.value
-  if (props.imagePath) return `${COVER_BASE_URL}${props.imagePath}`
-  return null
+  return props.imageUrl
 })
 
 const handleClick = () => {

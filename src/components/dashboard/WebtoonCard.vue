@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '../../stores/auth.ts'
-import { COVER_BASE_URL } from '../../services/api.ts'
+import { coverUrl } from '../../services/cover'
 import StatusSelect from '../card/StatusSelect.vue'
 
 const props = defineProps({
@@ -15,6 +15,10 @@ const emit = defineEmits(['status-change', 'bookmark-change'])
 
 const authStore = useAuthStore()
 const hasImageError = ref(false)
+const imageUrl = computed(() => coverUrl(props.webtoon.image, props.webtoon.updated))
+watch(imageUrl, () => {
+  hasImageError.value = false
+})
 const isEditingBookmark = ref(false)
 const bookmarkInput = ref<number | null>(null)
 
@@ -91,8 +95,8 @@ const saveBookmarkInput = () => {
   <article class="webtoon-card">
     <div class="poster-wrapper">
       <img
-        v-if="webtoon.image && !hasImageError"
-        :src="`${COVER_BASE_URL}${webtoon.image}?t=${new Date(webtoon.updated).getTime()}`"
+        v-if="imageUrl && !hasImageError"
+        :src="imageUrl"
         :alt="webtoon.title.title || 'Webtoon cover'"
         @error="hasImageError = true"
       />

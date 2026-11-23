@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { lockScroll, unlockScroll } from '@/services/scrollLock'
 import type { Webtoon, HydraCollection } from '@/types'
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
@@ -84,13 +85,13 @@ const selectTab = (tab: 'bibliotheque' | 'catalogue') => {
 const openModal = (webtoon: Webtoon | null = null) => {
   selectedWebtoon.value = webtoon
   isModalOpen.value = true
-  document.body.classList.add('modal-open')
+  lockScroll()
 }
 
 const closeModal = () => {
   selectedWebtoon.value = null
   isModalOpen.value = false
-  document.body.classList.remove('modal-open')
+  unlockScroll()
 }
 
 const handleModalSave = (updated: Webtoon) => {
@@ -157,7 +158,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   observer?.disconnect()
-  document.body.classList.remove('modal-open')
+  unlockScroll(false)
 })
 </script>
 

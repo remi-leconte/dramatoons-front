@@ -1,8 +1,9 @@
 // Gère la Recherche rapide.
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Webtoon, HydraCollection, ProgressState } from '@/types'
-import api, { COVER_BASE_URL } from '../services/api'
+import api from '../services/api'
+import { coverUrl } from '../services/cover'
 
 const emit = defineEmits<{
   (e: 'selectWebtoon', webtoon: Webtoon): void
@@ -61,10 +62,11 @@ const selectItem = (webtoon: Webtoon) => {
   clearSearch()
 }
 
-const getCoverUrl = (imagePath?: string) => {
-  if (!imagePath) return null
-  return `${COVER_BASE_URL}${imagePath}`
-}
+const resultsWithCover = computed(() =>
+  results.value.map((webtoon) => ({ webtoon, cover: coverUrl(webtoon.image, webtoon.updated) })),
+)
+// Retenues par adresse : une nouvelle couverture, sous un autre nom, est de nouveau essayée
+const failedCovers = ref(new Set<string>())
 
 const getFrenchState = (state?: ProgressState | null): string => {
   switch (state) {
@@ -144,16 +146,17 @@ onUnmounted(() => {
 
         <div v-else class="results-list">
           <div
-            v-for="webtoon in results"
+            v-for="{ webtoon, cover } in resultsWithCover"
             :key="webtoon.id"
             class="result-item"
             @click="selectItem(webtoon)"
           >
             <img
-              v-if="webtoon.image"
-              :src="getCoverUrl(webtoon.image)!"
+              v-if="cover && !failedCovers.has(cover)"
+              :src="cover"
               :alt="webtoon.title.title"
               class="result-cover"
+              @error="failedCovers.add(cover)"
             />
             <div v-else class="result-cover cover-placeholder">
               <span class="placeholder-icon">📖</span>

@@ -22,6 +22,7 @@ RUN npm ci
 
 COPY . .
 
+ARG APP_VERSION=dev
 RUN npm run build
 
 FROM nginx:1.31.3-alpine3.24 AS prod
