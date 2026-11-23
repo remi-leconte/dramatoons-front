@@ -103,7 +103,11 @@ export function useWebtoonSearch() {
     if (title.value) queryParams.append('title', title.value)
     includedStatuses.value.forEach((s) => queryParams.append('status[]', s))
     excludedStatuses.value.forEach((s) => queryParams.append('exclude_status[]', s))
-    queryParams.append('sortBy', sortBy.value)
+    // Le premier tri est commun aux deux onglets : « Dernier ajout » du catalogue, « Modification » (du suivi)
+    // dans la bibliothèque
+    const apiSortBy =
+      activeTab.value === 'bibliotheque' && sortBy.value === 'added' ? 'user_updated' : sortBy.value
+    queryParams.append('sortBy', apiSortBy)
     queryParams.append('sortOrder', sortOrder.value)
 
     return `/webtoons?${queryParams.toString()}`
