@@ -40,7 +40,7 @@ L'adresse de l'API est lue au démarrage, pas au build : la même image sert la 
 - **`src/router/index.ts`** : routes, avec les `meta` `requiresAuth`, `guestOnly` et `roles`.
 - **`src/types/`** : `Webtoon`, `WebtoonTitle`, `Progress` (= WebtoonUser), `User`, `HydraCollection`.
 - **`src/composables/dashboard/`** :
-  - `useWebtoonSearch` : onglet, filtres et tri, mémorisés dans `localStorage` (`dramatoons_search_prefs`) ;
+  - `useWebtoonSearch` : onglet, filtres et tri, mémorisés dans `localStorage` (`dramatoons_search_prefs`). Le premier tri garde la clé `added` dans les deux onglets : « Dernier ajout » du catalogue envoie `added`, « Modification » de la bibliothèque envoie `user_updated` (dernière modification du suivi). La liste affichée n'est pas retriée après une modification de suivi : le tri s'applique au prochain chargement de la liste ;
   - `useWebtoonProgress` : changement de `state` ou de `bookmark`, et `saveProgress()` (aussi utilisée par `WebtoonModal`) : `POST` si le suivi n'existe pas, sinon `PATCH`, et `DELETE` s'il devient vide (`isEmptyProgress()` : ni note ni état, chapitre vide ou 0), car l'API refuse un suivi vide.
 - **Composants** :
   - `components/dashboard/` : `DashboardHeader` (menu admin), `DashboardFilterBar`, `WebtoonCard` et `WebtoonModal`, qui crée, édite ou supprime un webtoon, gère titres, couverture et progression. Ce que la fenêtre propose de modifier (titres, couverture, statut, suppression) dépend du champ `canEdit` que l'API renvoie avec chaque webtoon : elle ne recalcule pas ce droit, qui dépend de suivis qu'elle ne voit pas ;
