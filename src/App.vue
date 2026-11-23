@@ -11,6 +11,7 @@ import HeaderSearch from './components/HeaderSearch.vue'
 import WebtoonModal from './components/dashboard/WebtoonModal.vue'
 
 const authStore = useAuthStore()
+const appVersion = __APP_VERSION__
 const router = useRouter()
 
 const selectedSearchWebtoon = ref<Webtoon | null>(null)
@@ -66,7 +67,7 @@ const handleLogout = () => {
 
     <footer class="app-footer">
       <div class="footer-content">
-        <span>&copy; {{ new Date().getFullYear() }} Dramatoons.ovh</span>
+        <span>&copy; {{ new Date().getFullYear() }} Dramatoons.ovh · {{ appVersion }}</span>
         <div class="footer-links">
           <router-link to="/install-tutorial" class="footer-link"
             >Installer l'extension</router-link
