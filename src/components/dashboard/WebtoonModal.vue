@@ -26,10 +26,6 @@ const emit = defineEmits(['close', 'saved', 'created', 'deleted'])
 const authStore = useAuthStore()
 
 const isEditMode = computed(() => !!props.webtoon)
-const isCreator = computed(() => {
-  if (!isEditMode.value) return true
-  return authStore.userId === props.webtoon?.creator?.id
-})
 
 const localWebtoon = ref<Webtoon | null>(null)
 const loading = ref(false)
@@ -54,20 +50,9 @@ watch(bannerUrl, () => {
   hasBannerError.value = false
 })
 
-const creatorHasProgress = computed(() => {
-  if (!localWebtoon.value?.userProgress) return false
-  const p = localWebtoon.value.userProgress
-  return Boolean(p.id || p.state || p.rate !== null || p.bookmark !== null)
-})
-
-const canDelete = computed(() => {
-  if (!localWebtoon.value) return false
-  if (localWebtoon.value.publish || !isCreator.value || !isEditMode.value) {
-    return false
-  }
-  const maxAllowedReaders = creatorHasProgress.value ? 2 : 1
-  return (localWebtoon.value.readersCount ?? 0) < maxAllowedReaders
-})
+// Calculé par l'API, qui voit tous les suivis (« Pas intéressé » compris), contrairement à readersCount
+const canEdit = computed(() => !isEditMode.value || localWebtoon.value?.canEdit === true)
+const canDelete = computed(() => isEditMode.value && canEdit.value)
 
 watch(
   () => props.webtoon,
@@ -238,7 +223,7 @@ const performAutoSave = async () => {
   validateInputs()
   errorMessage.value = ''
 
-  if (isCreator.value && !localWebtoon.value.title.title?.trim()) {
+  if (canEdit.value && !localWebtoon.value.title.title?.trim()) {
     errorMessage.value = 'Le titre est obligatoire.'
     return
   }
@@ -258,8 +243,8 @@ const performAutoSave = async () => {
 
       await saveProgress(localWebtoon.value.id, progress)
 
-      if (isCreator.value || authStore.isModo) {
-        const webtoonPayload: Partial<WebtoonPayload> = isCreator.value
+      if (canEdit.value || authStore.isModo) {
+        const webtoonPayload: Partial<WebtoonPayload> = canEdit.value
           ? {
               title: localWebtoon.value.title,
               status: localWebtoon.value.status,
@@ -408,7 +393,7 @@ const deleteWebtoon = async () => {
         <WebtoonCoverUploader
           :image-url="bannerUrl"
           :title="localWebtoon.title.title"
-          :is-editable="isCreator"
+          :is-editable="canEdit"
           @file-selected="handleCoverSelected"
         />
 
@@ -442,7 +427,7 @@ const deleteWebtoon = async () => {
             <div v-else class="title-display">
               <h2>{{ localWebtoon.title.title }}</h2>
               <button
-                v-if="isCreator && canDelete"
+                v-if="canEdit"
                 type="button"
                 class="btn-edit-title"
                 title="Modifier le titre"
@@ -454,7 +439,7 @@ const deleteWebtoon = async () => {
           </div>
 
           <div
-            v-if="localWebtoon.secondaryTitles?.length !== 0 || isCreator"
+            v-if="localWebtoon.secondaryTitles?.length !== 0 || canEdit"
             class="secondary-titles-section"
           >
             <span v-if="localWebtoon.secondaryTitles?.length !== 0" class="section-subtitle"
@@ -483,7 +468,7 @@ const deleteWebtoon = async () => {
                 <template v-else>
                   <span>{{ st.title }}</span>
                   <button
-                    v-if="isCreator && st.id"
+                    v-if="canEdit && st.id"
                     type="button"
                     class="btn-chip-action"
                     title="Éditer"
@@ -492,7 +477,7 @@ const deleteWebtoon = async () => {
                     ✎
                   </button>
                   <button
-                    v-if="isCreator"
+                    v-if="canEdit"
                     type="button"
                     class="btn-chip-action btn-delete-chip"
                     title="Supprimer"
@@ -503,7 +488,7 @@ const deleteWebtoon = async () => {
                 </template>
               </div>
 
-              <div v-if="isCreator" class="secondary-title-chip">
+              <div v-if="canEdit" class="secondary-title-chip">
                 <template v-if="isAddingSecondaryTitle">
                   <input
                     ref="addSecondaryInputRef"
@@ -530,7 +515,7 @@ const deleteWebtoon = async () => {
           </div>
 
           <div
-            v-if="localWebtoon.status === 'completed' || canDelete || authStore.isModo"
+            v-if="localWebtoon.status === 'completed' || canEdit || authStore.isModo"
             class="toggles-section"
           >
             <div class="toggle-row">
@@ -541,7 +526,7 @@ const deleteWebtoon = async () => {
                 ></span>
                 Série terminée
               </span>
-              <label v-if="canDelete" class="switch">
+              <label v-if="canEdit" class="switch">
                 <input
                   type="checkbox"
                   :checked="localWebtoon?.status === 'completed'"
