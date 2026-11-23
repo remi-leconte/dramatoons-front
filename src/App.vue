@@ -1,7 +1,8 @@
 /* Affiche l'entête du site qui comprend : - Le logo - Le formulaire de recherche par titre - Les
 liens vers "Mon Profil" et "Déconnexion" lorsque l'utilisateur est connecté - Les liens vers "Créer
 un compte" et "Connexion" lorsque l'utilisateur est déconnecté Et le footer qui comprend : - le
-copyright - Les liens vers "Installer l'extension" et "Politique de confidentialité" */
+copyright et la version du site - Les liens vers "Installer l'extension" et "Politique de
+confidentialité" */
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from './stores/auth'
