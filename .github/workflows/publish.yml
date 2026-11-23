@@ -43,10 +43,15 @@ jobs:
             type=ref,event=branch
             type=sha
 
+      # release/vX.Y.Z donne vX.Y.Z : la version affichée par le site, celle sous laquelle cette image sera livrée
+      - id: version
+        run: echo "version=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@v7
         with:
           context: .
           target: prod
+          build-args: APP_VERSION=${{ steps.version.outputs.version }}
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
