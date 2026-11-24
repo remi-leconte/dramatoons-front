@@ -4,7 +4,7 @@
       <h1>Installer l'extension Dramatoons</h1>
 
       <section class="store-section">
-        <h2>Stores officiels</h2>
+        <h2>Store officiel</h2>
         <p class="section-intro">
           Pour une installation en un clic avec mises à jour automatiques :
         </p>
@@ -17,22 +17,13 @@
           >
             <span>Obtenir pour <strong>Firefox</strong></span>
           </a>
-
-          <a
-            href="https://microsoftedge.microsoft.com/addons/detail/cjnoabamjhohobpnmmkjfhipfhcjadeb"
-            target="_blank"
-            rel="noopener"
-            class="store-btn edge"
-          >
-            <span>Obtenir pour <strong>Microsoft Edge</strong></span>
-          </a>
         </div>
       </section>
 
       <hr class="divider" />
 
       <section class="manual-section">
-        <h2>Installation manuelle (Chrome, Brave et autres navigateurs Chromium)</h2>
+        <h2>Installation manuelle (Chrome et les autres navigateurs basés sur Chromium)</h2>
 
         <div class="info-note">
           <p>
@@ -40,7 +31,7 @@
             La publication d'extensions sur le Chrome Web Store requiert un compte développeur
             payant. S'agissant d'un projet personnel et gratuit, l'extension est mise à disposition
             gratuitement en installation manuelle directe via GitHub. Elle fonctionne sur Google
-            Chrome, Brave et tous les navigateurs basés sur Chromium.
+            Chrome et les autres navigateurs basés sur Chromium.
           </p>
         </div>
 
@@ -62,20 +53,20 @@
         </ol>
 
         <h3>Étape 2 : Activer l'extension dans le navigateur</h3>
-        <p>Ouvrez votre navigateur puis, dans la barre d'adresse, saisissez :</p>
-        <ul>
-          <li><code>chrome://extensions</code> (sur Chrome)</li>
-          <li><code>brave://extensions</code> (sur Brave)</li>
-        </ul>
+        <p>
+          Ouvrez votre navigateur puis, dans la barre d'adresse, saisissez
+          <code>chrome://extensions</code>, ou ouvrez la page des extensions depuis le menu de votre
+          navigateur.
+        </p>
 
         <ol start="3" class="steps-list">
           <li>
-            En haut à droite de la page, activez le commutateur
-            <strong>« Mode développeur »</strong>.
+            Activez le commutateur <strong>« Mode développeur »</strong> de cette page (en haut à
+            droite sur Chrome).
           </li>
           <li>
-            En haut à gauche, cliquez sur le bouton
-            <strong>« Charger l'extension non empaquetée »</strong>.
+            Cliquez sur le bouton <strong>« Charger l'extension non empaquetée »</strong> (en haut à
+            gauche sur Chrome).
           </li>
           <li>Sélectionnez le dossier décompressé à l'étape 1.</li>
         </ol>
@@ -242,13 +233,6 @@ const DERNIERE_RELEASE =
 }
 .store-btn.firefox:hover {
   background-color: #bf4514;
-}
-
-.store-btn.edge {
-  background-color: #005a9e;
-}
-.store-btn.edge:hover {
-  background-color: #004578;
 }
 
 .divider {

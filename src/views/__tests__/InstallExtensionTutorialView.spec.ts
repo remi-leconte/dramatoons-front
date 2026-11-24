@@ -22,4 +22,20 @@ describe("InstallExtensionTutorialView (tutoriel d'installation de l'extension)"
 
     expect(liens.filter((href) => href.includes('dramatoons-extension-chromium'))).toEqual([])
   })
+
+  it("ne propose que le store de Firefox, l'extension étant retirée de celui d'Edge", () => {
+    const vue = afficher()
+    const stores = vue.findAll('.store-section a').map((lien) => lien.attributes('href'))
+    const liens = vue.findAll('a').map((lien) => lien.attributes('href') ?? '')
+
+    expect(stores).toEqual(['https://addons.mozilla.org/fr/firefox/addon/dramatoons-highlighter/'])
+    expect(liens.filter((href) => href.includes('microsoftedge'))).toEqual([])
+  })
+
+  it('ne cite ni Edge ni Brave, seulement Chrome et les autres navigateurs basés sur Chromium', () => {
+    const texte = afficher().text()
+
+    expect(texte).not.toMatch(/edge|brave/i)
+    expect(texte).toContain('Chrome et les autres navigateurs basés sur Chromium')
+  })
 })
