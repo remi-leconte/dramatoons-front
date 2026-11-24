@@ -2,7 +2,7 @@
   <div class="privacy-container">
     <div class="privacy-card">
       <h1>Politique de confidentialité</h1>
-      <p class="last-updated">Dernière mise à jour : 22 novembre 2026</p>
+      <p class="last-updated">Dernière mise à jour : 24 novembre 2026</p>
 
       <p>
         <strong>Dramatoons</strong> (<a href="https://dramatoons.ovh" target="_blank" rel="noopener"
@@ -41,8 +41,8 @@
 
       <h2>4. Extension navigateur Dramatoons Highlighter</h2>
       <p>
-        L'extension fonctionne sur Firefox, Chrome, Edge et les autres navigateurs basés sur
-        Chromium. Elle ne communique qu'avec l'API de Dramatoons (<code>api.dramatoons.ovh</code>).
+        L'extension fonctionne sur Firefox, Chrome et les autres navigateurs basés sur Chromium.
+        Elle ne communique qu'avec l'API de Dramatoons (<code>api.dramatoons.ovh</code>).
       </p>
       <ul>
         <li>
