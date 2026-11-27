@@ -71,7 +71,8 @@ function tracer() {
   if (!page) return
   const cadre = page.getBoundingClientRect()
   largeur.value = cadre.width
-  hauteur.value = page.scrollHeight
+  // La boîte de la page, et non scrollHeight, qui compterait le SVG lui-même : sa hauteur ne pourrait plus diminuer
+  hauteur.value = cadre.height
   const epaisseur = cadre.width < 760 ? 12 : 18
   demiLargeur.value = epaisseur / 2
   const points = ancres(page)
