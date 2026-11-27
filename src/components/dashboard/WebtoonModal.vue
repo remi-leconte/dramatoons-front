@@ -21,6 +21,16 @@ const props = defineProps({
     type: Object as PropType<Webtoon | null>,
     default: null,
   },
+  // Page d'accueil : la fenêtre se manipule comme pour un simple lecteur connecté, sans rien enregistrer
+  demo: {
+    type: Boolean,
+    default: false,
+  },
+  // Couverture d'exemple, qui ne vient pas de l'API
+  cover: {
+    type: String as PropType<string | null>,
+    default: null,
+  },
 })
 const emit = defineEmits(['close', 'saved', 'created', 'deleted'])
 const authStore = useAuthStore()
@@ -44,7 +54,11 @@ const addSecondaryInputRef = ref<HTMLInputElement | null>(null)
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-const bannerUrl = computed(() => coverUrl(localWebtoon.value?.image, localWebtoon.value?.updated))
+const bannerUrl = computed(
+  () => props.cover ?? coverUrl(localWebtoon.value?.image, localWebtoon.value?.updated),
+)
+const isModo = computed(() => !props.demo && authStore.isModo)
+const showProgress = computed(() => props.demo || authStore.isAuthenticated)
 const hasBannerError = ref(false)
 watch(bannerUrl, () => {
   hasBannerError.value = false
@@ -225,6 +239,11 @@ const performAutoSave = async () => {
 
   if (canEdit.value && !localWebtoon.value.title.title?.trim()) {
     errorMessage.value = 'Le titre est obligatoire.'
+    return
+  }
+
+  if (props.demo) {
+    emit('saved', JSON.parse(JSON.stringify(localWebtoon.value)))
     return
   }
 
@@ -515,7 +534,7 @@ const deleteWebtoon = async () => {
           </div>
 
           <div
-            v-if="localWebtoon.status === 'completed' || canEdit || authStore.isModo"
+            v-if="localWebtoon.status === 'completed' || canEdit || isModo"
             class="toggles-section"
           >
             <div class="toggle-row">
@@ -544,7 +563,7 @@ const deleteWebtoon = async () => {
               </label>
             </div>
 
-            <div v-if="authStore.isModo" class="toggle-row">
+            <div v-if="isModo" class="toggle-row">
               <span class="toggle-label">Publier au catalogue</span>
               <label class="switch">
                 <input type="checkbox" v-model="localWebtoon.publish" @change="onFieldChanged" />
@@ -564,7 +583,7 @@ const deleteWebtoon = async () => {
           <hr class="modal-separator" />
 
           <WebtoonUserProgressForm
-            v-if="authStore.isAuthenticated"
+            v-if="showProgress"
             v-model:progress="localWebtoon.userProgress"
             :loading="loading"
             :can-delete="canDelete"
