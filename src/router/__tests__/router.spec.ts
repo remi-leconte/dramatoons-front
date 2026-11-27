@@ -17,18 +17,15 @@ describe('router (pages et défilement)', () => {
     expect(route.meta.roles).toBeUndefined()
   })
 
-  it('ouvre une nouvelle page en haut, ou sur la section demandée, et Précédent rend la position quittée', () => {
+  it('ouvre toute page en haut, même avec Précédent, sauf un lien vers une section', () => {
     const vers = (adresse: string) => router.resolve(adresse) as unknown as RouteLocationNormalized
     const depuis = vers('/')
 
     expect(defiler(vers('/privacy'), depuis, null)).toEqual({ top: 0 })
+    expect(defiler(vers('/'), vers('/privacy'), { left: 0, top: 900 })).toEqual({ top: 0 })
     expect(defiler(vers('/mentions-legales#retrait'), depuis, null)).toEqual({
       el: '#retrait',
       top: 20,
-    })
-    expect(defiler(vers('/'), vers('/privacy'), { left: 0, top: 900 })).toEqual({
-      left: 0,
-      top: 900,
     })
   })
 })
