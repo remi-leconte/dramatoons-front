@@ -51,8 +51,7 @@
       <h2>5. Données personnelles</h2>
       <p>
         Les données collectées et vos droits sont décrits dans la
-        <router-link to="/privacy">politique de confidentialité</router-link>. Le site n'utilise ni
-        cookie publicitaire, ni outil de mesure d'audience.
+        <router-link to="/privacy">politique de confidentialité</router-link>.
       </p>
 
       <div class="legal-back">
@@ -101,7 +100,6 @@ const CONTACT = 'dramatoons@mailo.com'
   margin-top: 1.8rem;
   margin-bottom: 0.8rem;
   color: #e50914;
-  scroll-margin-top: 20px;
 }
 
 .legal-card p,
