@@ -73,7 +73,10 @@ const handleLogout = () => {
           <router-link to="/install-tutorial" class="footer-link"
             >Installer l'extension</router-link
           >
+          <span class="footer-separator" aria-hidden="true">·</span>
           <router-link to="/privacy" class="footer-link">Politique de confidentialité</router-link>
+          <span class="footer-separator" aria-hidden="true">·</span>
+          <router-link to="/mentions-legales" class="footer-link">Mentions légales</router-link>
         </div>
       </div>
     </footer>
@@ -282,7 +285,11 @@ body {
 .footer-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 4px 12px;
+}
+
+.footer-separator {
+  color: #555;
 }
 
 .footer-link {

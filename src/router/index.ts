@@ -3,6 +3,12 @@ import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Une nouvelle page s'ouvre en haut, ou sur sa section (#retrait) ; Précédent rend la position quittée
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, top: 20 }
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',
@@ -13,6 +19,11 @@ const router = createRouter({
       path: '/privacy',
       name: 'privacy-policy',
       component: () => import('../views/PrivacyPolicyView.vue'),
+    },
+    {
+      path: '/mentions-legales',
+      name: 'legal-notice',
+      component: () => import('../views/LegalNoticeView.vue'),
     },
     {
       path: '/install-tutorial',
