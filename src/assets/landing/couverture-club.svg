@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="400" height="600">
+  <defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6a35b"/><stop offset="0.6" stop-color="#e0617a"/><stop offset="1" stop-color="#5b2a5e"/></linearGradient></defs>
+  <rect width="200" height="300" fill="url(#c)"/>
+  <circle cx="140" cy="150" r="40" fill="#ffd9a0" opacity="0.9"/>
+  <rect x="0" y="200" width="200" height="100" fill="#3a1d40"/>
+  <g stroke="#2a1430" stroke-width="3"><path d="M0 196h200"/><path d="M10 196v-40M40 196v-40M70 196v-40M100 196v-40M130 196v-40M160 196v-40M190 196v-40"/><path d="M0 160h200"/></g>
+  <path d="M52 200c0-26 6-40 14-40s14 14 14 40Z" fill="#2a1430"/>
+  <circle cx="66" cy="150" r="9" fill="#2a1430"/>
+  <text x="100" y="250" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800" letter-spacing="0.8" text-anchor="middle" font-size="19" fill="#fff">LE CLUB</text>
+  <text x="100" y="272" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800" letter-spacing="0.8" text-anchor="middle" font-size="19" fill="#ffd9a0">DE MINUIT</text>
+</svg>
