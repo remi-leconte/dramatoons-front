@@ -42,9 +42,9 @@
           <li>votre qualité (auteur, éditeur, représentant…) et de quoi la justifier.</li>
         </ul>
         <p>
-          Le titre d'une œuvre n'est cité que pour la désigner. Toute autre demande, par exemple un
-          titre ou un contenu trompeur, est examinée au cas par cas. La même adresse permet de
-          signaler tout contenu illicite.
+          Un webtoon n'est pas retiré pour son seul titre : le titre d'une œuvre n'est cité que pour
+          la désigner. Toute autre demande, par exemple un titre ou un contenu trompeur, est
+          examinée au cas par cas. La même adresse permet de signaler tout contenu illicite.
         </p>
       </section>
 

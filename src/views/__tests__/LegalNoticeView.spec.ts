@@ -43,7 +43,8 @@ describe('LegalNoticeView (mentions légales)', () => {
   it('ne retire pas un webtoon pour son seul titre, mais examine les autres demandes', () => {
     const texte = afficher().get('#retrait').text()
 
-    expect(texte).toContain("Le titre d'une œuvre n'est cité que pour la désigner")
+    expect(texte).toContain("Un webtoon n'est pas retiré pour son seul titre")
+    expect(texte).toContain("le titre d'une œuvre n'est cité que pour la désigner")
     expect(texte).toContain('examinée au cas par cas')
     expect(texte).toContain('signaler tout contenu illicite')
     expect(texte).not.toContain('webtoon entier')
