@@ -326,5 +326,14 @@ body {
     align-items: center;
     gap: 4px;
   }
+
+  /* Les liens passent à la ligne sur un téléphone : un séparateur y resterait seul en bout de ligne */
+  .footer-links {
+    justify-content: center;
+  }
+
+  .footer-separator {
+    display: none;
+  }
 }
 </style>
