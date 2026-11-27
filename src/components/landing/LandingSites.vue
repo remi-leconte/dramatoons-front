@@ -4,13 +4,13 @@ import { isEmptyProgress, type ProgressState } from '@/types/progress'
 import libraire from '@/assets/landing/couverture-libraire.svg'
 import { COUVERTURES, utiliserWebtoonsDemo } from './demo'
 
-// Teintes du surlignage de l'extension (contenu.js), une par état
+// Couleurs des états du site (base.css), celles du surlignage de l'extension
 const TEINTES: Record<string, string> = {
-  reading: 'rgba(33, 150, 243, 0.9)',
-  pause: 'rgba(255, 152, 0, 0.9)',
-  break: 'rgba(229, 9, 20, 0.9)',
-  completed: 'rgba(76, 175, 80, 0.9)',
-  aucun: 'rgba(85, 85, 85, 0.9)',
+  reading: 'var(--status-reading)',
+  pause: 'var(--status-paused)',
+  break: 'var(--status-disinterested)',
+  completed: 'var(--status-completed)',
+  aucun: 'var(--status-none)',
 }
 
 const LIBELLES: Record<string, string> = {

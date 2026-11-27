@@ -99,11 +99,11 @@ describe("LandingView (page d'accueil d'un visiteur)", () => {
   it('surligne les extraits de sites selon le suivi de chaque webtoon, comme l’extension', () => {
     const vue = afficher()
 
-    expect(surlignage(vue, 'Le Sabre des neuf lunes')).toContain('rgba(33, 150, 243, 0.9)')
-    expect(surlignage(vue, 'Le Bal des cendres')).toContain('rgba(255, 152, 0, 0.9)')
-    expect(surlignage(vue, 'Porte nº 0')).toContain('rgba(85, 85, 85, 0.9)')
-    expect(surlignage(vue, 'Le Club de minuit')).toContain('rgba(76, 175, 80, 0.9)')
-    expect(surlignage(vue, 'Le Café des comètes')).toContain('rgba(229, 9, 20, 0.9)')
+    expect(surlignage(vue, 'Le Sabre des neuf lunes')).toContain('var(--status-reading)')
+    expect(surlignage(vue, 'Le Bal des cendres')).toContain('var(--status-paused)')
+    expect(surlignage(vue, 'Porte nº 0')).toContain('var(--status-none)')
+    expect(surlignage(vue, 'Le Club de minuit')).toContain('var(--status-completed)')
+    expect(surlignage(vue, 'Le Café des comètes')).toContain('var(--status-disinterested)')
     expect(surlignage(vue, "L'Ombre du libraire")).toBeNull()
   })
 
@@ -116,7 +116,7 @@ describe("LandingView (page d'accueil d'un visiteur)", () => {
     await carte.get('button[title="+1 chapitre"]').trigger('click')
     await vi.advanceTimersByTimeAsync(500)
 
-    expect(surlignage(vue, 'Le Sabre des neuf lunes')).toContain('rgba(76, 175, 80, 0.9)')
+    expect(surlignage(vue, 'Le Sabre des neuf lunes')).toContain('var(--status-completed)')
     expect(vue.findAll('.extrait')[0]!.text()).toContain('📌 49')
     aucunAppel()
   })
@@ -159,11 +159,11 @@ describe("LandingView (page d'accueil d'un visiteur)", () => {
     carte.getComponent(StatusSelect).vm.$emit('update:state', 'completed')
     await carte.get('button[title="+1 chapitre"]').trigger('click')
     await vi.advanceTimersByTimeAsync(500)
-    expect(surlignage(premiere, 'Le Sabre des neuf lunes')).toContain('rgba(76, 175, 80, 0.9)')
+    expect(surlignage(premiere, 'Le Sabre des neuf lunes')).toContain('var(--status-completed)')
     premiere.unmount()
 
     const seconde = afficher()
-    expect(surlignage(seconde, 'Le Sabre des neuf lunes')).toContain('rgba(33, 150, 243, 0.9)')
+    expect(surlignage(seconde, 'Le Sabre des neuf lunes')).toContain('var(--status-reading)')
     expect(seconde.findAll('.extrait')[0]!.text()).toContain('📌 48')
   })
 
