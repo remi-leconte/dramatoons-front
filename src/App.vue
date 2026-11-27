@@ -1,8 +1,3 @@
-/* Affiche l'entête du site qui comprend : - Le logo - Le formulaire de recherche par titre - Les
-liens vers "Mon Profil" et "Déconnexion" lorsque l'utilisateur est connecté - Les liens vers "Créer
-un compte" et "Connexion" lorsque l'utilisateur est déconnecté Et le footer qui comprend : - le
-copyright et la version du site - Les liens vers "Installer l'extension" et "Politique de
-confidentialité" */
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from './stores/auth'
@@ -73,7 +68,10 @@ const handleLogout = () => {
           <router-link to="/install-tutorial" class="footer-link"
             >Installer l'extension</router-link
           >
+          <span class="footer-separator" aria-hidden="true">·</span>
           <router-link to="/privacy" class="footer-link">Politique de confidentialité</router-link>
+          <span class="footer-separator" aria-hidden="true">·</span>
+          <router-link to="/mentions-legales" class="footer-link">Mentions légales</router-link>
         </div>
       </div>
     </footer>
@@ -282,7 +280,11 @@ body {
 .footer-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 4px 12px;
+}
+
+.footer-separator {
+  color: #555;
 }
 
 .footer-link {
@@ -323,6 +325,15 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 4px;
+  }
+
+  /* Les liens passent à la ligne sur un téléphone : un séparateur y resterait seul en bout de ligne */
+  .footer-links {
+    justify-content: center;
+  }
+
+  .footer-separator {
+    display: none;
   }
 }
 </style>

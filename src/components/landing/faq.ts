@@ -1,7 +1,7 @@
 export interface QuestionFaq {
   question: string
   reponse: string
-  lien?: { texte: string; to?: string; href?: string }
+  liens?: { texte: string; to?: string; href?: string }[]
 }
 
 export const QUESTIONS: QuestionFaq[] = [
@@ -24,7 +24,7 @@ export const QUESTIONS: QuestionFaq[] = [
     question: "Sur quels navigateurs fonctionne l'extension ?",
     reponse:
       'Sur Firefox, depuis son store, et sur Chrome et les autres navigateurs basés sur Chromium, en installation manuelle.',
-    lien: { texte: "Voir comment l'installer", to: '/install-tutorial' },
+    liens: [{ texte: "Voir comment l'installer", to: '/install-tutorial' }],
   },
   {
     question: 'Est-ce gratuit ?',
@@ -33,7 +33,10 @@ export const QUESTIONS: QuestionFaq[] = [
   {
     question: "Vous êtes ayant droit d'un webtoon référencé ?",
     reponse:
-      'Écrivez-nous en indiquant le titre concerné et votre qualité (auteur, éditeur…) : le webtoon, ou sa couverture, est retiré après vérification.',
-    lien: { texte: 'dramatoons@mailo.com', href: 'mailto:dramatoons@mailo.com' },
+      'Sa couverture est retirée sur simple demande justifiée. Écrivez-nous en indiquant le titre concerné et votre qualité (auteur, éditeur…) :',
+    liens: [
+      { texte: 'dramatoons@mailo.com', href: 'mailto:dramatoons@mailo.com' },
+      { texte: 'Détails dans les mentions légales', to: '/mentions-legales#retrait' },
+    ],
   },
 ]

@@ -177,10 +177,25 @@ describe("LandingView (page d'accueil d'un visiteur)", () => {
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
-  it('répond aux questions fréquentes, dont celle des ayants droit', () => {
+  it('répond aux questions fréquentes, avec leurs liens', () => {
     const vue = afficher()
+    const question = (debut: string) =>
+      vue.findAll('details').find((element) => element.get('summary').text().startsWith(debut))!
+    const liensDe = (debut: string) =>
+      vue
+        .findAllComponents(RouterLinkStub)
+        .filter((lien) => question(debut).element.contains(lien.element))
+        .map((lien) => lien.props('to'))
 
     expect(vue.findAll('details')).toHaveLength(6)
-    expect(vue.get('a[href="mailto:dramatoons@mailo.com"]').text()).toBe('dramatoons@mailo.com')
+    expect(liensDe('Sur quels navigateurs')).toEqual(['/install-tutorial'])
+
+    const ayantDroit = question('Vous êtes ayant droit')
+    expect(ayantDroit.text()).toContain('Sa couverture est retirée sur simple demande justifiée')
+    expect(ayantDroit.text()).not.toMatch(/le webtoon, ou sa couverture/i)
+    const liens = ayantDroit.findAll('a').map((lien) => lien.text())
+    expect(liens).toEqual(['dramatoons@mailo.com', 'Détails dans les mentions légales'])
+    expect(ayantDroit.get('a').attributes('href')).toBe('mailto:dramatoons@mailo.com')
+    expect(liensDe('Vous êtes ayant droit')).toEqual(['/mentions-legales#retrait'])
   })
 })

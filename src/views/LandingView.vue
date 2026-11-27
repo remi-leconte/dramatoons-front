@@ -78,11 +78,10 @@ fournirWebtoonsDemo()
           <summary>{{ item.question }}</summary>
           <p>
             {{ item.reponse }}
-            <template v-if="item.lien">
-              <router-link v-if="item.lien.to" :to="item.lien.to">{{
-                item.lien.texte
-              }}</router-link>
-              <a v-else :href="item.lien.href">{{ item.lien.texte }}</a>
+            <template v-for="(lien, index) in item.liens ?? []" :key="lien.texte">
+              {{ index ? ' · ' : ' ' }}
+              <router-link v-if="lien.to" :to="lien.to">{{ lien.texte }}</router-link>
+              <a v-else :href="lien.href">{{ lien.texte }}</a>
             </template>
           </p>
         </details>

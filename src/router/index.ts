@@ -3,6 +3,11 @@ import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Toute page s'ouvre en haut, même avec Précédent, sauf un lien vers une section (#retrait)
+  scrollBehavior(to) {
+    if (to.hash) return { el: to.hash, top: 20 }
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',
@@ -13,6 +18,11 @@ const router = createRouter({
       path: '/privacy',
       name: 'privacy-policy',
       component: () => import('../views/PrivacyPolicyView.vue'),
+    },
+    {
+      path: '/mentions-legales',
+      name: 'legal-notice',
+      component: () => import('../views/LegalNoticeView.vue'),
     },
     {
       path: '/install-tutorial',
