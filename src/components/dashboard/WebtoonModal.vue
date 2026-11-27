@@ -345,6 +345,11 @@ const performAutoSave = async () => {
 }
 
 const onFieldChanged = () => {
+  // En démo, rien ne part vers l'API : pas de délai, sinon un changement suivi d'une fermeture rapide serait perdu
+  if (props.demo) {
+    performAutoSave()
+    return
+  }
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
     performAutoSave()

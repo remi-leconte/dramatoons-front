@@ -115,6 +115,19 @@ describe('WebtoonModal (mode démo de la page d’accueil)', () => {
     aucunAppel()
   })
 
+  it('en mode démo, un changement est transmis aussitôt : fermer la fenêtre juste après ne le perd pas', async () => {
+    const vue = mount(WebtoonModal, { props: { webtoon: webtoon(), demo: true } })
+    const formulaire = vue.getComponent(WebtoonUserProgressForm)
+
+    formulaire.vm.$emit('update:progress', { state: 'pause', bookmark: 48, rate: 9 })
+    formulaire.vm.$emit('change')
+    await flushPromises()
+
+    const enregistre = vue.emitted('saved')?.[0]?.[0] as Webtoon
+    expect(enregistre.userProgress?.state).toBe('pause')
+    aucunAppel()
+  })
+
   it('en mode démo, même un modérateur connecté n’a que les droits d’un lecteur', () => {
     const auth = useAuthStore()
     auth.userId = 7
