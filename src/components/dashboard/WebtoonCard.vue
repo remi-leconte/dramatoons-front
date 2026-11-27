@@ -10,12 +10,23 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  // Page d'accueil : la carte se manipule comme pour un lecteur connecté, sans rien enregistrer
+  demo: {
+    type: Boolean,
+    default: false,
+  },
+  // Couverture d'exemple, qui ne vient pas de l'API
+  cover: {
+    type: String,
+    default: null,
+  },
 })
 const emit = defineEmits(['status-change', 'bookmark-change'])
 
 const authStore = useAuthStore()
 const hasImageError = ref(false)
-const imageUrl = computed(() => coverUrl(props.webtoon.image, props.webtoon.updated))
+const imageUrl = computed(() => props.cover ?? coverUrl(props.webtoon.image, props.webtoon.updated))
+const showControls = computed(() => props.demo || authStore.isAuthenticated)
 watch(imageUrl, () => {
   hasImageError.value = false
 })
@@ -104,7 +115,7 @@ const saveBookmarkInput = () => {
         <span class="placeholder-text">{{ webtoon.title.title || 'Sans titre' }}</span>
       </div>
 
-      <div v-if="authStore.isAuthenticated" class="grid-select-position" @click.stop>
+      <div v-if="showControls" class="grid-select-position" @click.stop>
         <StatusSelect
           :state="webtoon.userProgress?.state"
           @update:state="(newState) => emit('status-change', newState)"
@@ -112,7 +123,7 @@ const saveBookmarkInput = () => {
       </div>
 
       <div class="overlay">
-        <div v-if="authStore.isAuthenticated" class="quick-actions-container" @click.stop>
+        <div v-if="showControls" class="quick-actions-container" @click.stop>
           <div v-if="isEditingBookmark" class="bookmark-edit-wrapper">
             <input
               type="number"
@@ -170,10 +181,7 @@ const saveBookmarkInput = () => {
       </div>
 
       <div class="stats-row">
-        <span
-          v-if="authStore.isAuthenticated && webtoon.userProgress"
-          title="Votre note"
-          class="user-rating"
+        <span v-if="showControls && webtoon.userProgress" title="Votre note" class="user-rating"
           >🏷️ {{ webtoon.userProgress.rate || '-' }}</span
         >
         <span v-if="webtoon.publish" title="Note moyenne globale"

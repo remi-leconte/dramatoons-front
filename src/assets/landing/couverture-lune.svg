@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="400" height="600">
+  <defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a44"/><stop offset="1" stop-color="#0d3a42"/></linearGradient></defs>
+  <rect width="200" height="300" fill="url(#c)"/>
+  <circle cx="120" cy="105" r="62" fill="#e8ecef" opacity="0.92"/>
+  <circle cx="140" cy="92" r="9" fill="#cfd6db"/>
+  <circle cx="104" cy="128" r="6" fill="#cfd6db"/>
+  <path d="M0 230 60 170 95 205 140 150 200 215V300H0Z" fill="#0a1a24"/>
+  <path d="M0 255 50 225 110 260 160 228 200 250V300H0Z" fill="#06121a"/>
+  <path d="M20 60 180 200" stroke="#e5452e" stroke-width="3" stroke-linecap="round"/>
+  <path d="M40 40 170 175" stroke="#ff8a4c" stroke-width="1.2" opacity="0.8"/>
+  <text x="100" y="268" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800" letter-spacing="0.8" text-anchor="middle" font-size="17" fill="#fff">LE SABRE DES</text>
+  <text x="100" y="288" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800" letter-spacing="0.8" text-anchor="middle" font-size="17" fill="#ff8a4c">NEUF LUNES</text>
+</svg>
